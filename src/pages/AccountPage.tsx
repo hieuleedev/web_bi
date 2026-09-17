@@ -330,12 +330,14 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                             {p.status === 'hidden' ? 'Hiện lại' : 'Ẩn đi'}
                           </button>
                           <button
-                            onClick={() => {
-                              deleteProduct(p.id);
-                              showToast('Đã xóa sản phẩm khỏi danh sách!', 'info');
+                            onClick={async () => {
+                              if (window.confirm(`Bạn có chắc chắn muốn xóa bài đăng "${p.title}" không? Hành động này sẽ xóa sản phẩm khỏi Database và không thể hoàn tác.`)) {
+                                await deleteProduct(p.id);
+                                showToast('Đã xóa bài đăng khỏi hệ thống thành công!', 'success');
+                              }
                             }}
                             className="p-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50"
-                            title="Xóa sản phẩm"
+                            title="Xóa bài đăng này"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

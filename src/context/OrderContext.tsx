@@ -4,6 +4,7 @@ import { generateOrderCode } from '../utils/helpers';
 import { useProducts } from './ProductContext';
 import { useCart } from './CartContext';
 import { useToast } from './ToastContext';
+import { supabase } from '../lib/supabase';
 
 interface CreateOrderParams {
   userId: string;
@@ -18,8 +19,8 @@ interface CreateOrderParams {
 
 interface OrderContextType {
   orders: Order[];
-  createOrder: (params: CreateOrderParams) => Order | null;
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  createOrder: (params: CreateOrderParams) => Promise<Order | null>;
+  updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
   getOrderById: (orderId: string) => Order | undefined;
   getUserOrders: (userId: string) => Order[];
   getSellerOrders: (sellerId: string) => Order[];
@@ -127,7 +128,45 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
   }, [orders]);
 
-  const createOrder = (params: CreateOrderParams): Order | null => {
+  // Sync orders from Supabase on mount
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          const mappedOrders: Order[] = data.map((row: any) => ({
+            id: row.id,
+            code: row.order_code,
+            userId: row.user_id || 'guest',
+            customerName: row.customer_name,
+            customerPhone: row.customer_phone,
+            customerEmail: row.customer_email || '',
+            shippingAddress: row.shipping_address,
+            deliveryMethod: row.delivery_method || 'shipping',
+            paymentMethod: row.payment_method || 'cod',
+            paymentStatus: row.payment_status || 'unpaid',
+            items: row.items || [],
+            subtotal: row.total_buy_price || row.total_rent_fee || 0,
+            depositTotal: row.total_deposit || 0,
+            shippingFee: row.shipping_fee || 30000,
+            serviceFee: 0,
+            totalAmount: (row.total_rent_fee || 0) + (row.total_buy_price || 0) + (row.total_deposit || 0) + (row.shipping_fee || 30000),
+            status: row.status as OrderStatus,
+            notes: row.notes,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at || row.created_at,
+          }));
+          setOrders(mappedOrders);
+          localStorage.setItem(ORDERS_KEY, JSON.stringify(mappedOrders));
+        }
+      } catch (e) {
+        console.warn('Could not fetch orders from Supabase', e);
+      }
+    }
+    fetchOrders();
+  }, []);
+
+  const createOrder = async (params: CreateOrderParams): Promise<Order | null> => {
     if (cartItems.length === 0) {
       showToast('Giỏ hàng của bạn đang trống!', 'error');
       return null;
@@ -176,27 +215,69 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       updatedAt: new Date().toISOString(),
     };
 
-    // Lock booked dates on products for rental items
+    // Lock booked dates on products for rental items & write to rental_bookings
     for (const item of cartItems) {
       if (item.mode === 'rent' && item.rentalStartDate && item.rentalEndDate) {
+        const bookingId = `book-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
         addRentalBookingToProduct(item.productId, {
-          id: `book-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+          id: bookingId,
           startDate: item.rentalStartDate,
           endDate: item.rentalEndDate,
           renterName: params.customerName,
           status: 'confirmed',
         });
+
+        // Supabase DB rental booking
+        try {
+          await supabase.from('rental_bookings').insert({
+            id: bookingId,
+            product_id: item.productId,
+            order_id: orderId,
+            start_date: item.rentalStartDate,
+            end_date: item.rentalEndDate,
+            renter_name: params.customerName,
+            renter_phone: params.customerPhone,
+            status: 'confirmed',
+            note: params.notes
+          });
+        } catch (e) {
+          console.warn('Error saving booking to Supabase', e);
+        }
       }
     }
 
     setOrders((prev) => [newOrder, ...prev]);
     clearCart();
+
+    // Write order directly into Supabase Cloud DB
+    try {
+      await supabase.from('orders').insert({
+        id: newOrder.id,
+        order_code: newOrder.code,
+        customer_name: newOrder.customerName,
+        customer_phone: newOrder.customerPhone,
+        shipping_address: newOrder.shippingAddress,
+        items: newOrder.items,
+        total_rent_fee: subtotal,
+        total_buy_price: 0,
+        total_deposit: depositTotal,
+        shipping_fee: shippingTotal,
+        status: newOrder.status,
+        delivery_method: newOrder.deliveryMethod,
+        payment_method: newOrder.paymentMethod,
+        payment_status: newOrder.paymentStatus,
+        notes: newOrder.notes
+      });
+    } catch (err) {
+      console.warn('Error writing order to Supabase', err);
+    }
+
     showToast(`Đặt hàng thành công! Mã đơn: ${orderCode}`, 'success');
 
     return newOrder;
   };
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
     setOrders((prev) =>
       prev.map((o) =>
         o.id === orderId
@@ -204,6 +285,16 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           : o
       )
     );
+
+    try {
+      await supabase.from('orders').update({
+        status,
+        updated_at: new Date().toISOString()
+      }).eq('id', orderId);
+    } catch (e) {
+      console.warn('Error updating order status in Supabase', e);
+    }
+
     showToast(`Đã cập nhật trạng thái đơn hàng sang "${status}"`, 'info');
   };
 

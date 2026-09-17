@@ -87,28 +87,28 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
       </label>
 
       {/* Quick sample photo adder for convenience */}
-      <div className="flex items-center gap-2 pt-1 text-xs text-gray-500">
-        <span>Gợi ý ảnh thời trang mẫu đẹp:</span>
+      <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-gray-500">
+        <span>Gợi ý ảnh váy trắng mẫu đẹp (không người mẫu):</span>
         <button
           type="button"
-          onClick={() => handleAddSampleImage('https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80')}
+          onClick={() => handleAddSampleImage('https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80')}
           className="text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1 rounded-lg transition-colors"
         >
-          + Đầm dạ tiệc
+          + Váy trắng xòe bồng
         </button>
         <button
           type="button"
           onClick={() => handleAddSampleImage('https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80')}
           className="text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1 rounded-lg transition-colors"
         >
-          + Áo dài ren
+          + Áo dài lụa trắng
         </button>
         <button
           type="button"
-          onClick={() => handleAddSampleImage('https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80')}
+          onClick={() => handleAddSampleImage('https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=800&q=80')}
           className="text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1 rounded-lg transition-colors"
         >
-          + Đầm lụa đỏ
+          + Váy cưới mannequin
         </button>
       </div>
 

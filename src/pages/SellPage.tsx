@@ -48,11 +48,11 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
 
   // Image Upload state
   const [images, setImages] = useState<string[]>([
-    'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80'
+    'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80'
   ]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
 
-  const handleSubmit = (isDraft = false) => {
+  const handleSubmit = async (isDraft = false) => {
     if (!title.trim()) {
       showToast('Vui lòng nhập tên sản phẩm!', 'error');
       return;
@@ -66,7 +66,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
     const sizesArray = sizesInput.split(',').map((s) => s.trim()).filter(Boolean);
     const colorsArray = colorsInput.split(',').map((c) => c.trim()).filter(Boolean);
 
-    const newProd = addProduct({
+    const newProd = await addProduct({
       title: title.trim(),
       description: description.trim() || 'Trang phục thời trang cao cấp phù hợp cho các sự kiện, dạ hội hoặc dạo phố.',
       category,

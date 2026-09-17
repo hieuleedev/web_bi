@@ -521,6 +521,26 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                       <span>Lịch khả dụng! Tổng tiền thuê dự kiến: <strong>{formatVND(rentalFee)}</strong> + Cọc: <strong>{formatVND(deposit)}</strong></span>
                     </div>
                   )}
+
+                  {/* List of already booked dates right here */}
+                  {product.bookedDates && product.bookedDates.length > 0 && (
+                    <div className="pt-2 border-t border-gray-200/80">
+                      <span className="text-[11px] font-semibold text-gray-500 block mb-1.5">
+                        🔴 Các khoảng ngày váy này ĐÃ CÓ NGƯỜI THUÊ (không chọn được):
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {product.bookedDates.map((b) => (
+                          <span
+                            key={b.id}
+                            className="inline-flex items-center gap-1 text-[11px] font-mono font-bold bg-rose-100/80 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-lg"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                            {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

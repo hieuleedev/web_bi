@@ -171,12 +171,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onViewProduct }) => {
                       <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => {
-                        deleteProduct(p.id);
-                        showToast('Đã xóa sản phẩm khỏi hệ thống', 'info');
+                      onClick={async () => {
+                        if (window.confirm(`Xác nhận xóa bài đăng "${p.title}" khỏi sàn Bi Bi và cơ sở dữ liệu?`)) {
+                          await deleteProduct(p.id);
+                          showToast('Đã xóa sản phẩm khỏi hệ thống và database!', 'success');
+                        }
                       }}
                       className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
-                      title="Xóa"
+                      title="Xóa bài đăng"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

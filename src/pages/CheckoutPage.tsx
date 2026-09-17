@@ -35,7 +35,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
+  const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
@@ -55,7 +55,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       return;
     }
 
-    const newOrder = createOrder({
+    const newOrder = await createOrder({
       userId: currentUser?.id || 'guest',
       customerName: customerName.trim(),
       customerPhone: phoneClean,

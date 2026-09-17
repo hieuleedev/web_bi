@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { /* ignore */ }
     }
-    return MOCK_USERS[0]; // Default to Linh Bi (Seller/Owner)
+    return null; // Default to guest (not logged in)
   });
 
   useEffect(() => {
@@ -101,6 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
+    localStorage.removeItem(AUTH_USER_KEY);
     setCurrentUser(null);
   };
 

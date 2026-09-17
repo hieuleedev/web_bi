@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Lock, Mail, User as UserIcon, Phone, ShieldCheck, Sparkles, LogIn } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -26,12 +26,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [role, setRole] = useState<UserRole>('buyer');
 
   if (!isOpen) return null;
-
-  const handleQuickLogin = (emailTarget: string, pass: string, roleName: string) => {
-    login(emailTarget, pass);
-    showToast('Đăng nhập thành công với vai trò: ' + roleName, 'success');
-    onClose();
-  };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,50 +76,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </p>
         </div>
 
-        {/* Quick Demo Login Cards */}
-        <div className="px-6 pt-5 pb-2">
-          <p className="text-[11px] font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-            ⚡ Đăng nhập nhanh tài khoản có sẵn:
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('bibi.fashion@gmail.com', '123456', 'Chủ Shop (Linh Bi)')}
-              className="p-2.5 rounded-xl border border-brand-200 bg-brand-50/60 hover:bg-brand-100 text-left transition-all"
-            >
-              <span className="block text-xs font-bold text-brand-800">👑 Chủ Shop</span>
-              <span className="text-[10px] text-brand-600">Linh Bi</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('admin@bibifashion.vn', '123456', 'Quản Trị Viên (Admin)')}
-              className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/60 hover:bg-amber-100 text-left transition-all"
-            >
-              <span className="block text-xs font-bold text-amber-800">🛡️ Admin</span>
-              <span className="text-[10px] text-amber-600">Quản trị viên</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('maiyen.hoang@gmail.com', '123456', 'Khách Hàng (Mai Yến)')}
-              className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-left transition-all"
-            >
-              <span className="block text-xs font-bold text-blue-800">🛍️ Khách Mua</span>
-              <span className="text-[10px] text-blue-600">Mai Yến</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="relative px-6 py-3 flex items-center">
-          <div className="flex-grow border-t border-gray-100"></div>
-          <span className="flex-shrink mx-3 text-[11px] text-gray-400">hoặc nhập thông tin</span>
-          <div className="flex-grow border-t border-gray-100"></div>
-        </div>
-
         {/* Main Form */}
-        <form onSubmit={handleFormSubmit} className="px-6 pb-6 space-y-3.5">
+        <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
           {mode === 'register' && (
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Họ và tên</label>
