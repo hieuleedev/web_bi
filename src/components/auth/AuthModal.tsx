@@ -27,10 +27,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === 'login') {
-      const ok = login(email.trim(), password);
+      const ok = await login(email.trim(), password);
       if (ok) {
         showToast('Đăng nhập thành công vào Bi Bi Boutique!', 'success');
         onClose();
@@ -42,7 +42,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         showToast('Vui lòng điền đầy đủ thông tin!', 'warning');
         return;
       }
-      register(name.trim(), email.trim(), phone.trim(), role);
+      await register(name.trim(), email.trim(), phone.trim(), role);
       showToast('Đăng ký tài khoản mới thành công!', 'success');
       onClose();
     }

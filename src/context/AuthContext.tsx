@@ -1,17 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '../types';
 import { MOCK_USERS } from '../data/mockUsers';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
   currentUser: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password?: string) => boolean;
-  register: (name: string, email: string, phone: string, role?: UserRole) => void;
+  login: (email: string, password?: string) => Promise<boolean>;
+  register: (name: string, email: string, phone: string, role?: UserRole) => Promise<void>;
   changePassword: (oldPass: string, newPass: string) => { success: boolean; message: string };
   switchRole: (role: UserRole) => void;
   switchUser: (userId: string) => void;
-  updateProfile: (updatedData: Partial<User>) => void;
+  updateProfile: (updatedData: Partial<User>) => Promise<void>;
   logout: () => void;
   allUsers: User[];
 }
@@ -43,6 +44,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return null; // Default to guest (not logged in)
   });
 
+  // Sync users list from Supabase
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const { data, error } = await supabase.from('users').select('*');
+        if (!error && data && data.length > 0) {
+          const mappedUsers: User[] = data.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone || '',
+            avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+            role: u.role as UserRole,
+            rating: u.rating || 5.0,
+            ratingCount: u.rating_count || 0,
+            location: u.location || 'Việt Nam',
+            joinedDate: u.created_at ? u.created_at.split('T')[0] : '2026-01-01',
+            bio: u.bio
+          }));
+          setUsers(mappedUsers);
+          localStorage.setItem(ALL_USERS_KEY, JSON.stringify(mappedUsers));
+        }
+      } catch (err) {
+        console.warn('Could not fetch users from Supabase', err);
+      }
+    }
+    fetchUsers();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem(ALL_USERS_KEY, JSON.stringify(users));
   }, [users]);
@@ -57,7 +87,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [currentUser, token]);
 
-  const login = (email: string, _password?: string): boolean => {
+  const login = async (email: string, _password?: string): Promise<boolean> => {
     const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
     if (found) {
       const generatedToken = `bibi_jwt_${found.id}_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
@@ -70,7 +100,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return false;
   };
 
-  const register = (name: string, email: string, phone: string, role: UserRole = 'buyer') => {
+  const register = async (name: string, email: string, phone: string, role: UserRole = 'buyer') => {
     const newUser: User = {
       id: `user-${Date.now()}`,
       name,
@@ -89,6 +119,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCurrentUser(newUser);
     localStorage.setItem(AUTH_TOKEN_KEY, generatedToken);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(newUser));
+
+    // Save directly to Supabase users table
+    try {
+      await supabase.from('users').insert({
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        phone: newUser.phone,
+        avatar: newUser.avatar,
+        role: newUser.role,
+        rating: newUser.rating,
+        location: newUser.location
+      });
+    } catch (e) {
+      console.warn('Error saving new user to Supabase', e);
+    }
   };
 
   const switchRole = (role: UserRole) => {
@@ -129,11 +175,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return { success: true, message: 'Đổi mật khẩu thành công!' };
   };
 
-  const updateProfile = (updatedData: Partial<User>) => {
+  const updateProfile = async (updatedData: Partial<User>) => {
     if (!currentUser) return;
     const updated = { ...currentUser, ...updatedData };
     setCurrentUser(updated);
     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+
+    try {
+      const dbUpdate: any = {};
+      if (updatedData.name) dbUpdate.name = updatedData.name;
+      if (updatedData.phone) dbUpdate.phone = updatedData.phone;
+      if (updatedData.location) dbUpdate.location = updatedData.location;
+      if (updatedData.bio) dbUpdate.bio = updatedData.bio;
+      if (updatedData.avatar) dbUpdate.avatar = updatedData.avatar;
+
+      if (Object.keys(dbUpdate).length > 0) {
+        await supabase.from('users').update(dbUpdate).eq('id', currentUser.id);
+      }
+    } catch (e) {
+      console.warn('Error updating profile in Supabase', e);
+    }
   };
 
   const logout = () => {

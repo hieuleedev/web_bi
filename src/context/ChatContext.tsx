@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ChatMessage, Conversation, Product, User } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface ChatContextType {
   conversations: Conversation[];
   messages: Record<string, ChatMessage[]>;
   activeConversationId: string | null;
   setActiveConversationId: (id: string | null) => void;
-  sendMessage: (conversationId: string, content: string, sender: User, imageUrl?: string) => void;
+  sendMessage: (conversationId: string, content: string, sender: User, imageUrl?: string) => Promise<void>;
   startProductChat: (product: Product, sender: User) => string;
   totalUnreadCount: number;
 }
@@ -84,7 +85,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem(CHAT_MSG_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  const sendMessage = (conversationId: string, content: string, sender: User, imageUrl?: string) => {
+  const sendMessage = async (conversationId: string, content: string, sender: User, imageUrl?: string) => {
     const newMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
       conversationId,
@@ -113,6 +114,22 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           : conv
       )
     );
+
+    // Write message row to Supabase Cloud DB
+    try {
+      await supabase.from('messages').insert({
+        id: newMsg.id,
+        conversation_id: conversationId,
+        sender_id: sender.id,
+        sender_name: sender.name,
+        sender_avatar: sender.avatar,
+        content: newMsg.content,
+        image_url: newMsg.imageUrl || null,
+        is_read: true
+      });
+    } catch (e) {
+      console.warn('Error saving message to Supabase', e);
+    }
   };
 
   const startProductChat = (product: Product, sender: User): string => {

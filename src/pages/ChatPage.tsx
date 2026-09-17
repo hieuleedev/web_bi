@@ -26,11 +26,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onBack, onViewProduct }) => 
   const activeConv = conversations.find((c) => c.id === activeConversationId) || conversations[0];
   const currentMessages = activeConv ? messages[activeConv.id] || [] : [];
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const text = textToSend || inputMessage;
     if (!text.trim() || !activeConv || !currentUser) return;
 
-    sendMessage(activeConv.id, text.trim(), currentUser);
+    await sendMessage(activeConv.id, text.trim(), currentUser);
     setInputMessage('');
   };
 

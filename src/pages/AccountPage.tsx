@@ -85,10 +85,10 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   // Wishlist products
   const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id));
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile({ name, phone, location, bio });
-    showToast('Đã cập nhật thông tin cá nhân thành công!', 'success');
+    await updateProfile({ name, phone, location, bio });
+    showToast('Đã cập nhật thông tin cá nhân lên hệ thống thành công!', 'success');
   };
 
   const menuTabs = [

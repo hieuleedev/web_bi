@@ -278,6 +278,22 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       })
     );
 
+    // Sync review record into Supabase reviews table
+    try {
+      await supabase.from('reviews').insert({
+        id: newReview.id,
+        product_id: productId,
+        user_id: newReview.userId,
+        user_name: newReview.userName,
+        user_avatar: newReview.userAvatar,
+        rating: newReview.rating,
+        comment: newReview.comment,
+        type: newReview.type
+      });
+    } catch (err) {
+      console.warn('Could not insert review to Supabase', err);
+    }
+
     // Sync updated rating and reviewsCount directly into Supabase Cloud DB
     try {
       await supabase.from('products').update({
