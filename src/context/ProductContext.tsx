@@ -20,7 +20,7 @@ interface ProductContextType {
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-const PRODUCTS_KEY = 'bibi_products_v6_white_dresses';
+const PRODUCTS_KEY = 'bibi_products_store_v1';
 const WISHLIST_KEY = 'bibi_wishlist_ids';
 
 // Helper to map Supabase row to Product model
@@ -75,10 +75,21 @@ function mapDbToProduct(row: any): Product {
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
+    // Clear legacy mock caches if present
+    try {
+      localStorage.removeItem('bibi_products_v6_white_dresses');
+      localStorage.removeItem('bibi_products_v5_full_seed');
+      localStorage.removeItem('bibi_products_v4_local_v2');
+    } catch (e) {}
+
     const saved = localStorage.getItem(PRODUCTS_KEY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Filter out any previous dummy items
+          return parsed.filter((p: Product) => p && p.id && !p.id.startsWith('prod-'));
+        }
       } catch (e) {
         console.error('Error loading products from localStorage', e);
       }

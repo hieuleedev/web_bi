@@ -10,12 +10,14 @@ import {
   RotateCcw,
   Clock,
   Star,
-  PlusCircle
+  PlusCircle,
+  PackageOpen
 } from 'lucide-react';
 import { ProductCard } from '../components/product/ProductCard';
 import { CATEGORIES } from '../data/initialCategories';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
+import { formatVND } from '../utils/helpers';
 
 interface HomePageProps {
   onNavigate: (view: string) => void;
@@ -66,7 +68,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </h1>
 
               <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                Tự tin tỏa sáng trong mọi sự kiện, tiệc cưới và dạ hội với bộ sưu tập đầm thiết kế, áo dài tơ tằm và vest cao cấp. Mua sắm hoặc thuê linh hoạt theo ngày với chi phí tiết kiệm đến 80%.
+                Tự tin tỏa sáng trong mọi sự kiện, tiệc cưới và dạ hội với bộ sưu tập đầm thiết kế, áo dài tơ tằm và vest cao cấp. Mua sắm hoặc thuê linh hoạt theo ngày với chi phí tiết kiệm.
               </p>
 
               {/* 2 Big Action CTAs */}
@@ -93,16 +95,16 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* Trust badges */}
               <div className="pt-6 grid grid-cols-3 gap-4 border-t border-brand-200/60 max-w-lg mx-auto lg:mx-0 text-left">
                 <div>
-                  <span className="block font-serif text-xl font-bold text-gray-900">5,000+</span>
-                  <span className="text-[11px] text-gray-500">Mẫu váy tiệc & áo dài</span>
+                  <span className="block font-serif text-base sm:text-lg font-bold text-gray-900">Chuẩn 5 Sao</span>
+                  <span className="text-[11px] text-gray-500">Giặt hấp tiệt trùng UV</span>
                 </div>
                 <div>
-                  <span className="block font-serif text-xl font-bold text-gray-900">100%</span>
-                  <span className="text-[11px] text-gray-500">Giặt hấp UV khử khuẩn</span>
+                  <span className="block font-serif text-base sm:text-lg font-bold text-gray-900">Linh Hoạt</span>
+                  <span className="text-[11px] text-gray-500">Thuê & mua theo ngày</span>
                 </div>
                 <div>
-                  <span className="block font-serif text-xl font-bold text-gray-900">24h</span>
-                  <span className="text-[11px] text-gray-500">Hoàn tiền cọc minh bạch</span>
+                  <span className="block font-serif text-base sm:text-lg font-bold text-gray-900">Minh Bạch</span>
+                  <span className="text-[11px] text-gray-500">Hoàn tiền cọc an tâm</span>
                 </div>
               </div>
             </div>
@@ -112,24 +114,51 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="relative mx-auto max-w-sm lg:max-w-none">
                 
                 {/* Main Hero Card */}
-                <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[3/4] bg-gray-100 group">
-                  <img
-                    src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80"
-                    alt="Thời trang nàng thơ Bi Bi"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6 text-white">
-                    <span className="bg-brand-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full w-fit mb-2">
-                      Bộ Sưu Tập Nàng Thơ 2026
-                    </span>
-                    <h3 className="font-serif text-lg font-bold">
-                      Đầm Trắng Nàng Thơ Cổ Vuông Tay Bồng
-                    </h3>
-                    <p className="text-xs text-gray-300 mt-1">
-                      Giá thuê chỉ từ <strong className="text-emerald-400">250.000 ₫</strong> /ngày
-                    </p>
+                {approvedProducts.length > 0 ? (
+                  <div
+                    onClick={() => onViewProduct(approvedProducts[0].id)}
+                    className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[3/4] bg-gray-100 group cursor-pointer"
+                  >
+                    <img
+                      src={approvedProducts[0].featuredImage}
+                      alt={approvedProducts[0].title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6 text-white">
+                      <span className="bg-brand-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full w-fit mb-2">
+                        {approvedProducts[0].brand || 'Bộ Sưu Tập Mới'}
+                      </span>
+                      <h3 className="font-serif text-lg font-bold line-clamp-2">
+                        {approvedProducts[0].title}
+                      </h3>
+                      <p className="text-xs text-gray-300 mt-1">
+                        {approvedProducts[0].rentPrice1Day ? (
+                          <>Giá thuê từ <strong className="text-emerald-400">{formatVND(approvedProducts[0].rentPrice1Day)}</strong> /ngày</>
+                        ) : (
+                          <>Giá bán <strong className="text-emerald-400">{formatVND(approvedProducts[0].buyPrice || 0)}</strong></>
+                        )}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[3/4] bg-gradient-to-br from-brand-950 via-gray-900 to-brand-900 flex flex-col justify-between p-8 text-white">
+                    <div className="flex items-center justify-between">
+                      <span className="bg-brand-500/30 text-brand-200 border border-brand-500/40 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                        Bi Bi Boutique
+                      </span>
+                      <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                    </div>
+                    <div className="space-y-3">
+                      <div className="w-12 h-1 bg-brand-500 rounded-full"></div>
+                      <h3 className="font-serif text-2xl font-bold leading-snug">
+                        Không Gian Thời Trang & Cho Thuê Váy Thiết Kế
+                      </h3>
+                      <p className="text-xs text-gray-300 leading-relaxed">
+                        Hệ thống mua sắm và cho thuê trang phục dạ tiệc, sự kiện, áo dài theo ngày chuyên nghiệp.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Floating mini badge top right */}
                 <div className="absolute -top-4 -right-4 z-20 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-gray-100 flex items-center gap-3 animate-bounce-slow">
@@ -138,7 +167,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </div>
                   <div>
                     <span className="block text-xs font-bold text-gray-900">Đặt Lịch Thuê Ngay</span>
-                    <span className="text-[10px] text-emerald-600 font-semibold">Trống lịch cuối tuần này</span>
+                    <span className="text-[10px] text-emerald-600 font-semibold">Tự động chống trùng lịch</span>
                   </div>
                 </div>
 
@@ -231,45 +260,9 @@ export const HomePage: React.FC<HomePageProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              onViewDetail={onViewProduct}
-              onOpenRentalCalendar={onOpenRentalCalendar}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* 4. RENTAL HIGHLIGHTS SECTION (GALA, WEDDING, EVENTS) */}
-      <section className="bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 text-white py-16 lg:py-20 rounded-3xl mx-4 sm:mx-6 lg:mx-8 px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-10">
-            <div>
-              <span className="bg-brand-500/20 text-brand-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-brand-500/30">
-                Bộ Sưu Tập Cho Thuê Đặc Sắc
-              </span>
-              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold mt-3">
-                Thuê Trang Phục Sự Kiện & Tiệc Tùng
-              </h2>
-              <p className="text-xs text-gray-400 mt-1.5 max-w-xl">
-                Không cần bỏ ra hàng triệu đồng cho trang phục chỉ mặc 1 lần. Đặt thuê lịch hẹn linh hoạt, giao nhận tận nơi và giặt hấp sẵn sàng.
-              </p>
-            </div>
-
-            <button
-              onClick={() => onNavigate('rent')}
-              className="px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all shrink-0 flex items-center gap-2"
-            >
-              <Calendar className="w-4 h-4" />
-              <span>Xem Toàn Bộ Đồ Thuê</span>
-            </button>
-          </div>
-
+        {featuredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {rentalProducts.map((p) => (
+            {featuredProducts.map((p) => (
               <ProductCard
                 key={p.id}
                 product={p}
@@ -278,40 +271,107 @@ export const HomePage: React.FC<HomePageProps> = ({
               />
             ))}
           </div>
-        </div>
+        ) : (
+          <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center">
+            <div className="w-14 h-14 mx-auto mb-3 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 shadow-sm">
+              <PackageOpen className="w-7 h-7" />
+            </div>
+            <h3 className="text-base font-bold text-gray-800">Chưa có sản phẩm nào trên hệ thống</h3>
+            <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
+              Dữ liệu mẫu đã được dọn sạch. Bạn có thể vào Quản Lý Shop để thêm sản phẩm thật của mình bất kỳ lúc nào!
+            </p>
+            <div className="mt-5 flex items-center justify-center gap-3">
+              <button
+                onClick={() => onNavigate('sell')}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-brand-600 text-white text-xs font-bold hover:bg-brand-700 shadow-md shadow-brand-500/20 transition-all"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Đăng Mẫu Váy Đầu Tiên</span>
+              </button>
+              <button
+                onClick={() => onNavigate('quan-ly-shop')}
+                className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-all"
+              >
+                Quản Lý Kho Shop
+              </button>
+            </div>
+          </div>
+        )}
       </section>
+
+      {/* 4. RENTAL HIGHLIGHTS SECTION (GALA, WEDDING, EVENTS) */}
+      {rentalProducts.length > 0 && (
+        <section className="bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 text-white py-16 lg:py-20 rounded-3xl mx-4 sm:mx-6 lg:mx-8 px-6 lg:px-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-10">
+              <div>
+                <span className="bg-brand-500/20 text-brand-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-brand-500/30">
+                  Bộ Sưu Tập Cho Thuê Đặc Sắc
+                </span>
+                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold mt-3">
+                  Thuê Trang Phục Sự Kiện & Tiệc Tùng
+                </h2>
+                <p className="text-xs text-gray-400 mt-1.5 max-w-xl">
+                  Không cần bỏ ra hàng triệu đồng cho trang phục chỉ mặc 1 lần. Đặt thuê lịch hẹn linh hoạt, giao nhận tận nơi và giặt hấp sẵn sàng.
+                </p>
+              </div>
+
+              <button
+                onClick={() => onNavigate('rent')}
+                className="px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all shrink-0 flex items-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Xem Toàn Bộ Đồ Thuê</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {rentalProducts.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onViewDetail={onViewProduct}
+                  onOpenRentalCalendar={onOpenRentalCalendar}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 5. NEW ARRIVALS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-8">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-brand-600">
-              Vừa Lên Kệ
-            </span>
-            <h2 className="font-serif text-2xl lg:text-3xl font-bold text-gray-900 mt-1">
-              Sản Phẩm Mới Đăng Gần Đây
-            </h2>
+      {newProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-8">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-600">
+                Vừa Lên Kệ
+              </span>
+              <h2 className="font-serif text-2xl lg:text-3xl font-bold text-gray-900 mt-1">
+                Sản Phẩm Mới Đăng Gần Đây
+              </h2>
+            </div>
+            <button
+              onClick={() => onNavigate('shop')}
+              className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
+            >
+              <span>Xem tất cả</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
           </div>
-          <button
-            onClick={() => onNavigate('shop')}
-            className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
-          >
-            <span>Xem tất cả</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {newProducts.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              onViewDetail={onViewProduct}
-              onOpenRentalCalendar={onOpenRentalCalendar}
-            />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {newProducts.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                onViewDetail={onViewProduct}
+                onOpenRentalCalendar={onOpenRentalCalendar}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 6. SELL / RENT OUT CTA SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
