@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Lock, Mail, User as UserIcon, Phone, ShieldCheck, Sparkles, LogIn, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -59,18 +60,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs p-2 sm:p-4 flex items-end sm:items-center justify-center animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60 backdrop-blur-xs flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
       {/* Backdrop tap to close */}
-      <div className="fixed inset-0" onClick={onClose} />
+      <div className="fixed inset-0 transition-opacity" onClick={onClose} aria-hidden="true" />
 
       {/* Modal Container */}
       <div 
-        className="relative bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md max-h-[92vh] sm:max-h-[90vh] overflow-y-auto z-10 flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
+        className="relative w-full max-w-md my-auto bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden text-left z-10 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Header */}
+        {/* Header - Always fixed at top of modal */}
         <div className="relative bg-gradient-to-br from-brand-700 via-brand-600 to-dark-900 text-white p-5 sm:p-6 shrink-0">
           <button
             onClick={onClose}
@@ -95,8 +96,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </p>
         </div>
 
-        {/* Segmented Tab Switcher */}
-        <div className="p-4 sm:p-6 pb-0">
+        {/* Scrollable Body (Segmented Switcher + Form) */}
+        <div className="overflow-y-auto flex-1 overscroll-contain">
+          {/* Segmented Tab Switcher */}
+          <div className="p-4 sm:p-6 pb-0">
           <div className="flex bg-gray-100 p-1 rounded-2xl">
             <button
               type="button"
@@ -288,8 +291,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             )}
           </div>
         </form>
+        </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

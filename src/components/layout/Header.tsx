@@ -51,6 +51,12 @@ export const Header: React.FC<HeaderProps> = ({
   const [searchInput, setSearchInput] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+  const openAuthModal = () => {
+    setUserDropdownOpen(false);
+    setMobileMenuOpen(false);
+    setIsAuthModalOpen(true);
+  };
+
   const goTo = (path: string, view?: string) => {
     navigate(path);
     if (setCurrentView && view) {
@@ -147,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             ) : (
               <button
-                onClick={() => setIsAuthModalOpen(true)}
+                onClick={openAuthModal}
                 className="flex items-center gap-1 text-brand-300 hover:text-white font-semibold transition-colors whitespace-nowrap"
               >
                 <LogIn className="w-3.5 h-3.5" />
@@ -369,7 +375,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <div className="p-3">
                       <p className="text-xs text-gray-600 mb-3 text-center">Bạn chưa đăng nhập vào hệ thống</p>
                       <button
-                        onClick={() => setIsAuthModalOpen(true)}
+                        onClick={openAuthModal}
                         className="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-1.5"
                       >
                         <LogIn className="w-4 h-4" />
@@ -493,10 +499,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             ) : (
               <button
-                onClick={() => {
-                  setIsAuthModalOpen(true);
-                  setMobileMenuOpen(false);
-                }}
+                onClick={openAuthModal}
                 className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
               >
                 <LogIn className="w-4 h-4" />
