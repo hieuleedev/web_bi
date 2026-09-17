@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Sparkles,
   Calendar,
+  CalendarRange,
   ShoppingBag,
   MessageSquare,
   AlertCircle,
@@ -24,6 +25,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 import { useToast } from '../context/ToastContext';
+import { ProductScheduleManagerModal } from '../components/product/ProductScheduleManagerModal';
 
 interface ProductDetailPageProps {
   productId: string;
@@ -61,6 +63,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   // Active image
   const [activeImage, setActiveImage] = useState(product.featuredImage);
   const isLiked = wishlistIds.includes(product.id);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   // Buy or Rent Mode Tab
   const [activeMode, setActiveMode] = useState<'buy' | 'rent'>(
@@ -455,9 +458,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                       <Calendar className="w-4 h-4 text-emerald-600" />
                       Lịch Chọn Ngày Thuê & Kiểm Tra Trùng
                     </h4>
-                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                      {rentalDays} ngày thuê
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsScheduleModalOpen(true)}
+                        className="text-[11px] font-semibold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg border border-brand-200 transition-colors flex items-center gap-1"
+                      >
+                        <CalendarRange className="w-3.5 h-3.5" />
+                        <span>Xem chi tiết lịch thuê ({product.bookedDates.length})</span>
+                      </button>
+                      <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                        {rentalDays} ngày thuê
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -665,6 +678,14 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Visual Product Schedule Manager Modal */}
+      {isScheduleModalOpen && (
+        <ProductScheduleManagerModal
+          product={product}
+          onClose={() => setIsScheduleModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

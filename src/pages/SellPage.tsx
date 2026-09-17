@@ -41,7 +41,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   const [description, setDescription] = useState('');
   const [careInstructions, setCareInstructions] = useState('Giặt tay hoặc giặt khô nhẹ nhàng, ủi hơi nước.');
   const [sizeGuide, setSizeGuide] = useState('Phù hợp cho bạn từ 45kg đến 54kg, eo 64-70cm.');
-  const [location, setLocation] = useState(currentUser?.location || 'Quận 1, TP. Hồ Chí Minh');
+  const [location, setLocation] = useState(currentUser?.location || 'Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng, Da Nang, Vietnam, 560000');
   const [hasShipping] = useState(true);
   const [shippingFee, setShippingFee] = useState<number>(30000);
   const [shippingArea] = useState('Toàn quốc');

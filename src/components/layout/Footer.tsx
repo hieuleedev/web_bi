@@ -75,11 +75,11 @@ export const Footer: React.FC = () => {
             <div className="pt-2 space-y-2 text-xs text-gray-300">
               <div className="flex items-center gap-2.5">
                 <MapPin className="w-4 h-4 text-brand-400 shrink-0" />
-                <span>Số 88 Đồng Khởi, Bến Nghé, Quận 1, TP. Hồ Chí Minh</span>
+                <span>Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng, Da Nang, Vietnam, 560000</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-brand-400 shrink-0" />
-                <span>Hotline: 0988 776 655 (8:00 - 22:00 hàng ngày)</span>
+                <span>Hotline: (+84) 79 562 3097 (8:00 - 22:00 hàng ngày)</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-brand-400 shrink-0" />

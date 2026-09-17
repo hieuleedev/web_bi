@@ -16,8 +16,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_USER_KEY = 'bibi_current_user';
-const ALL_USERS_KEY = 'bibi_all_users';
+const AUTH_USER_KEY = 'bibi_current_user_v2';
+const ALL_USERS_KEY = 'bibi_all_users_v2';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [users, setUsers] = useState<User[]>(() => {

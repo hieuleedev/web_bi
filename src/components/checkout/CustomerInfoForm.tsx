@@ -62,7 +62,7 @@ export const CustomerInfoForm: React.FC<CustomerInfoFormProps> = ({
               required
               value={phone}
               onChange={(e) => onPhoneChange(e.target.value)}
-              placeholder="Ví dụ: 0912349876"
+              placeholder="Ví dụ: 079 562 3097"
               className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3.5 py-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
             />
             <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />

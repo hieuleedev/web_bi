@@ -58,8 +58,8 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                   <span className="font-bold text-gray-900">MB Bank (Quân Đội)</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Số tài khoản:</span>
-                  <span className="font-mono font-bold text-brand-700">0988776655</span>
+                  <span className="text-gray-500">Số tài khoản / SĐT:</span>
+                  <span className="font-mono font-bold text-brand-700">0795623097</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Chủ tài khoản:</span>

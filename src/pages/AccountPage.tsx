@@ -26,8 +26,9 @@ import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
 import { useOrders } from '../context/OrderContext';
 import { formatVND, formatDateVN } from '../utils/helpers';
-import { OrderStatus, ProductStatus } from '../types';
+import { OrderStatus, ProductStatus, Product } from '../types';
 import { useToast } from '../context/ToastContext';
+import { ProductScheduleManagerModal } from '../components/product/ProductScheduleManagerModal';
 
 interface AccountPageProps {
   initialTab?: string;
@@ -48,6 +49,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [scheduleProduct, setScheduleProduct] = useState<Product | null>(null);
 
   // Profile edit state
   const [name, setName] = useState(currentUser?.name || '');
@@ -300,6 +302,16 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         </div>
 
                         <div className="flex items-center gap-2 self-end sm:self-center">
+                          {(p.type === 'rent' || p.type === 'both') && (
+                            <button
+                              onClick={() => setScheduleProduct(p)}
+                              className="px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                              title="Quản lý lịch thuê của món này"
+                            >
+                              <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Lịch thuê ({(p.bookedDates || []).length})</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => onViewProduct(p.id)}
                             className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50"
@@ -568,6 +580,14 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
         </div>
       </div>
+
+      {/* Modal Quản lý lịch thuê từng sản phẩm */}
+      {scheduleProduct && (
+        <ProductScheduleManagerModal
+          product={scheduleProduct}
+          onClose={() => setScheduleProduct(null)}
+        />
+      )}
     </div>
   );
 };

@@ -12,12 +12,13 @@ interface ProductContextType {
   addReview: (productId: string, review: Omit<Review, 'id' | 'createdAt'>) => void;
   adminUpdateStatus: (productId: string, status: ProductStatus) => void;
   addRentalBookingToProduct: (productId: string, booking: RentalBookingDate) => void;
+  removeRentalBookingFromProduct: (productId: string, bookingId: string) => void;
   getProductById: (id: string) => Product | undefined;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-const PRODUCTS_KEY = 'bibi_products_v1';
+const PRODUCTS_KEY = 'bibi_products_v2';
 const WISHLIST_KEY = 'bibi_wishlist_ids';
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -145,6 +146,18 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     );
   };
 
+  const removeRentalBookingFromProduct = (productId: string, bookingId: string) => {
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id !== productId) return p;
+        return {
+          ...p,
+          bookedDates: (p.bookedDates || []).filter((b) => b.id !== bookingId),
+        };
+      })
+    );
+  };
+
   const getProductById = (id: string): Product | undefined => {
     return products.find((p) => p.id === id);
   };
@@ -161,6 +174,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         addReview,
         adminUpdateStatus,
         addRentalBookingToProduct,
+        removeRentalBookingFromProduct,
         getProductById,
       }}
     >

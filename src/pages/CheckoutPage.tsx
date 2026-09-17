@@ -28,7 +28,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const [customerName, setCustomerName] = useState(currentUser?.name || '');
   const [customerPhone, setCustomerPhone] = useState(currentUser?.phone || '');
   const [customerEmail, setCustomerEmail] = useState(currentUser?.email || '');
-  const [shippingAddress, setShippingAddress] = useState('Số 12 ngõ 34 Hoàng Cầu, Đống Đa, Hà Nội');
+  const [shippingAddress, setShippingAddress] = useState('Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng, Da Nang, Vietnam, 560000');
   const [notes, setNotes] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState<'shipping' | 'pickup'>('shipping');
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank_transfer' | 'momo' | 'vnpay'>('bank_transfer');
@@ -60,7 +60,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       customerName: customerName.trim(),
       customerPhone: phoneClean,
       customerEmail: customerEmail.trim(),
-      shippingAddress: deliveryMethod === 'shipping' ? shippingAddress.trim() : 'Nhận trực tiếp tại showroom Bi Bi (88 Đồng Khởi, Q1, TP.HCM)',
+      shippingAddress: deliveryMethod === 'shipping' ? shippingAddress.trim() : 'Nhận trực tiếp tại showroom Bi Bi (Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng)',
       deliveryMethod,
       paymentMethod,
       notes: notes.trim(),
