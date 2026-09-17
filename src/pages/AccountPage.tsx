@@ -25,7 +25,8 @@ import {
   CreditCard,
   FileText,
   Filter,
-  Sparkles
+  Sparkles,
+  Printer
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
@@ -39,6 +40,8 @@ import { ProductScheduleManagerModal } from '../components/product/ProductSchedu
 import { QuickCreateOrderModal } from '../components/order/QuickCreateOrderModal';
 import { BankConfigModal } from '../components/admin/BankConfigModal';
 import { OrderInvoiceModal } from '../components/order/OrderInvoiceModal';
+import { EditOrderModal } from '../components/order/EditOrderModal';
+import { EditProductModal } from '../components/product/EditProductModal';
 
 interface AccountPageProps {
   initialTab?: string;
@@ -55,7 +58,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 }) => {
   const { currentUser, updateProfile, changePassword, logout } = useAuth();
   const { products, deleteProduct, updateProduct, wishlistIds } = useProducts();
-  const { getUserOrders, getSellerOrders, updateOrderStatus } = useOrders();
+  const { getUserOrders, getSellerOrders, updateOrderStatus, updateOrder, deleteOrder } = useOrders();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -75,11 +78,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [productPage, setProductPage] = useState(1);
   const productsPerPage = 6;
 
-  // Modals for Quick Order & Bank Config & Bill Printing
+  // Modals for Quick Order & Bank Config & Bill Printing & Editing
   const [isQuickOrderOpen, setIsQuickOrderOpen] = useState(false);
   const [quickOrderInitialProdId, setQuickOrderInitialProdId] = useState<string | undefined>(undefined);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   // Profile edit state
   const [name, setName] = useState(currentUser?.name || '');
@@ -593,6 +598,15 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                               )}
 
                               <button
+                                onClick={() => setEditingProduct(p)}
+                                className="px-2.5 py-1.5 rounded-xl border border-brand-200 bg-brand-50/70 hover:bg-brand-100 text-brand-700 text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                title="Chỉnh sửa thông tin mẫu váy này"
+                              >
+                                <Edit3 className="w-3.5 h-3.5 text-brand-600" />
+                                <span>Sửa váy</span>
+                              </button>
+
+                              <button
                                 onClick={() => onViewProduct(p.id)}
                                 className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
                                 title="Xem chi tiết sản phẩm"
@@ -754,14 +768,30 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                             <span className="font-semibold text-gray-800">{order.customerName}</span>
                           </div>
                           
-                          {/* Quick customer actions */}
-                          <div className="flex items-center gap-2">
+                          {/* Order actions: Edit, Print bill, Call, Zalo, Delete */}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <button
+                              onClick={() => setEditingOrder(order)}
+                              className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-semibold text-[11px] hover:bg-amber-100 flex items-center gap-1 transition-colors shadow-2xs"
+                              title="Chỉnh sửa thông tin đơn hàng này"
+                            >
+                              <Edit3 className="w-3 h-3 text-amber-600" />
+                              <span>Sửa đơn</span>
+                            </button>
+                            <button
+                              onClick={() => setInvoiceOrder(order)}
+                              className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold text-[11px] hover:bg-indigo-100 flex items-center gap-1 transition-colors shadow-2xs"
+                              title="In hóa đơn / bill"
+                            >
+                              <Printer className="w-3 h-3 text-indigo-600" />
+                              <span>In bill</span>
+                            </button>
                             <a
                               href={`tel:${order.customerPhone}`}
                               className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[11px] hover:bg-emerald-100 flex items-center gap-1"
                             >
                               <Phone className="w-3 h-3" />
-                              <span>Gọi: {order.customerPhone}</span>
+                              <span>Gọi</span>
                             </a>
                             <a
                               href={`https://zalo.me/${order.customerPhone.replace(/\s+/g, '')}`}
@@ -769,14 +799,43 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                               rel="noopener noreferrer"
                               className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold text-[11px] hover:bg-blue-100 flex items-center gap-1"
                             >
-                              <span>Zalo khách</span>
+                              <span>Zalo</span>
                             </a>
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${order.code}? Thao tác này không thể hoàn tác.`)) {
+                                  deleteOrder(order.id);
+                                }
+                              }}
+                              className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Xóa đơn hàng"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
 
                         <div className="text-xs text-gray-600 space-y-1">
-                          <p><strong>Địa chỉ giao:</strong> {order.shippingAddress}</p>
+                          <p><strong>Địa chỉ giao / lấy:</strong> {order.shippingAddress || 'Khách nhận tại shop'}</p>
                           <p><strong>Sản phẩm:</strong> {order.items.map((i) => i.productTitle).join(', ')}</p>
+                          {(() => {
+                            const rentItem = order.items.find((i) => i.mode === 'rent' && i.rentalStartDate && i.rentalEndDate);
+                            return rentItem ? (
+                              <p className="text-emerald-700 font-medium">
+                                📅 <strong>Lịch thuê:</strong> {formatDateVN(rentItem.rentalStartDate!)} ➔ {formatDateVN(rentItem.rentalEndDate!)} ({rentItem.rentalDays || 1} ngày)
+                              </p>
+                            ) : null;
+                          })()}
+                          {order.depositTotal > 0 ? (
+                            <p className="text-amber-800 font-medium">
+                              💰 <strong>Tiền cọc:</strong> {formatVND(order.depositTotal)}
+                            </p>
+                          ) : null}
+                          {order.notes && (
+                            <p className="italic text-gray-500 bg-white/60 p-1.5 rounded border border-gray-100">
+                              <strong>Ghi chú:</strong> {order.notes}
+                            </p>
+                          )}
                         </div>
 
                         <div className="flex justify-between items-center pt-2 border-t border-gray-200/60 text-xs">
@@ -785,7 +844,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                             <select
                               value={order.status}
                               onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
-                              className="bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs font-medium text-gray-800"
+                              className="bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs font-medium text-gray-800 focus:ring-1 focus:ring-brand-500"
                             >
                               <option value="pending">Chờ xác nhận</option>
                               <option value="preparing">Đang chuẩn bị</option>
@@ -793,10 +852,14 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                               <option value="rented">Đang cho thuê</option>
                               <option value="returned">Đã nhận lại đồ</option>
                               <option value="completed">Đã hoàn cọc / Hoàn thành</option>
+                              <option value="cancelled">Đã hủy đơn</option>
                             </select>
                           </div>
 
-                          <span className="font-bold text-sm text-brand-600">{formatVND(order.totalAmount)}</span>
+                          <div className="text-right">
+                            <span className="text-gray-400 text-[10px] block">Tổng thanh toán</span>
+                            <span className="font-bold text-sm text-brand-600">{formatVND(order.totalAmount)}</span>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1030,6 +1093,28 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           isOpen={!!invoiceOrder}
           order={invoiceOrder}
           onClose={() => setInvoiceOrder(null)}
+        />
+      )}
+
+      {/* Modal Chỉnh Sửa Đơn Hàng Nhanh / Khách Đặt */}
+      {editingOrder && (
+        <EditOrderModal
+          isOpen={!!editingOrder}
+          order={editingOrder}
+          onClose={() => setEditingOrder(null)}
+          onPrintBill={(ord) => {
+            setEditingOrder(null);
+            setInvoiceOrder(ord);
+          }}
+        />
+      )}
+
+      {/* Modal Chỉnh Sửa Thông Tin Váy / Sản Phẩm */}
+      {editingProduct && (
+        <EditProductModal
+          isOpen={!!editingProduct}
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
         />
       )}
     </div>

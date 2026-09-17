@@ -24,6 +24,8 @@ interface OrderContextType {
   orders: Order[];
   createOrder: (params: CreateOrderParams) => Promise<Order | null>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  updateOrder: (orderId: string, data: Partial<Order>) => Promise<void>;
+  deleteOrder: (orderId: string) => Promise<void>;
   getOrderById: (orderId: string) => Order | undefined;
   getUserOrders: (userId: string) => Order[];
   getSellerOrders: (sellerId: string) => Order[];
@@ -275,6 +277,47 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     showToast(`Đã cập nhật trạng thái đơn hàng sang "${status}"`, 'info');
   };
 
+  const updateOrder = async (orderId: string, data: Partial<Order>) => {
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? { ...o, ...data, updatedAt: new Date().toISOString() }
+          : o
+      )
+    );
+
+    try {
+      await supabase.from('orders').update({
+        ...(data.customerName ? { customer_name: data.customerName } : {}),
+        ...(data.customerPhone ? { customer_phone: data.customerPhone } : {}),
+        ...(data.shippingAddress ? { shipping_address: data.shippingAddress } : {}),
+        ...(data.notes !== undefined ? { notes: data.notes } : {}),
+        ...(data.status ? { status: data.status } : {}),
+        ...(data.paymentStatus ? { payment_status: data.paymentStatus } : {}),
+        ...(data.totalAmount !== undefined ? { total_rent_fee: data.totalAmount } : {}),
+        ...(data.depositTotal !== undefined ? { total_deposit: data.depositTotal } : {}),
+        ...(data.items ? { items: data.items } : {}),
+        updated_at: new Date().toISOString()
+      }).eq('id', orderId);
+    } catch (e) {
+      console.warn('Error updating order in Supabase', e);
+    }
+
+    showToast('Đã lưu thay đổi thông tin đơn hàng!', 'success');
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+
+    try {
+      await supabase.from('orders').delete().eq('id', orderId);
+    } catch (e) {
+      console.warn('Error deleting order in Supabase', e);
+    }
+
+    showToast('Đã xóa đơn hàng khỏi hệ thống!', 'info');
+  };
+
   const getOrderById = (orderId: string) => {
     return orders.find((o) => o.id === orderId);
   };
@@ -295,6 +338,8 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         orders,
         createOrder,
         updateOrderStatus,
+        updateOrder,
+        deleteOrder,
         getOrderById,
         getUserOrders,
         getSellerOrders,
