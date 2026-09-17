@@ -4,6 +4,7 @@ import { MOCK_USERS } from '../data/mockUsers';
 
 interface AuthContextType {
   currentUser: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   login: (email: string, password?: string) => boolean;
   register: (name: string, email: string, phone: string, role?: UserRole) => void;
@@ -17,9 +18,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_USER_KEY = 'bibi_current_user_v2';
+const AUTH_TOKEN_KEY = 'bibi_auth_token';
 const ALL_USERS_KEY = 'bibi_all_users_v2';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  });
+
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem(ALL_USERS_KEY);
     if (saved) {
@@ -41,17 +47,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [users]);
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && token) {
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(currentUser));
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
     } else {
       localStorage.removeItem(AUTH_USER_KEY);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
     }
-  }, [currentUser]);
+  }, [currentUser, token]);
 
   const login = (email: string, _password?: string): boolean => {
     const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
     if (found) {
+      const generatedToken = `bibi_jwt_${found.id}_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      setToken(generatedToken);
       setCurrentUser(found);
+      localStorage.setItem(AUTH_TOKEN_KEY, generatedToken);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(found));
       return true;
     }
     return false;
@@ -70,8 +82,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       location: 'Việt Nam',
       joinedDate: new Date().toISOString().split('T')[0],
     };
+    const generatedToken = `bibi_jwt_${newUser.id}_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+    setToken(generatedToken);
     setUsers((prev) => [...prev, newUser]);
     setCurrentUser(newUser);
+    localStorage.setItem(AUTH_TOKEN_KEY, generatedToken);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(newUser));
   };
 
   const switchRole = (role: UserRole) => {
@@ -102,6 +118,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    setToken(null);
     setCurrentUser(null);
   };
 
@@ -109,7 +127,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider
       value={{
         currentUser,
-        isAuthenticated: !!currentUser,
+        token,
+        isAuthenticated: !!currentUser && !!token,
         login,
         register,
         switchRole,
