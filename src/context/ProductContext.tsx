@@ -23,6 +23,15 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 const PRODUCTS_KEY = 'bibi_products_store_v3';
 const WISHLIST_KEY = 'bibi_wishlist_ids';
 
+// Check if an item is an old hardcoded template mock item (e.g. prod-1 to prod-8, white-..., demo-...)
+function isLegacyMockId(id: string): boolean {
+  if (!id) return true;
+  // Match single digit mock IDs like prod-1, prod-2. Real products have 13-digit timestamps like prod-1789657...
+  if (/^prod-[1-9]$/.test(id)) return true;
+  if (id.startsWith('white-') || id.startsWith('demo-')) return true;
+  return false;
+}
+
 // Helper to map Supabase row to Product model
 function mapDbToProduct(row: any): Product {
   return {
@@ -94,13 +103,8 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          // Strictly keep only user-created real products
-          return parsed.filter((p: Product) => 
-            p && p.id && 
-            !p.id.startsWith('prod-') && 
-            !p.id.startsWith('white-') &&
-            !p.id.startsWith('demo-')
-          );
+          // Strictly filter out only old mock dummy items, keep all user created products
+          return parsed.filter((p: Product) => p && p.id && !isLegacyMockId(p.id));
         }
       } catch (e) {
         console.error('Error loading products from localStorage', e);
@@ -124,16 +128,16 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
       if (!error && data) {
-        // Exclude mock seed rows from database
-        const realRows = data.filter((row: any) => 
-          row.id && 
-          !row.id.startsWith('white-') && 
-          !row.id.startsWith('prod-') &&
-          !row.id.startsWith('demo-')
-        );
+        const realRows = data.filter((row: any) => row.id && !isLegacyMockId(row.id));
         const mapped = realRows.map(mapDbToProduct);
-        setProducts(mapped);
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(mapped));
+        setProducts((prev) => {
+          const dbIds = new Set(mapped.map((p) => p.id));
+          // Preserve any newly created products in local storage that haven't been synced or fetched yet
+          const localOnly = prev.filter((p) => !dbIds.has(p.id) && !isLegacyMockId(p.id));
+          const merged = [...mapped, ...localOnly];
+          localStorage.setItem(PRODUCTS_KEY, JSON.stringify(merged));
+          return merged;
+        });
       }
     } catch (e) {
       console.warn('Supabase fetch failed, using local/fallback', e);
@@ -182,8 +186,12 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       reviews: []
     };
 
-    // Optimistic UI update
-    setProducts((prev) => [newProduct, ...prev]);
+    // Optimistic UI update and immediate localStorage persistence
+    setProducts((prev) => {
+      const next = [newProduct, ...prev.filter((p) => p.id !== newProduct.id)];
+      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
 
     // Save to Supabase Cloud DB
     try {
@@ -248,7 +256,11 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const deleteProduct = async (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setProducts((prev) => {
+      const next = prev.filter((p) => p.id !== id);
+      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
     try {
       await supabase.from('products').delete().eq('id', id);
     } catch (e) {
