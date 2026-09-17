@@ -18,7 +18,7 @@ interface ChatPageProps {
 }
 
 export const ChatPage: React.FC<ChatPageProps> = ({ onBack, onViewProduct }) => {
-  const { conversations, messages, activeConversationId, setActiveConversationId, sendMessage } = useChat();
+  const { conversations, messages, activeConversationId, setActiveConversationId, sendMessage, isRealtimeConnected } = useChat();
   const { currentUser } = useAuth();
 
   const [inputMessage, setInputMessage] = useState('');
@@ -151,9 +151,13 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onBack, onViewProduct }) => 
                       <h4 className="font-bold text-xs text-gray-900">
                         {activeConv.participants.find((p) => p.id !== currentUser?.id)?.name || 'Chủ shop'}
                       </h4>
-                      <span className="text-[10px] text-emerald-600 flex items-center gap-1 font-medium">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Đang hoạt động phản hồi nhanh
+                      <span className={`text-[10px] flex items-center gap-1 font-medium ${
+                        isRealtimeConnected ? 'text-emerald-600' : 'text-gray-500'
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${
+                          isRealtimeConnected ? 'bg-emerald-500 animate-pulse shadow-sm shadow-emerald-300' : 'bg-amber-400'
+                        }`} />
+                        {isRealtimeConnected ? 'Realtime kết nối tức thì (WebSocket)' : 'Đang kết nối lại Realtime...'}
                       </span>
                     </div>
                   </div>

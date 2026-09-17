@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Calendar,
   Search,
@@ -11,6 +11,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { ProductCard } from '../components/product/ProductCard';
+import { Pagination } from '../components/ui/Pagination';
 import { CATEGORIES } from '../data/initialCategories';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
@@ -72,6 +73,21 @@ export const RentPage: React.FC<RentPageProps> = ({
       return true;
     });
   }, [products, search, selectedCategory, filterDateStart, filterDateEnd, maxDeposit]);
+
+  // Pagination state (8 sản phẩm/trang)
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 8;
+
+  // Reset về trang 1 khi đổi bộ lọc
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedCategory, filterDateStart, filterDateEnd, maxDeposit]);
+
+  const totalPages = Math.ceil(rentalProducts.length / PAGE_SIZE);
+  const paginatedRentalProducts = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return rentalProducts.slice(start, start + PAGE_SIZE);
+  }, [rentalProducts, currentPage, PAGE_SIZE]);
 
   return (
     <div className="bg-[#faf9f8] min-h-screen py-8 pb-20">
@@ -181,15 +197,27 @@ export const RentPage: React.FC<RentPageProps> = ({
 
         {/* Rental Products Grid */}
         {rentalProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {rentalProducts.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                onViewDetail={onViewProduct}
-                onOpenRentalCalendar={onOpenRentalCalendar}
-              />
-            ))}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {paginatedRentalProducts.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onViewDetail={onViewProduct}
+                  onOpenRentalCalendar={onOpenRentalCalendar}
+                />
+              ))}
+            </div>
+
+            {/* Phân trang */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={rentalProducts.length}
+              pageSize={PAGE_SIZE}
+              itemsName="trang phục thuê"
+              onPageChange={setCurrentPage}
+            />
           </div>
         ) : (
           <div className="bg-white rounded-3xl p-16 text-center border border-gray-100 shadow-sm">

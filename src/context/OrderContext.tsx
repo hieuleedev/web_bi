@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Order, OrderStatus, CartItem } from '../types';
 import { generateOrderCode } from '../utils/helpers';
+import { generateVietQrUrl, DEFAULT_BANK_CONFIG } from '../utils/vietqr';
 import { useProducts } from './ProductContext';
 import { useCart } from './CartContext';
 import { useToast } from './ToastContext';
 import { supabase } from '../lib/supabase';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5050';
 
 interface CreateOrderParams {
   userId: string;
@@ -28,84 +31,9 @@ interface OrderContextType {
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
-const ORDERS_KEY = 'bibi_orders_v1';
+const ORDERS_KEY = 'bibi_orders_v2_real';
 
-const INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ord-1',
-    code: 'BB-98214',
-    userId: 'user-buyer-1',
-    customerName: 'Hoàng Mai Yến',
-    customerPhone: '0912349876',
-    customerEmail: 'maiyen.hoang@gmail.com',
-    shippingAddress: 'Tòa nhà Landmark 72, Phạm Hùng, Nam Từ Liêm, Hà Nội',
-    deliveryMethod: 'shipping',
-    paymentMethod: 'bank_transfer',
-    paymentStatus: 'paid',
-    items: [
-      {
-        productId: 'prod-1',
-        productTitle: 'Đầm Dạ Hội Ánh Kim Sa Cao Cấp - Sparkling Rose Gold',
-        productImage: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=600&q=80',
-        mode: 'rent',
-        size: 'M',
-        color: 'Vàng Hồng (Rose Gold)',
-        quantity: 1,
-        price: 950000,
-        deposit: 1500000,
-        rentalStartDate: '2026-09-20',
-        rentalEndDate: '2026-09-24',
-        rentalDays: 4,
-        sellerId: 'user-seller-1',
-        sellerName: 'Bi Bi Boutique (Linh Bi)',
-      }
-    ],
-    subtotal: 950000,
-    depositTotal: 1500000,
-    shippingFee: 35000,
-    serviceFee: 0,
-    totalAmount: 2485000,
-    status: 'rented',
-    notes: 'Giao hàng buổi sáng giúp em nhé shop!',
-    createdAt: '2026-09-15T10:30:00Z',
-    updatedAt: '2026-09-16T14:20:00Z',
-  },
-  {
-    id: 'ord-2',
-    code: 'BB-67431',
-    userId: 'user-buyer-1',
-    customerName: 'Hoàng Mai Yến',
-    customerPhone: '0912349876',
-    customerEmail: 'maiyen.hoang@gmail.com',
-    shippingAddress: 'Tòa nhà Landmark 72, Phạm Hùng, Nam Từ Liêm, Hà Nội',
-    deliveryMethod: 'shipping',
-    paymentMethod: 'cod',
-    paymentStatus: 'unpaid',
-    items: [
-      {
-        productId: 'prod-6',
-        productTitle: 'Set Áo Blazer Dạ Tweed Nút Mạ Vàng Quý Tộc',
-        productImage: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?auto=format&fit=crop&w=600&q=80',
-        mode: 'buy',
-        size: 'S',
-        color: 'Trắng Kem (Off White)',
-        quantity: 1,
-        price: 1950000,
-        sellerId: 'user-seller-1',
-        sellerName: 'Bi Bi Boutique (Linh Bi)',
-      }
-    ],
-    subtotal: 1950000,
-    depositTotal: 0,
-    shippingFee: 30000,
-    serviceFee: 0,
-    totalAmount: 1980000,
-    status: 'shipping',
-    notes: '',
-    createdAt: '2026-09-16T08:15:00Z',
-    updatedAt: '2026-09-16T11:00:00Z',
-  }
-];
+const INITIAL_ORDERS: Order[] = [];
 
 export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -227,9 +155,42 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       totalAmount: grandTotal,
       status: 'pending',
       notes: params.notes,
+      vietqrUrl: generateVietQrUrl({
+        amount: grandTotal,
+        orderCode,
+        bankId: DEFAULT_BANK_CONFIG.bankId,
+        accountNo: DEFAULT_BANK_CONFIG.accountNo,
+        accountName: DEFAULT_BANK_CONFIG.accountName
+      }),
+      vietqrBank: DEFAULT_BANK_CONFIG.bankName,
+      vietqrAccountNo: DEFAULT_BANK_CONFIG.accountNo,
+      vietqrAccountName: DEFAULT_BANK_CONFIG.accountName,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    // Gửi đơn hàng sang Backend Node.js
+    try {
+      fetch(`${BACKEND_URL}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: params.customerName,
+          customerPhone: params.customerPhone,
+          shippingAddress: params.shippingAddress,
+          deliveryMethod: params.deliveryMethod,
+          paymentMethod: params.paymentMethod,
+          items: orderItems,
+          note: params.notes,
+          totalRentFee: subtotal,
+          totalBuyPrice: 0,
+          totalDeposit: depositTotal,
+          shippingFee: shippingTotal
+        })
+      }).catch(() => {});
+    } catch (e) {
+      // ignore
+    }
 
     // Lock booked dates on products for rental items & write to rental_bookings
     for (const item of cartItems) {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Filter,
@@ -10,6 +10,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { ProductCard } from '../components/product/ProductCard';
+import { Pagination } from '../components/ui/Pagination';
 import { CATEGORIES } from '../data/initialCategories';
 import { useProducts } from '../context/ProductContext';
 import { Product, ProductType, GenderCategory } from '../types';
@@ -108,6 +109,21 @@ export const ShopPage: React.FC<ShopPageProps> = ({
     });
   }, [products, search, selectedCategory, selectedGender, selectedType, selectedSize, priceRange, sortBy]);
 
+  // Pagination state (9 sản phẩm/trang)
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 9;
+
+  // Reset về trang 1 khi thay đổi bất kỳ bộ lọc nào
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedCategory, selectedGender, selectedType, selectedSize, priceRange, sortBy]);
+
+  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredProducts.slice(start, start + PAGE_SIZE);
+  }, [filteredProducts, currentPage, PAGE_SIZE]);
+
   const resetFilters = () => {
     setSearch('');
     setSelectedCategory('all');
@@ -116,6 +132,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
     setSelectedSize('all');
     setPriceRange('all');
     setSortBy('newest');
+    setCurrentPage(1);
   };
 
   return (
@@ -336,15 +353,27 @@ export const ShopPage: React.FC<ShopPageProps> = ({
 
             {/* Product Grid */}
             {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((p) => (
-                  <ProductCard
-                    key={p.id}
-                    product={p}
-                    onViewDetail={onViewProduct}
-                    onOpenRentalCalendar={onOpenRentalCalendar}
-                  />
-                ))}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedProducts.map((p) => (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      onViewDetail={onViewProduct}
+                      onOpenRentalCalendar={onOpenRentalCalendar}
+                    />
+                  ))}
+                </div>
+
+                {/* Phân trang */}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredProducts.length}
+                  pageSize={PAGE_SIZE}
+                  itemsName="sản phẩm"
+                  onPageChange={setCurrentPage}
+                />
               </div>
             ) : (
               <div className="bg-white rounded-3xl p-16 text-center border border-gray-100 shadow-sm">

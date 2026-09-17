@@ -157,6 +157,10 @@ export interface Order {
   totalAmount: number;
   status: OrderStatus;
   notes?: string;
+  vietqrUrl?: string;
+  vietqrBank?: string;
+  vietqrAccountNo?: string;
+  vietqrAccountName?: string;
   createdAt: string;
   updatedAt: string;
 }

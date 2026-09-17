@@ -1,8 +1,10 @@
-import React from 'react';
-import { Search } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Printer } from 'lucide-react';
 import { Order, OrderStatus } from '../../types';
 import { formatVND, formatDateVN } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
+import { Pagination } from '../ui/Pagination';
+import { OrderInvoiceModal } from '../order/OrderInvoiceModal';
 
 interface AdminOrdersTableProps {
   orders: Order[];
@@ -22,6 +24,20 @@ export const AdminOrdersTable: React.FC<AdminOrdersTableProps> = ({
   onUpdateStatus,
 }) => {
   const { showToast } = useToast();
+
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<Order | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchPhone, statusFilter]);
+
+  const totalPages = Math.ceil(orders.length / PAGE_SIZE);
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return orders.slice(start, start + PAGE_SIZE);
+  }, [orders, currentPage, PAGE_SIZE]);
 
   return (
     <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-6">
@@ -76,7 +92,7 @@ export const AdminOrdersTable: React.FC<AdminOrdersTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {orders.map((order) => (
+            {paginatedOrders.map((order) => (
               <tr key={order.id} className="hover:bg-gray-50/80 transition-colors">
                 <td className="py-3.5 px-4 font-mono font-bold text-brand-700">
                   {order.code}
@@ -139,23 +155,51 @@ export const AdminOrdersTable: React.FC<AdminOrdersTableProps> = ({
                 </td>
 
                 <td className="py-3.5 px-4 text-right">
-                  {order.status === 'returned' && (
+                  <div className="flex items-center justify-end gap-2">
                     <button
-                      onClick={() => {
-                        onUpdateStatus(order.id, 'completed');
-                        showToast(`Đã xác nhận hoàn cọc ${formatVND(order.depositTotal)} cho khách ${order.customerName}`, 'success');
-                      }}
-                      className="text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg"
+                      onClick={() => setSelectedOrderForInvoice(order)}
+                      title="Xem và In Hóa Đơn (Bill)"
+                      className="px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-brand-50 hover:border-brand-300 text-gray-700 hover:text-brand-800 transition-colors inline-flex items-center gap-1.5 text-[11px] font-semibold"
                     >
-                      Hoàn cọc ngay
+                      <Printer className="w-3.5 h-3.5 text-brand-600" />
+                      <span>In Bill</span>
                     </button>
-                  )}
+
+                    {order.status === 'returned' && (
+                      <button
+                        onClick={() => {
+                          onUpdateStatus(order.id, 'completed');
+                          showToast(`Đã xác nhận hoàn cọc ${formatVND(order.depositTotal)} cho khách ${order.customerName}`, 'success');
+                        }}
+                        className="text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap"
+                      >
+                        Hoàn cọc
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Phân trang danh sách đơn hàng */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={orders.length}
+        pageSize={PAGE_SIZE}
+        itemsName="đơn hàng"
+        onPageChange={setCurrentPage}
+      />
+
+      {/* Modal In Bill Hóa Đơn Cho Admin */}
+      <OrderInvoiceModal
+        order={selectedOrderForInvoice}
+        isOpen={!!selectedOrderForInvoice}
+        onClose={() => setSelectedOrderForInvoice(null)}
+      />
     </div>
   );
 };

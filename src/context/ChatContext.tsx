@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { ChatMessage, Conversation, Product, User } from '../types';
 import { supabase } from '../lib/supabase';
 
@@ -10,53 +11,20 @@ interface ChatContextType {
   sendMessage: (conversationId: string, content: string, sender: User, imageUrl?: string) => Promise<void>;
   startProductChat: (product: Product, sender: User) => string;
   totalUnreadCount: number;
+  isRealtimeConnected: boolean;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-const CHAT_CONV_KEY = 'bibi_chat_convs';
-const CHAT_MSG_KEY = 'bibi_chat_msgs';
+const CHAT_CONV_KEY = 'bibi_chat_convs_v2';
+const CHAT_MSG_KEY = 'bibi_chat_msgs_v2';
 
-const INITIAL_CONVERSATIONS: Conversation[] = [
-  {
-    id: 'conv-1',
-    productId: 'prod-1',
-    productTitle: 'Đầm Dạ Hội Ánh Kim Sa Cao Cấp - Sparkling Rose Gold',
-    productImage: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=400&q=80',
-    participants: [
-      { id: 'user-seller-1', name: 'Bi Bi Boutique (Linh Bi)', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80', role: 'seller' },
-      { id: 'user-buyer-1', name: 'Hoàng Mai Yến', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80', role: 'buyer' }
-    ],
-    lastMessage: 'Dạ đầm này có sẵn size M vừa vặn với chiều cao 1m62 bạn nhé!',
-    lastMessageTime: '2026-09-16T15:30:00Z',
-    unreadCount: 1,
-  }
-];
+const INITIAL_CONVERSATIONS: Conversation[] = [];
 
-const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
-  'conv-1': [
-    {
-      id: 'msg-1',
-      conversationId: 'conv-1',
-      senderId: 'user-buyer-1',
-      senderName: 'Hoàng Mai Yến',
-      senderAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
-      content: 'Chào shop! Mình cao 1m62 nặng 50kg thì đầm này mặc size gì vừa ạ? Mình muốn thuê đi tiệc ngày 20 tới.',
-      timestamp: '2026-09-16T15:20:00Z',
-      isRead: true,
-    },
-    {
-      id: 'msg-2',
-      conversationId: 'conv-1',
-      senderId: 'user-seller-1',
-      senderName: 'Bi Bi Boutique (Linh Bi)',
-      senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-      content: 'Dạ đầm này có sẵn size M vừa vặn với chiều cao 1m62 bạn nhé! Váy ôm đuôi cá có độ co giãn nhẹ và đi kèm giày cao gót 7-10cm sẽ cực kỳ tôn dáng ạ.',
-      timestamp: '2026-09-16T15:30:00Z',
-      isRead: false,
-    }
-  ]
-};
+const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {};
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5050';
+let socket: Socket | null = null;
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [conversations, setConversations] = useState<Conversation[]>(() => {
@@ -76,8 +44,70 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(false);
 
-  // Fetch and sync messages realtime from Supabase
+  // Khởi tạo kết nối Socket.IO Realtime
+  useEffect(() => {
+    try {
+      socket = io(BACKEND_URL, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        timeout: 6000
+      });
+
+      socket.on('connect', () => {
+        console.log('⚡ [Chat Realtime]: Kết nối Socket.IO thành công');
+        setIsRealtimeConnected(true);
+        if (activeConversationId) {
+          socket?.emit('join_conversation', activeConversationId);
+        }
+      });
+
+      socket.on('disconnect', () => {
+        console.log('🔌 [Chat Realtime]: Ngắt kết nối Socket.IO');
+        setIsRealtimeConnected(false);
+      });
+
+      // Nhận tin nhắn mới từ người khác trong thời gian thực (0s delay)
+      socket.on('new_message', (incoming: ChatMessage) => {
+        setMessages((prev) => {
+          const list = prev[incoming.conversationId] || [];
+          if (list.some((m) => m.id === incoming.id)) return prev;
+          return {
+            ...prev,
+            [incoming.conversationId]: [...list, incoming]
+          };
+        });
+
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv.id === incoming.conversationId
+              ? {
+                  ...conv,
+                  lastMessage: incoming.content,
+                  lastMessageTime: incoming.timestamp,
+                }
+              : conv
+          )
+        );
+      });
+
+      return () => {
+        socket?.disconnect();
+      };
+    } catch (err) {
+      console.warn('Không thể kết nối Socket.IO:', err);
+    }
+  }, []);
+
+  // Tự động chuyển phòng chat realtime khi activeConversationId thay đổi
+  useEffect(() => {
+    if (activeConversationId && socket?.connected) {
+      socket.emit('join_conversation', activeConversationId);
+    }
+  }, [activeConversationId]);
+
+  // Fetch and sync messages realtime from Supabase (chạy song song dự phòng)
   useEffect(() => {
     async function fetchAllMessages() {
       try {
@@ -109,7 +139,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     fetchAllMessages();
 
-    // Subscribe to new incoming messages realtime
+    // Subscribe to new incoming messages realtime from Supabase
     const channel = supabase
       .channel('realtime_messages')
       .on(
@@ -128,10 +158,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             timestamp: row.created_at,
             isRead: row.is_read
           };
-          setMessages((prev) => ({
-            ...prev,
-            [row.conversation_id]: [...(prev[row.conversation_id] || []), incoming]
-          }));
+          setMessages((prev) => {
+            const list = prev[row.conversation_id] || [];
+            if (list.some((m) => m.id === incoming.id)) return prev;
+            return {
+              ...prev,
+              [row.conversation_id]: [...list, incoming]
+            };
+          });
         }
       )
       .subscribe();
@@ -179,7 +213,33 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       )
     );
 
-    // Write message row to Supabase Cloud DB
+    // 1. Gửi tin nhắn qua Socket.IO Realtime
+    if (socket?.connected) {
+      socket.emit('send_message', {
+        conversationId,
+        senderId: sender.id,
+        senderName: sender.name,
+        senderAvatar: sender.avatar,
+        content,
+        imageUrl
+      });
+    } else {
+      // 2. Gửi qua REST API Backend
+      fetch(`${BACKEND_URL}/api/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId,
+          senderId: sender.id,
+          senderName: sender.name,
+          senderAvatar: sender.avatar,
+          content,
+          imageUrl
+        })
+      }).catch(() => {});
+    }
+
+    // 3. Dự phòng ghi vào Supabase
     try {
       await supabase.from('messages').insert({
         id: newMsg.id,
@@ -192,7 +252,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         is_read: true
       });
     } catch (e) {
-      console.warn('Error saving message to Supabase', e);
+      // ignore
     }
   };
 
@@ -253,6 +313,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sendMessage,
         startProductChat,
         totalUnreadCount,
+        isRealtimeConnected,
       }}
     >
       {children}

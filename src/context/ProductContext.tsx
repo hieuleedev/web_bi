@@ -67,18 +67,6 @@ function mapDbToProduct(row: any): Product {
         const saved = localStorage.getItem(`bibi_reviews_${row.id}`);
         if (saved) return JSON.parse(saved);
       } catch (e) {}
-      if (row.id === 'prod-1') {
-        return [{
-          id: 'rev-1',
-          userId: 'user-buyer-1',
-          userName: 'Hoàng Mai Yến',
-          userAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
-          rating: 5,
-          comment: 'Váy ở ngoài đẹp xuất sắc! Vải tơ mềm nhẹ, form dáng tiểu thư chụp ảnh lên màu trắng rất trong trẻo.',
-          createdAt: '2024-03-05T14:30:00Z',
-          type: 'rent'
-        }];
-      }
       return [];
     })()
   };
@@ -104,7 +92,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         return JSON.parse(saved);
       } catch (e) {}
     }
-    return ['prod-1', 'prod-4'];
+    return [];
   });
 
   // Sync with Supabase on mount

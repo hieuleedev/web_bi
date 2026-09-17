@@ -62,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Mua Quần Áo', view: 'shop' },
     { label: 'Thuê Quần Áo', view: 'rent', badge: 'Hot' },
     ...(isOwnerOrAdmin
-      ? [{ label: 'Đăng Mẫu Váy (Chủ Shop)', view: 'sell', icon: PlusCircle, highlight: true }]
+      ? [{ label: 'Đăng Mẫu Váy', view: 'sell', icon: PlusCircle, highlight: true }]
       : []),
   ];
 
@@ -72,19 +72,19 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="bg-dark-900 text-brand-100 text-xs py-2 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
           <div className="flex items-center gap-2 text-center sm:text-left">
-            <span className="bg-brand-500/20 text-brand-300 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-brand-500/30">
+            <span className="bg-brand-500/20 text-brand-300 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-brand-500/30 whitespace-nowrap">
               Hotline Cửa Hàng
             </span>
-            <span>Núi Thành - Đà Nẵng: <strong className="text-white">(+84) 79 562 3097</strong> • Miễn phí giặt hấp chuẩn 5 sao</span>
+            <span className="truncate">Núi Thành - Đà Nẵng: <strong className="text-white">(+84) 79 562 3097</strong> • Miễn phí giặt hấp chuẩn 5 sao</span>
           </div>
 
-          <div className="flex items-center gap-3 text-[11px]">
+          <div className="flex items-center gap-3 text-[11px] shrink-0">
             {/* Zalo Direct Chat */}
             <a
               href="https://zalo.me/0795623097"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-colors whitespace-nowrap"
             >
               <span>Chat Zalo</span>
             </a>
@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
             {currentUser?.role === 'admin' && (
               <button
                 onClick={() => setCurrentView('admin')}
-                className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors font-semibold"
+                className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors font-semibold whitespace-nowrap"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Quản Trị Admin</span>
@@ -102,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Auth Action */}
             {currentUser ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 whitespace-nowrap">
                 <span className="text-gray-300">
                   Chào, <strong>{currentUser.name}</strong> ({currentUser.role === 'admin' ? '🛡️ Admin' : currentUser.role === 'seller' ? '👑 Chủ Shop' : '🛍️ Khách Hàng'})
                 </span>
@@ -116,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <button
                 onClick={() => setIsAuthModalOpen(true)}
-                className="flex items-center gap-1 text-brand-300 hover:text-white font-semibold transition-colors"
+                className="flex items-center gap-1 text-brand-300 hover:text-white font-semibold transition-colors whitespace-nowrap"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Đăng Nhập / Đăng Ký</span>
@@ -128,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Main Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
+        <div className="flex items-center justify-between h-20 gap-3 lg:gap-6">
           
           {/* Logo */}
           <div className="flex items-center gap-3 shrink-0">
@@ -136,10 +136,10 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setCurrentView('home')}
               className="text-left group flex items-center gap-2.5"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform shrink-0">
                 <Sparkles className="w-5 h-5" />
               </div>
-              <div>
+              <div className="whitespace-nowrap">
                 <span className="font-serif text-2xl font-bold tracking-tight text-gray-900 group-hover:text-brand-600 transition-colors">
                   Bi Bi
                 </span>
@@ -151,24 +151,24 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+          <nav className="hidden md:flex items-center gap-1 lg:gap-2 shrink-0">
             {navItems.map((item) => (
               <button
                 key={item.view}
                 onClick={() => setCurrentView(item.view)}
-                className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`relative px-3 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
                   currentView === item.view
-                    ? 'text-brand-600 bg-brand-50 font-semibold'
+                    ? 'text-brand-600 bg-brand-50 font-semibold shadow-xs'
                     : item.highlight
-                    ? 'text-brand-700 bg-brand-100/70 hover:bg-brand-100 font-semibold'
+                    ? 'text-brand-700 bg-brand-100/80 hover:bg-brand-100 font-semibold border border-brand-200'
                     : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                <div className="flex items-center gap-1.5">
-                  {item.icon && <item.icon className="w-4 h-4 text-brand-600" />}
-                  <span>{item.label}</span>
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  {item.icon && <item.icon className="w-4 h-4 text-brand-600 shrink-0" />}
+                  <span className="whitespace-nowrap">{item.label}</span>
                   {item.badge && (
-                    <span className="text-[10px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-bold">
+                    <span className="text-[10px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-bold leading-tight">
                       {item.badge}
                     </span>
                   )}
@@ -180,29 +180,29 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Search bar */}
           <form
             onSubmit={handleSearchSubmit}
-            className="hidden lg:flex items-center flex-1 max-w-xs relative"
+            className="hidden xl:flex items-center flex-1 max-w-[220px] 2xl:max-w-xs relative shrink"
           >
             <input
               type="text"
-              placeholder="Tìm kiếm đầm dạ hội, áo dài, vest..."
+              placeholder="Tìm kiếm đầm dạ hội, áo dài..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-full pl-10 pr-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-gray-400"
+              className="w-full bg-gray-50 border border-gray-200 rounded-full pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-gray-400"
             />
-            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           </form>
 
           {/* Right Action Icons */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Chat Icon */}
             <button
               onClick={() => setCurrentView('chat')}
-              className="relative p-2.5 text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-full transition-colors"
+              className="relative p-2 text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-full transition-colors shrink-0"
               title="Tin nhắn trò chuyện"
             >
               <MessageSquare className="w-5 h-5" />
               {totalUnreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
                   {totalUnreadCount}
                 </span>
               )}
@@ -211,12 +211,12 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Wishlist */}
             <button
               onClick={() => setCurrentView('wishlist')}
-              className="relative p-2.5 text-gray-700 hover:text-rose-500 hover:bg-gray-50 rounded-full transition-colors"
+              className="relative p-2 text-gray-700 hover:text-rose-500 hover:bg-gray-50 rounded-full transition-colors shrink-0"
               title="Sản phẩm yêu thích"
             >
               <Heart className="w-5 h-5" />
               {wishlistIds.length > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {wishlistIds.length}
                 </span>
               )}
@@ -225,34 +225,34 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Cart Button */}
             <button
               onClick={() => setCurrentView('cart')}
-              className="relative p-2.5 text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-full transition-colors flex items-center gap-1.5"
+              className="relative p-2 text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-full transition-colors flex items-center gap-1.5 shrink-0"
               title="Giỏ hàng & Đơn thuê"
             >
               <ShoppingBag className="w-5 h-5" />
               {totalCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-brand-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {totalCount}
                 </span>
               )}
             </button>
 
             {/* User Profile dropdown */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2 p-1.5 pl-2 rounded-full border border-gray-200 hover:border-brand-400 hover:shadow-sm transition-all text-left"
+                className="flex items-center gap-1.5 p-1 pl-1.5 pr-2 rounded-full border border-gray-200 hover:border-brand-400 hover:shadow-sm transition-all text-left bg-white shrink-0"
               >
                 {currentUser ? (
                   <>
                     <img
                       src={currentUser.avatar}
                       alt={currentUser.name}
-                      className="w-7 h-7 rounded-full object-cover ring-2 ring-brand-500/30"
+                      className="w-7 h-7 rounded-full object-cover ring-2 ring-brand-500/30 shrink-0"
                     />
-                    <span className="hidden xl:inline text-xs font-medium text-gray-800 max-w-[100px] truncate">
+                    <span className="hidden 2xl:inline text-xs font-medium text-gray-800 max-w-[85px] truncate">
                       {currentUser.name}
                     </span>
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                   </>
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">

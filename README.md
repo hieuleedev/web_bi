@@ -52,7 +52,15 @@ Website thương mại điện tử thời trang hiện đại hàng đầu kế
 ```bash
 npm run dev
 ```
-Ứng dụng sẽ chạy tại địa chỉ: `http://localhost:3000` (hoặc cổng Vite thông báo).
+Ứng dụng frontend sẽ chạy tại địa chỉ: `http://localhost:3000` (hoặc cổng Vite thông báo).
+
+### Khởi động Backend Node.js Server
+```bash
+npm run server
+# hoặc chế độ tự động reload khi sửa code:
+npm run server:dev
+```
+Backend API sẽ chạy tại: `http://localhost:5000`
 
 ### Kiểm tra build production
 ```bash
