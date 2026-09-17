@@ -11,7 +11,12 @@ import {
   Clock,
   Star,
   PlusCircle,
-  PackageOpen
+  PackageOpen,
+  Briefcase,
+  Crown,
+  Smile,
+  Gem,
+  Layers
 } from 'lucide-react';
 import { ProductCard } from '../components/product/ProductCard';
 import { CATEGORIES } from '../data/initialCategories';
@@ -25,6 +30,19 @@ interface HomePageProps {
   onOpenRentalCalendar: (product: Product) => void;
   onSelectCategory: (categoryId: string) => void;
 }
+
+const renderCategoryIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'Sparkles': return <Sparkles className="w-6 h-6" />;
+    case 'Heart': return <Heart className="w-6 h-6" />;
+    case 'Briefcase': return <Briefcase className="w-6 h-6" />;
+    case 'Crown': return <Crown className="w-6 h-6" />;
+    case 'Smile': return <Smile className="w-6 h-6" />;
+    case 'Layers': return <Layers className="w-6 h-6" />;
+    case 'Gem': return <Gem className="w-6 h-6" />;
+    default: return <Sparkles className="w-6 h-6" />;
+  }
+};
 
 export const HomePage: React.FC<HomePageProps> = ({
   onNavigate,
@@ -216,22 +234,25 @@ export const HomePage: React.FC<HomePageProps> = ({
                 onSelectCategory(cat.id);
                 onNavigate('shop');
               }}
-              className="group relative aspect-[4/5] rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300"
+              className="group p-5 sm:p-6 rounded-3xl bg-white border border-gray-100/90 hover:border-brand-300 hover:shadow-xl hover:shadow-brand-500/5 transition-all duration-300 cursor-pointer flex flex-col justify-between space-y-4"
             >
-              <img
-                src={cat.image}
-                alt={cat.name}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-white">
-                <h3 className="font-serif text-base sm:text-lg font-bold group-hover:text-brand-300 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-brand-600 group-hover:text-white transition-all duration-300 shadow-2xs">
+                  {renderCategoryIcon(cat.icon)}
+                </div>
+                <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-brand-50 flex items-center justify-center transition-colors">
+                  <ArrowRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-brand-600 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
+              <div>
+                <h3 className="font-serif text-sm sm:text-base font-bold text-gray-900 group-hover:text-brand-700 transition-colors">
                   {cat.name}
                 </h3>
-                <p className="text-[11px] text-gray-300 line-clamp-1 mt-0.5">
+                <p className="text-[11px] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
                   {cat.description}
                 </p>
-                <div className="mt-2.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-brand-300">
-                  <span>Khám phá</span>
+                <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-brand-600 uppercase tracking-wider">
+                  <span>Khám phá ngay</span>
                   <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>

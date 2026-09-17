@@ -20,7 +20,7 @@ interface ProductContextType {
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-const PRODUCTS_KEY = 'bibi_products_store_v1';
+const PRODUCTS_KEY = 'bibi_products_store_v3';
 const WISHLIST_KEY = 'bibi_wishlist_ids';
 
 // Helper to map Supabase row to Product model
@@ -49,7 +49,7 @@ function mapDbToProduct(row: any): Product {
     images: row.images && row.images.length > 0 ? row.images : [row.featured_image || ''],
     sellerId: row.seller_id || 'user-seller-1',
     sellerName: row.seller_name || 'Bi Bi Boutique (Linh Bi)',
-    sellerAvatar: row.seller_avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    sellerAvatar: row.seller_avatar || '',
     sellerRating: row.seller_rating || 5.0,
     location: row.location || 'Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng',
     hasShipping: row.has_shipping ?? true,
@@ -75,26 +75,38 @@ function mapDbToProduct(row: any): Product {
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
-    // Clear legacy mock caches if present
-    try {
-      localStorage.removeItem('bibi_products_v6_white_dresses');
-      localStorage.removeItem('bibi_products_v5_full_seed');
-      localStorage.removeItem('bibi_products_v4_local_v2');
-    } catch (e) {}
+    // Proactively wipe all legacy mock/seed caches from browser storage
+    const purgeKeys = [
+      'bibi_products_store_v1',
+      'bibi_products_store_v2',
+      'bibi_products_v6_white_dresses',
+      'bibi_products_v5_full_seed',
+      'bibi_products_v4_local_v2',
+    ];
+    purgeKeys.forEach((k) => {
+      try {
+        localStorage.removeItem(k);
+      } catch (e) {}
+    });
 
     const saved = localStorage.getItem(PRODUCTS_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          // Filter out any previous dummy items
-          return parsed.filter((p: Product) => p && p.id && !p.id.startsWith('prod-'));
+          // Strictly keep only user-created real products
+          return parsed.filter((p: Product) => 
+            p && p.id && 
+            !p.id.startsWith('prod-') && 
+            !p.id.startsWith('white-') &&
+            !p.id.startsWith('demo-')
+          );
         }
       } catch (e) {
         console.error('Error loading products from localStorage', e);
       }
     }
-    return INITIAL_PRODUCTS;
+    return [];
   });
 
   const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
@@ -111,8 +123,15 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const refreshProducts = async () => {
     try {
       const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
-        const mapped = data.map(mapDbToProduct);
+      if (!error && data) {
+        // Exclude mock seed rows from database
+        const realRows = data.filter((row: any) => 
+          row.id && 
+          !row.id.startsWith('white-') && 
+          !row.id.startsWith('prod-') &&
+          !row.id.startsWith('demo-')
+        );
+        const mapped = realRows.map(mapDbToProduct);
         setProducts(mapped);
         localStorage.setItem(PRODUCTS_KEY, JSON.stringify(mapped));
       }

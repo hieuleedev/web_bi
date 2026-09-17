@@ -363,56 +363,56 @@ export const AccountPage: React.FC<AccountPageProps> = ({
               return (
                 <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-sm space-y-6">
                   {/* Top Bar: Title & Action Buttons */}
-                  <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 pb-4 border-b border-gray-100">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-gray-100">
                     <div>
-                      <h3 className="font-serif font-bold text-xl text-gray-900 flex items-center gap-2.5">
-                        <span>Quản Lý Kho Váy Của Tôi</span>
-                        <span className="text-xs bg-brand-50 text-brand-700 font-bold px-2.5 py-0.5 rounded-full border border-brand-200">
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-serif font-bold text-xl text-gray-900">Quản Lý Kho Váy</h3>
+                        <span className="text-xs bg-brand-50 text-brand-700 font-bold px-3 py-1 rounded-full border border-brand-200">
                           {filteredMyProducts.length}/{myProducts.length} món
                         </span>
-                      </h3>
+                      </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        Hiện có <strong className="text-emerald-600 font-semibold">{totalRentingNow} món</strong> đang được khách thuê hôm nay • Dễ dàng lên đơn và in bill trực tiếp
+                        Hiện có <strong className="text-emerald-600 font-semibold">{totalRentingNow} món</strong> đang cho khách thuê hôm nay • Dễ dàng lên đơn và in bill trực tiếp
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={onNavigateSell}
+                        className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-600/20 flex items-center gap-1.5 transition-all"
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                        <span>Đăng Thêm Váy</span>
+                      </button>
+
                       <button
                         onClick={() => {
                           setQuickOrderInitialProdId(undefined);
                           setIsQuickOrderOpen(true);
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all"
+                        className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all"
                         title="Tạo đơn hàng nhanh cho khách đến tiệm hoặc gọi điện"
                       >
                         <ShoppingBag className="w-4 h-4" />
-                        <span>+ Tạo Đơn Hàng Mới</span>
+                        <span>Tạo Đơn Hàng Mới</span>
                       </button>
 
                       <button
                         onClick={() => setIsBankModalOpen(true)}
-                        className="px-3.5 py-2 rounded-xl border border-gray-200 hover:border-brand-400 bg-gray-50 hover:bg-white text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+                        className="px-3.5 py-2.5 rounded-xl border border-gray-200 hover:border-brand-400 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
                         title="Cấu hình tài khoản ngân hàng để in bill và sinh mã VietQR"
                       >
                         <CreditCard className="w-4 h-4 text-brand-600" />
                         <span>Cài Đặt STK In Bill</span>
                       </button>
-
-                      <button
-                        onClick={onNavigateSell}
-                        className="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-1.5 transition-all"
-                      >
-                        <PlusCircle className="w-4 h-4" />
-                        <span>Đăng Thêm Váy</span>
-                      </button>
                     </div>
                   </div>
 
                   {/* Filter & Search Controls */}
-                  <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-200/70 space-y-3">
+                  <div className="bg-gray-50/90 p-4 rounded-2xl border border-gray-200/80">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
-                      {/* Search Bar (5 cols) */}
-                      <div className="lg:col-span-5 relative">
+                      {/* Search Bar (4 cols) */}
+                      <div className="lg:col-span-4 relative">
                         <input
                           type="text"
                           value={productSearch}
@@ -420,7 +420,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                             setProductSearch(e.target.value);
                             setProductPage(1);
                           }}
-                          placeholder="Tìm kiếm theo tên đầm, mã SKU (BB-...)..."
+                          placeholder="Tìm theo tên váy, mã SKU (BB-...)..."
                           className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-3.5 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-gray-400"
                         />
                         <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -445,18 +445,18 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         </select>
                       </div>
 
-                      {/* Rental Status Filter (2 cols) */}
-                      <div className="lg:col-span-2">
+                      {/* Rental Status Filter (3 cols) */}
+                      <div className="lg:col-span-3">
                         <select
                           value={productRentalFilter}
                           onChange={(e) => {
                             setProductRentalFilter(e.target.value as any);
                             setProductPage(1);
                           }}
-                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-800 focus:outline-none focus:border-brand-500"
+                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-800 focus:outline-none focus:border-brand-500"
                         >
                           <option value="all">Tất cả trạng thái</option>
-                          <option value="renting_now">🟢 Đang cho thuê hiện tại</option>
+                          <option value="renting_now">🟢 Đang cho thuê hôm nay</option>
                           <option value="available">⚪ Sẵn sàng trong kho</option>
                           <option value="hidden">👁️ Đã ẩn đi</option>
                         </select>
@@ -473,9 +473,9 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:border-brand-500"
                         >
                           <option value="all">Bán & Thuê</option>
-                          <option value="rent">Chỉ Cho Thuê</option>
-                          <option value="buy">Chỉ Bán Đứt</option>
-                          <option value="both">Cả Bán & Thuê</option>
+                          <option value="rent">Chỉ Thuê</option>
+                          <option value="buy">Chỉ Bán</option>
+                          <option value="both">Cả Hai</option>
                         </select>
                       </div>
                     </div>
@@ -483,7 +483,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
                   {/* Product List */}
                   {paginatedMyProducts.length > 0 ? (
-                    <div className="divide-y divide-gray-100">
+                    <div className="space-y-3 pt-1">
                       {paginatedMyProducts.map((p) => {
                         const activeBookingToday = (p.bookedDates || []).find(
                           (b) => b.startDate <= todayDate && b.endDate >= todayDate && b.status !== 'cancelled'
@@ -495,16 +495,19 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         return (
                           <div
                             key={p.id}
-                            className={`py-4.5 px-3 rounded-2xl transition-colors flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 ${
-                              isRentingNow ? 'bg-emerald-50/40 border border-emerald-100/80 mb-2' : 'hover:bg-gray-50/60'
+                            className={`p-4 rounded-2xl border transition-all flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 ${
+                              isRentingNow
+                                ? 'bg-emerald-50/30 border-emerald-200/80 shadow-2xs'
+                                : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-xs'
                             }`}
                           >
-                            <div className="flex gap-4">
-                              <div className="relative shrink-0">
+                            {/* Product Info Left */}
+                            <div className="flex items-start gap-4 min-w-0 flex-1">
+                              <div className="relative shrink-0 cursor-pointer" onClick={() => onViewProduct(p.id)}>
                                 <img
                                   src={p.featuredImage}
                                   alt={p.title}
-                                  className="w-20 h-24 rounded-2xl object-cover shadow-xs border border-gray-100"
+                                  className="w-20 h-24 rounded-xl object-cover shadow-xs border border-gray-200/60"
                                 />
                                 {isRentingNow && (
                                   <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white p-1 rounded-full shadow-xs" title="Đang có khách thuê hôm nay">
@@ -513,7 +516,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                 )}
                               </div>
 
-                              <div className="space-y-1.5">
+                              <div className="space-y-1.5 min-w-0 flex-1">
+                                {/* Badges row */}
                                 <div className="flex flex-wrap items-center gap-1.5">
                                   {/* SKU Code */}
                                   <span className="text-[11px] font-mono font-bold bg-gray-900 text-amber-400 px-2 py-0.5 rounded-lg tracking-wider">
@@ -521,11 +525,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                   </span>
 
                                   {/* Category Tag */}
-                                  <span className="text-[10px] font-semibold bg-gray-100 text-gray-700 px-2 py-0.5 rounded-lg border border-gray-200">
+                                  <span className="text-[10px] font-medium bg-gray-100 text-gray-700 px-2 py-0.5 rounded-lg border border-gray-200">
                                     {categoryObj ? categoryObj.name : p.category}
                                   </span>
 
-                                  {/* Type */}
+                                  {/* Mode */}
                                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-brand-50 text-brand-700 border border-brand-200">
                                     {p.type === 'both' ? 'Bán & Thuê' : p.type === 'rent' ? 'Cho thuê' : 'Bán'}
                                   </span>
@@ -534,7 +538,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                   {isRentingNow ? (
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
                                       <span>🟢 Đang cho thuê</span>
-                                      <span className="text-emerald-700">({formatDateVN(activeBookingToday.startDate)} → {formatDateVN(activeBookingToday.endDate)})</span>
+                                      <span className="text-emerald-700 font-normal">({formatDateVN(activeBookingToday.startDate)} → {formatDateVN(activeBookingToday.endDate)})</span>
                                     </span>
                                   ) : p.status === 'hidden' ? (
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-gray-200 text-gray-700">
@@ -547,49 +551,60 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                   )}
                                 </div>
 
-                                <h4 className="text-sm font-bold text-gray-900 line-clamp-1">{p.title}</h4>
+                                {/* Title */}
+                                <h4
+                                  onClick={() => onViewProduct(p.id)}
+                                  className="text-sm font-bold text-gray-900 hover:text-brand-600 transition-colors cursor-pointer truncate"
+                                  title={p.title}
+                                >
+                                  {p.title}
+                                </h4>
                                 
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
-                                  {p.rentPrice3Days && (
-                                    <span>Giá thuê 3 ngày: <strong className="text-brand-700">{formatVND(p.rentPrice3Days)}</strong></span>
+                                {/* Pricing tags (No floating 0) */}
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
+                                  {Boolean(p.rentPrice1Day) && p.rentPrice1Day! > 0 && (
+                                    <span>Giá thuê 1 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice1Day!)}</strong></span>
                                   )}
-                                  {p.buyPrice && (
-                                    <span>Giá bán: <strong className="text-gray-900">{formatVND(p.buyPrice)}</strong></span>
+                                  {Boolean(p.rentPrice3Days) && p.rentPrice3Days! > 0 && (
+                                    <span>Giá thuê 3 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice3Days!)}</strong></span>
                                   )}
-                                  {p.deposit && (
-                                    <span>Cọc: <strong className="text-gray-700">{formatVND(p.deposit)}</strong></span>
+                                  {Boolean(p.buyPrice) && p.buyPrice! > 0 && (
+                                    <span>Giá bán: <strong className="text-gray-900 font-semibold">{formatVND(p.buyPrice!)}</strong></span>
+                                  )}
+                                  {Boolean(p.deposit) && p.deposit! > 0 && (
+                                    <span>Cọc: <strong className="text-amber-800 font-semibold">{formatVND(p.deposit!)}</strong></span>
                                   )}
                                 </div>
 
-                                <div className="text-[11px] text-gray-400 flex items-center gap-3 pt-0.5">
-                                  <span>Lượt xem: {p.views}</span>
+                                {/* Stats row */}
+                                <div className="text-[11px] text-gray-400 flex items-center gap-2.5 pt-0.5">
+                                  <span>Lượt xem: {p.views || 0}</span>
                                   <span>•</span>
-                                  <span>Yêu thích: {p.likes}</span>
+                                  <span>Yêu thích: {p.likes || 0}</span>
                                   <span>•</span>
-                                  <span className="text-amber-500 font-semibold">Đánh giá: {p.rating}★ ({p.reviewsCount})</span>
+                                  <span className="text-amber-500 font-semibold">Đánh giá: {p.rating || 5}★ ({p.reviewsCount || 0})</span>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex flex-wrap items-center gap-2 self-end lg:self-center">
-                              {/* Quick POS order for this product */}
+                            {/* Action Buttons Right: Clean, single-row aligned toolbar */}
+                            <div className="flex flex-wrap items-center gap-1.5 self-end xl:self-center shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-gray-100 w-full xl:w-auto justify-end">
                               <button
                                 onClick={() => {
                                   setQuickOrderInitialProdId(p.id);
                                   setIsQuickOrderOpen(true);
                                 }}
-                                className="px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                                className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs"
                                 title="Tạo đơn hàng nhanh cho váy này"
                               >
-                                <ShoppingBag className="w-3.5 h-3.5 text-brand-600" />
+                                <ShoppingBag className="w-3.5 h-3.5" />
                                 <span>Lên đơn</span>
                               </button>
 
                               {(p.type === 'rent' || p.type === 'both') && (
                                 <button
                                   onClick={() => setScheduleProduct(p)}
-                                  className="px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+                                  className="px-2.5 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
                                   title="Quản lý lịch thuê của món này"
                                 >
                                   <Calendar className="w-3.5 h-3.5 text-emerald-600" />
@@ -599,16 +614,16 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
                               <button
                                 onClick={() => setEditingProduct(p)}
-                                className="px-2.5 py-1.5 rounded-xl border border-brand-200 bg-brand-50/70 hover:bg-brand-100 text-brand-700 text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                className="px-2.5 py-1.5 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
                                 title="Chỉnh sửa thông tin mẫu váy này"
                               >
-                                <Edit3 className="w-3.5 h-3.5 text-brand-600" />
+                                <Edit3 className="w-3.5 h-3.5 text-amber-600" />
                                 <span>Sửa váy</span>
                               </button>
 
                               <button
                                 onClick={() => onViewProduct(p.id)}
-                                className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
+                                className="p-1.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
                                 title="Xem chi tiết sản phẩm"
                               >
                                 <Eye className="w-4 h-4" />
@@ -621,6 +636,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                   showToast(`Đã chuyển sản phẩm sang trạng thái ${newStatus === 'hidden' ? 'Ẩn' : 'Hiện'}`, 'info');
                                 }}
                                 className="px-2.5 py-1.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                                title="Ẩn hoặc hiện váy trên cửa hàng"
                               >
                                 {p.status === 'hidden' ? 'Hiện lại' : 'Ẩn đi'}
                               </button>
@@ -632,7 +648,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                     showToast('Đã xóa bài đăng khỏi hệ thống thành công!', 'success');
                                   }
                                 }}
-                                className="p-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
+                                className="p-1.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
                                 title="Xóa bài đăng này"
                               >
                                 <Trash2 className="w-4 h-4" />

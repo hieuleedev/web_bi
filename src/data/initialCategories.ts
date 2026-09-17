@@ -4,72 +4,64 @@ export interface Category {
   slug: string;
   icon: string;
   description: string;
-  image: string;
+  image?: string;
 }
 
 export const CATEGORIES: Category[] = [
   {
     id: 'party-dress',
-    name: 'Đầm Dự Tiệc & Dạ Hội Trắng',
+    name: 'Đầm Dự Tiệc & Dạ Hội',
     slug: 'dam-da-hoi',
     icon: 'Sparkles',
-    description: 'Váy dạ hội trắng tinh khôi treo giá boutique cao cấp',
-    image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=600&q=80',
+    description: 'Váy dạ hội, đầm dự tiệc sang trọng thiết kế cao cấp',
   },
   {
     id: 'ao-dai',
-    name: 'Áo Dài Lụa Trắng Nàng Thơ',
+    name: 'Áo Dài Truyền Thống & Cách Tân',
     slug: 'ao-dai',
     icon: 'Heart',
-    description: 'Áo dài lụa tơ tằm trắng thêu hoa sen trang nhã',
-    image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=600&q=80',
+    description: 'Áo dài lụa tơ tằm thêu hoa sen, áo dài cưới thanh lịch',
   },
   {
     id: 'vest-blazer',
-    name: 'Set Blazer & Váy Trắng Tiểu Thư',
+    name: 'Set Blazer & Áo Khoác Tiểu Thư',
     slug: 'blazer-tieu-thu',
     icon: 'Briefcase',
-    description: 'Blazer dạ tweed trắng phối chân váy xếp ly thanh lịch',
-    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=600&q=80',
+    description: 'Blazer dạ tweed phối chân váy xếp ly thanh lịch',
   },
   {
     id: 'wedding',
-    name: 'Váy Cưới & Đầm Công Chúa Trắng',
+    name: 'Váy Cưới & Đầm Công Chúa',
     slug: 'vay-cuoi',
     icon: 'Crown',
-    description: 'Váy cưới ren trắng bồng bềnh trưng bày mannequin lộng lẫy',
-    image: 'https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=600&q=80',
+    description: 'Váy cưới ren bồng bềnh trưng bày mannequin lộng lẫy',
   },
   {
     id: 'streetwear',
-    name: 'Váy Hoa Nhí & Maxi Trắng Đi Biển',
+    name: 'Váy Hoa Nhí & Maxi Đi Biển',
     slug: 'vay-hoa-nhi',
     icon: 'Smile',
-    description: 'Váy maxi trắng bồng bềnh dạo phố và du lịch',
-    image: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=600&q=80',
+    description: 'Váy maxi voan tơ bồng bềnh dạo phố và du lịch',
   },
   {
     id: 'office',
-    name: 'Váy Công Sở Trắng Nàng Thơ',
+    name: 'Thời Trang Công Sở Nữ',
     slug: 'vay-cong-so',
     icon: 'Layers',
-    description: 'Đầm suông cổ vest trắng trang nhã nơi công sở',
-    image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=600&q=80',
+    description: 'Đầm suông công sở thanh lịch, nhã nhặn',
   },
   {
     id: 'co-ords',
-    name: 'Set Váy Xô Trắng Nàng Thơ',
+    name: 'Set Đồ Thiết Kế Phối Sẵn',
     slug: 'set-vay-vintage',
     icon: 'Sparkles',
-    description: 'Set váy xô đũi trắng phong cách nàng thơ vintage',
-    image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=600&q=80',
+    description: 'Set đồ phối sẵn tiện lợi phong cách nàng thơ',
   },
   {
     id: 'accessories',
-    name: 'Túi Xách & Phụ Kiện Ngọc Trai',
+    name: 'Túi Xách & Phụ Kiện',
     slug: 'phu-kien-nu',
     icon: 'Gem',
-    description: 'Clutch ngọc trai trắng sang trọng tôn vinh bộ váy',
-    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80',
+    description: 'Túi xách, clutch ngọc trai sang trọng tôn vinh bộ váy',
   }
 ];
