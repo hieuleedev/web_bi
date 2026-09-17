@@ -114,7 +114,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 {/* Main Hero Card */}
                 <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[3/4] bg-gray-100 group">
                   <img
-                    src="https://images.unsplash.com/photo-1516575334481-f85287c2c82d?auto=format&fit=crop&w=800&q=80"
+                    src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80"
                     alt="Thời trang nàng thơ Bi Bi"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />

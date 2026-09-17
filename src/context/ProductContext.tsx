@@ -18,11 +18,20 @@ interface ProductContextType {
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-const PRODUCTS_KEY = 'bibi_products_v4';
+const PRODUCTS_KEY = 'bibi_products_v6_white_dresses';
 const WISHLIST_KEY = 'bibi_wishlist_ids';
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
+    // Clear old versions
+    try {
+      localStorage.removeItem('bibi_products_v1');
+      localStorage.removeItem('bibi_products_v2');
+      localStorage.removeItem('bibi_products_v3');
+      localStorage.removeItem('bibi_products_v4');
+      localStorage.removeItem('bibi_products_v5');
+    } catch (e) {}
+
     const saved = localStorage.getItem(PRODUCTS_KEY);
     if (saved) {
       try {

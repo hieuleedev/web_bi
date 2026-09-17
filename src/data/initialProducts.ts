@@ -4,7 +4,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-1',
     title: 'Đầm Trắng Nàng Thơ Cổ Vuông Tay Bồng Xòe Tơ Lụa',
-    description: 'Thiết kế đầm trắng thuần khiết đậm chất nàng thơ Đà Lạt và phong cách quý cô Á Đông. Cổ vuông khoe trọn xương quai xanh thanh tú, tay bồng xếp nếp điệu đà, tùng váy xòe bồng bềnh nhiều tầng bay trong gió. Hoàn hảo cho các buổi hẹn hò, tiệc sinh nhật, chụp lookbook ngoài trời.',
+    description: 'Mẫu đầm trắng tinh khôi độc quyền từ Bi Bi Boutique. Thiết kế cổ vuông quý phái, tay bồng công chúa xếp nếp bồng bềnh, tùng váy nhiều tầng mềm mại như mây. Hình chụp tĩnh sản phẩm trên giá treo studio cực nét, không người mẫu.',
     category: 'party-dress',
     gender: 'women',
     brand: 'Nàng Thơ Boutique',
@@ -17,14 +17,13 @@ export const INITIAL_PRODUCTS: Product[] = [
     rentPrice7Days: 980000,
     deposit: 800000,
     sizes: ['S', 'M', 'L'],
-    colors: ['Trắng Thuần Khiết (Pure White)', 'Kem Vani (Cream Butter)'],
-    material: 'Tơ organza dệt hoa chìm cao cấp, lớp trong lót lụa tơ tằm mềm mịn mát lạnh',
+    colors: ['Trắng Thuần Khiết (Pure White)', 'Trắng Kem Vani'],
+    material: 'Tơ organza dệt hoa chìm cao cấp, lớp trong lót lụa tơ tằm mềm mịn',
     condition: 'Mới 100%',
-    featuredImage: 'https://images.unsplash.com/photo-1516575334481-f85287c2c82d?auto=format&fit=crop&w=800&q=80',
+    featuredImage: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80',
     images: [
-      'https://images.unsplash.com/photo-1516575334481-f85287c2c82d?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=1000&q=80'
     ],
     sellerId: 'user-seller-1',
     sellerName: 'Bi Bi Boutique (Linh Bi)',
@@ -64,7 +63,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         userName: 'Hoàng Mai Yến',
         userAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
         rating: 5,
-        comment: 'Váy mặc lên như nàng thơ Đà Lạt luôn ấy! Vải tơ mềm nhẹ, chụp ảnh lên màu trong trẻo xuất sắc.',
+        comment: 'Váy ở ngoài đẹp xuất sắc! Vải tơ mềm nhẹ, chụp ảnh lên màu trong trẻo.',
         createdAt: '2024-03-05T14:30:00Z',
         type: 'rent'
       }
@@ -72,8 +71,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-2',
-    title: 'Áo Dài Nàng Thơ Lụa Tơ Tằm Thêu Hoa Sen Hồng',
-    description: 'Bộ áo dài dáng suông cách tân thanh thoát mang vẻ đẹp thuần Việt. Tà áo lụa tơ tằm dệt tay mềm rủ thướt tha, họa tiết hoa sen búp nở thanh tao thêu thủ công tinh tế. Phù hợp cho dịp chụp kỷ niệm, dạo phố cổ Hội An, lễ ăn hỏi, Tết Nguyên Đán.',
+    title: 'Áo Dài Lụa Tơ Tằm Trắng Thêu Sen Thủ Công',
+    description: 'Tác phẩm áo dài lụa tơ tằm trắng ngà tinh khôi thêu hoa sen. Tà áo lụa Nha Xá mềm rủ, phom dáng truyền thống thướt tha. Ảnh chụp tĩnh chi tiết chất liệu lụa tự nhiên.',
     category: 'ao-dai',
     gender: 'women',
     brand: 'Heritage Bi Bi',
@@ -86,13 +85,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     rentPrice7Days: 1100000,
     deposit: 1000000,
     sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['Hồng Phấn Pastel', 'Xanh Bạc Hà', 'Trắng Tinh Khôi'],
+    colors: ['Trắng Tinh Khôi', 'Trắng Ngà Tự Nhiên'],
     material: '100% Lụa tơ tằm Nha Xá mềm mại, tà bay bổng tự nhiên',
     condition: '99% Like New',
     featuredImage: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80',
     images: [
-      'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=1000&q=80'
     ],
     sellerId: 'user-seller-1',
     sellerName: 'Bi Bi Boutique (Linh Bi)',
@@ -107,7 +105,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     rating: 5.0,
     reviewsCount: 31,
     createdAt: '2024-03-02T08:00:00Z',
-    careInstructions: 'Giặt tay nhẹ nhàng bằng dầu gội thiên nhiên, không vò mạnh, phơi trong mát.',
+    careInstructions: 'Giặt tay nhẹ nhàng bằng dầu gội dịu nhẹ, không vò mạnh, phơi trong mát.',
     sizeGuide: 'Size S (40-47kg), Size M (48-53kg), Size L (54-58kg), Size XL (59-65kg)',
     bookedDates: [
       {
@@ -122,8 +120,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-3',
-    title: 'Đầm Hoa Nhí Vintage Dáng Dài Thắt Nơ Lưng Cổ Điển',
-    description: 'Chiếc đầm hoa nhí phong cách nàng thơ đồng nội được các cô gái Việt Nam cực kỳ yêu thích. Dáng váy xòe vintage bồng bềnh, chi tiết thắt nơ lưng tôn eo thon, chất vải voan cát mềm rủ giúp từng bước chân bay bổng nhẹ nhàng như mây.',
+    title: 'Đầm Xòe Trắng Tiểu Thư Cổ Vuông Đính Nơ Satin',
+    description: 'Mẫu váy trắng xòe bồng tiểu thư chụp trải sàn flat-lay cực kỳ tinh tế. Chi tiết cổ vuông viền ren, đính nơ satin thanh lịch và tùng váy xếp ly nhiều tầng.',
     category: 'streetwear',
     gender: 'women',
     brand: 'Mộc Lan Vintage',
@@ -136,13 +134,13 @@ export const INITIAL_PRODUCTS: Product[] = [
     rentPrice7Days: 520000,
     deposit: 400000,
     sizes: ['S', 'M', 'L'],
-    colors: ['Vàng Hoa Cúc', 'Xanh Bơ Pastel', 'Hồng Nude'],
-    material: 'Voan tơ chiffon Hàn Quốc nhẹ mát, lót lụa habutai êm ái chống lộ',
+    colors: ['Trắng Tinh Khôi', 'Trắng Sữa'],
+    material: 'Voan tơ dệt nổi mềm mại, lót lụa êm ái',
     condition: 'Mới 100%',
-    featuredImage: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=800&q=80',
+    featuredImage: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80',
     images: [
-      'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1516575334481-f85287c2c82d?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=1000&q=80'
     ],
     sellerId: 'user-seller-1',
     sellerName: 'Bi Bi Boutique (Linh Bi)',
@@ -164,8 +162,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-4',
-    title: 'Váy Cưới Ren Hoa Chuông Trắng Tinh Khôi Dáng Suông',
-    description: 'Váy cưới tối giản mang hơi hướng vintage nàng thơ. Chất ren hoa chuông dệt nổi tinh xảo trên nền voan mềm, phần cổ thuyền kín đáo e ấp cùng tay lửng ren nhẹ nhàng. Rất phù hợp cho tiệc cưới ngoài trời, bãi biển hay tiệc báo hỷ ấm cúng.',
+    title: 'Váy Cưới Hoàng Gia Trắng Ren Chuông Mannequin Showroom',
+    description: 'Váy cưới công chúa xòe bồng cao cấp trưng bày trên mannequin showroom. Tùng váy ren hoa chuông đa tầng lộng lẫy, gọng định hình eo corsage tôn dáng.',
     category: 'wedding',
     gender: 'women',
     brand: 'Bi Bi Bridal Couture',
@@ -176,13 +174,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     rentPrice7Days: 4500000,
     deposit: 2500000,
     sizes: ['S', 'M'],
-    colors: ['Trắng Ngà Tự Nhiên (Ivory)', 'Trắng Sữa'],
+    colors: ['Trắng Ngà Tự Nhiên (Ivory)', 'Trắng Tinh'],
     material: 'Ren dệt sợi cotton mềm cao cấp, lót lụa satin co giãn thoải mái',
     condition: '99% Like New',
-    featuredImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+    featuredImage: 'https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=800&q=80',
     images: [
-      'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1516575334481-f85287c2c82d?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=1000&q=80'
     ],
     sellerId: 'user-seller-1',
     sellerName: 'Bi Bi Boutique (Linh Bi)',
@@ -212,8 +209,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-5',
-    title: 'Đầm Lụa Tơ Tằm Hai Dây Dáng Ôm Nhẹ Thanh Tao',
-    description: 'Vẻ đẹp tinh giản, thuần khiết của những cô gái Á Đông. Đầm lụa hai dây thanh mảnh tôn trọn bờ vai thon, đường lượn sóng tà váy nhẹ nhàng nữ tính. Rất thích hợp cho những buổi tiệc tối thân mật, trà chiều hay chụp lookbook hoàng hôn.',
+    title: 'Đầm Lụa Tơ Tằm Trắng Hai Dây Dáng Ôm Nhẹ Thanh Tao',
+    description: 'Thiết kế váy lụa hai dây trắng trơn treo giá studio nghệ thuật. Chất lụa tơ tằm dệt trơn óng ả, mềm mại rủ nhẹ theo đường cong cơ thể, cực kỳ gợi cảm và sang trọng.',
     category: 'party-dress',
     gender: 'women',
     brand: 'Minimalist Chic',
@@ -226,13 +223,13 @@ export const INITIAL_PRODUCTS: Product[] = [
     rentPrice7Days: 850000,
     deposit: 600000,
     sizes: ['XS', 'S', 'M'],
-    colors: ['Trắng Ngà Nàng Thơ', 'Hồng Nude Tự Nhiên', 'Xanh Rêu Pastel'],
-    material: 'Lụa tơ tằm dệt trơn cao cấp mặt vải óng nhẹ, mịn màng',
+    colors: ['Trắng Ngà Nàng Thơ', 'Trắng Sữa'],
+    material: 'Lụa tơ tằm dệt trơn cao cấp mặt vải óng nhẹ, mềm mát',
     condition: 'Mới 100%',
-    featuredImage: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80',
+    featuredImage: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80',
     images: [
-      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=1000&q=80'
     ],
     sellerId: 'user-seller-1',
     sellerName: 'Bi Bi Boutique (Linh Bi)',
@@ -254,8 +251,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-6',
-    title: 'Set Áo Blazer Lửng & Chân Váy Xếp Ly Tiểu Thư Hàn Quốc',
-    description: 'Set đồ phong cách tiểu thư ngọt ngào trẻ trung chuẩn style các nàng thơ Ulzzang Hàn Quốc. Áo blazer croptop tôn dáng eo thon phối cùng chân váy xếp ly xòe điệu đà, chất dạ tweed mỏng dệt sợi kim tuyến nhẹ nhàng.',
+    title: 'Set Áo Blazer Nữ & Chân Váy Xếp Ly Trắng Dạ Tweed',
+    description: 'Set áo khoác blazer dạ tweed màu trắng kem phối cùng chân váy xếp ly chụp tĩnh trên móc boutique. Sợi dạ dệt kim tuyến nhẹ, nút mạ vàng sáng bóng.',
     category: 'office',
     gender: 'women',
     brand: 'Seoul Muse by Bi Bi',
@@ -264,13 +261,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     buyPrice: 1750000,
     originalPrice: 2150000,
     sizes: ['S', 'M', 'L'],
-    colors: ['Trắng Kem Hạt Dẻ', 'Hồng Phấn Tiểu Thư'],
+    colors: ['Trắng Kem Hạt Dẻ', 'Trắng Sữa'],
     material: 'Dạ Tweed mỏng dệt sợi óng ánh cao cấp, lót lụa êm ái thoáng mát',
     condition: 'Mới 100%',
-    featuredImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80',
+    featuredImage: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=800&q=80',
     images: [
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=80'
     ],
     sellerId: 'user-seller-1',
     sellerName: 'Bi Bi Boutique (Linh Bi)',
@@ -292,8 +288,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-7',
-    title: 'Váy Yếm Xô Trắng Nàng Thơ Du Lịch Cổ Điển',
-    description: 'Mẫu váy yếm xô trắng bồng bềnh phong cách nàng thơ vintage mộng mơ. Dáng yếm mềm rủ, tà váy nhiều tầng xếp nếp xoay tròn cực kỳ ăn ảnh khi du lịch Đà Lạt, cắm trại hay đi cafe check-in cùng bạn bè.',
+    title: 'Váy Yếm Xô Trắng Nàng Thơ Trải Sàn Flat-Lay Vintage',
+    description: 'Mẫu váy yếm xô đũi trắng chụp flat-lay trải sàn phong cách vintage mộng mơ. Chất vải xô dệt sợi tự nhiên mềm mịn, tà váy xòe rộng xếp ly bồng bềnh.',
     category: 'streetwear',
     gender: 'women',
     brand: 'Nàng Thơ Dạo Phố',
@@ -306,13 +302,12 @@ export const INITIAL_PRODUCTS: Product[] = [
     rentPrice7Days: 490000,
     deposit: 300000,
     sizes: ['Free size (42-56kg)'],
-    colors: ['Trắng Kem Mây', 'Vàng Nhạt Bơ'],
+    colors: ['Trắng Kem Mây', 'Trắng Sữa'],
     material: 'Vải xô đũi organic tự nhiên mềm mịn, thoáng mát thấm hút mồ hôi',
     condition: 'Mới 100%',
-    featuredImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80',
+    featuredImage: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80',
     images: [
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1516575334481-f85287c2c82d?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1000&q=80'
     ],
     sellerId: 'user-buyer-1',
     sellerName: 'Hoàng Mai Yến',
@@ -335,7 +330,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod-8',
     title: 'Túi Xách Mây Tre Đan & Clutch Ngọc Trai Nàng Thơ',
-    description: 'Chiếc túi cầm tay kết hợp ngọc trai tinh khôi và chất liệu mây tre đan thủ công. Phụ kiện không thể thiếu khi các nàng thơ diện váy hoa nhí, váy đũi trắng hoặc áo dài dạo phố.',
+    description: 'Chiếc túi cầm tay kết hợp ngọc trai tinh khôi và chất liệu mây tre đan thủ công. Phụ kiện chụp tĩnh studio cực kỳ sắc nét, quai cầm ngọc trai sáng bóng sang trọng.',
     category: 'accessories',
     gender: 'women',
     brand: 'Bi Bi Luxe Accessories',
