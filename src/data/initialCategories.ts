@@ -57,12 +57,12 @@ export const CATEGORIES: Category[] = [
     image: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?auto=format&fit=crop&w=600&q=80',
   },
   {
-    id: 'men-fashion',
-    name: 'Thời Trang Nam',
-    slug: 'thoi-trang-nam',
-    icon: 'User',
-    description: 'Phong cách nam tính, tinh tế cho phái mạnh',
-    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
+    id: 'co-ords',
+    name: 'Set Đồ & Lookbook Nữ',
+    slug: 'set-do-nu',
+    icon: 'Sparkles',
+    description: 'Set đồ phối sẵn sành điệu, tôn dáng cho nàng',
+    image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=600&q=80',
   },
   {
     id: 'accessories',

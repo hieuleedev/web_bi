@@ -18,7 +18,7 @@ interface ProductContextType {
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-const PRODUCTS_KEY = 'bibi_products_v2';
+const PRODUCTS_KEY = 'bibi_products_v3';
 const WISHLIST_KEY = 'bibi_wishlist_ids';
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

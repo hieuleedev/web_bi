@@ -105,10 +105,10 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => handleAddSampleImage('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80')}
+          onClick={() => handleAddSampleImage('https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80')}
           className="text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1 rounded-lg transition-colors"
         >
-          + Suit Nam
+          + Đầm lụa đỏ
         </button>
       </div>
 
