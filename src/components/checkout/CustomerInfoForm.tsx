@@ -32,10 +32,22 @@ export const CustomerInfoForm: React.FC<CustomerInfoFormProps> = ({
 }) => {
   return (
     <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
-      <h3 className="font-bold text-sm text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
-        <User className="w-4 h-4 text-brand-600" />
-        <span>1. Thông Tin Người Nhận Hàng</span>
-      </h3>
+      <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
+          <User className="w-4 h-4 text-brand-600" />
+          <span>1. Thông Tin Người Nhận Hàng</span>
+        </h3>
+        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+          ✓ Không cần tài khoản
+        </span>
+      </div>
+
+      <div className="p-3 bg-brand-50/60 border border-brand-200/80 rounded-2xl text-xs text-brand-900 flex items-center gap-2">
+        <span className="text-base">🛍️</span>
+        <span>
+          <strong>Đặt thuê nhanh:</strong> Bạn không cần đăng nhập hay tạo tài khoản, chỉ cần điền đúng <strong>Họ tên, Số điện thoại và Địa chỉ</strong> bên dưới để shop giao đồ tận nơi nhé!
+        </span>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>

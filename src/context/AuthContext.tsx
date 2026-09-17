@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password?: string) => boolean;
   register: (name: string, email: string, phone: string, role?: UserRole) => void;
+  changePassword: (oldPass: string, newPass: string) => { success: boolean; message: string };
   switchRole: (role: UserRole) => void;
   switchUser: (userId: string) => void;
   updateProfile: (updatedData: Partial<User>) => void;
@@ -109,6 +110,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const changePassword = (oldPass: string, newPass: string): { success: boolean; message: string } => {
+    if (!currentUser) {
+      return { success: false, message: 'Bạn chưa đăng nhập!' };
+    }
+    if (!newPass || newPass.length < 6) {
+      return { success: false, message: 'Mật khẩu mới phải có tối thiểu 6 ký tự!' };
+    }
+    // Update password hash/string in localStorage
+    const PASS_KEY = `bibi_pass_${currentUser.id}`;
+    const currentStoredPass = localStorage.getItem(PASS_KEY) || '123456';
+
+    if (oldPass !== currentStoredPass) {
+      return { success: false, message: 'Mật khẩu hiện tại không chính xác!' };
+    }
+
+    localStorage.setItem(PASS_KEY, newPass);
+    return { success: true, message: 'Đổi mật khẩu thành công!' };
+  };
+
   const updateProfile = (updatedData: Partial<User>) => {
     if (!currentUser) return;
     const updated = { ...currentUser, ...updatedData };
@@ -131,6 +151,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!currentUser && !!token,
         login,
         register,
+        changePassword,
         switchRole,
         switchUser,
         updateProfile,

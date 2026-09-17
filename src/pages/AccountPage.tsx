@@ -43,7 +43,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   onViewProduct,
   onOpenChat,
 }) => {
-  const { currentUser, updateProfile, logout } = useAuth();
+  const { currentUser, updateProfile, changePassword, logout } = useAuth();
   const { products, deleteProduct, updateProduct, wishlistIds } = useProducts();
   const { getUserOrders, getSellerOrders, updateOrderStatus } = useOrders();
   const { showToast } = useToast();
@@ -56,6 +56,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [phone, setPhone] = useState(currentUser?.phone || '');
   const [location, setLocation] = useState(currentUser?.location || '');
   const [bio, setBio] = useState(currentUser?.bio || '');
+
+  // Password change state
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Orders filter
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
@@ -541,7 +546,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
             {/* TAB: EDIT PROFILE */}
             {activeTab === 'profile' && (
-              <form onSubmit={handleSaveProfile} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+              <div className="space-y-6">
+                <form onSubmit={handleSaveProfile} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
                 <div className="pb-3 border-b border-gray-100">
                   <h3 className="font-serif font-bold text-lg text-gray-900">Thông Tin Cá Nhân & Liên Hệ</h3>
                   <p className="text-xs text-gray-500">Cập nhật họ tên, số điện thoại và địa chỉ để giao nhận nhanh chóng</p>
@@ -592,12 +598,91 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 <div className="flex justify-end pt-2">
                   <button
                     type="submit"
-                    className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors"
+                    className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors shadow-md shadow-brand-500/20"
                   >
-                    Lưu Thay Đổi
+                    Lưu Thông Tin Cá Nhân
                   </button>
                 </div>
               </form>
+
+              {/* Password Change Box */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (newPassword !== confirmPassword) {
+                    showToast('Mật khẩu xác nhận không khớp với mật khẩu mới!', 'error');
+                    return;
+                  }
+                  const res = changePassword(oldPassword, newPassword);
+                  if (res.success) {
+                    showToast(res.message, 'success');
+                    setOldPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  } else {
+                    showToast(res.message, 'error');
+                  }
+                }}
+                className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4"
+              >
+                <div className="pb-3 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-gray-900">Đổi Mật Khẩu Đăng Nhập</h3>
+                    <p className="text-xs text-gray-500">Bảo mật tài khoản của bạn bằng mật khẩu mạnh</p>
+                  </div>
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    Bảo mật 2 lớp
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Mật khẩu hiện tại</label>
+                    <input
+                      type="password"
+                      required
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="Nhập mật khẩu cũ"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Mật khẩu mới</label>
+                    <input
+                      type="password"
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Tối thiểu 6 ký tự"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Xác nhận mật khẩu mới</label>
+                    <input
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Nhập lại mật khẩu mới"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold transition-colors"
+                  >
+                    Cập Nhật Mật Khẩu Mới
+                  </button>
+                </div>
+              </form>
+            </div>
             )}
 
           </div>
