@@ -2,7 +2,7 @@ import React from 'react';
 import { Printer, X, ShieldCheck, QrCode } from 'lucide-react';
 import { Order } from '../../types';
 import { formatVND, formatDateVN } from '../../utils/helpers';
-import { generateVietQrUrl, DEFAULT_BANK_CONFIG } from '../../utils/vietqr';
+import { generateVietQrUrl, getActiveBankConfig } from '../../utils/vietqr';
 
 interface OrderInvoiceModalProps {
   order: Order | null;
@@ -17,13 +17,17 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
 }) => {
   if (!isOpen || !order) return null;
 
-  const qrUrl = order.vietqrUrl || generateVietQrUrl({
+  const bankConfig = getActiveBankConfig();
+  const hasBank = Boolean(bankConfig.accountNo && bankConfig.accountNo.trim());
+
+  const qrUrl = order.vietqrUrl || (hasBank ? generateVietQrUrl({
     amount: order.totalAmount,
     orderCode: order.code,
-    bankId: DEFAULT_BANK_CONFIG.bankId,
-    accountNo: DEFAULT_BANK_CONFIG.accountNo,
-    accountName: DEFAULT_BANK_CONFIG.accountName
-  });
+    bankId: bankConfig.bankId,
+    accountNo: bankConfig.accountNo,
+    accountName: bankConfig.accountName,
+    template: bankConfig.template
+  }) : '');
 
   const handlePrint = () => {
     window.print();
@@ -184,32 +188,42 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
             
             {/* Cột Trái: Mã VietQR tự động khớp số tiền để quét thanh toán */}
             <div className="sm:col-span-6 bg-gradient-to-br from-brand-50/50 to-amber-50/40 p-4 rounded-2xl border border-brand-200 flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-32 h-32 bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm shrink-0 flex items-center justify-center">
-                <img
-                  src={qrUrl}
-                  alt="Mã VietQR thanh toán tự động"
-                  className="w-full h-full object-contain"
-                />
-              </div>
+              {hasBank && qrUrl ? (
+                <>
+                  <div className="w-32 h-32 bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm shrink-0 flex items-center justify-center">
+                    <img
+                      src={qrUrl}
+                      alt="Mã VietQR thanh toán tự động"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
 
-              <div className="text-xs space-y-1 text-center sm:text-left">
-                <div className="flex items-center gap-1 justify-center sm:justify-start text-brand-800 font-bold text-xs">
-                  <QrCode className="w-3.5 h-3.5" />
-                  <span>Quét Mã VietQR Thanh Toán</span>
+                  <div className="text-xs space-y-1 text-center sm:text-left">
+                    <div className="flex items-center gap-1 justify-center sm:justify-start text-brand-800 font-bold text-xs">
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>Quét Mã VietQR Thanh Toán</span>
+                    </div>
+                    <p className="text-[11px] text-gray-600">
+                      Ngân hàng: <strong>{bankConfig.bankName}</strong>
+                    </p>
+                    <p className="text-[11px] text-gray-600">
+                      STK: <strong className="font-mono text-brand-700 text-xs">{bankConfig.accountNo}</strong>
+                    </p>
+                    <p className="text-[11px] text-gray-600">
+                      Chủ TK: <strong>{bankConfig.accountName}</strong>
+                    </p>
+                    <p className="text-[10px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 w-fit mx-auto sm:mx-0 mt-1">
+                      ✓ Tự động điền: <strong>{formatVND(order.totalAmount)}</strong>
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="w-full text-center py-4 space-y-1 text-gray-500">
+                  <QrCode className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                  <p className="text-xs font-semibold text-gray-700">Chưa cài đặt số tài khoản ngân hàng</p>
+                  <p className="text-[11px] text-gray-400">Vào mục Quản lý shop ➔ Cài Đặt STK In Bill để thêm số tài khoản của bạn</p>
                 </div>
-                <p className="text-[11px] text-gray-600">
-                  Ngân hàng: <strong>{DEFAULT_BANK_CONFIG.bankName}</strong>
-                </p>
-                <p className="text-[11px] text-gray-600">
-                  STK: <strong className="font-mono text-brand-700 text-xs">{DEFAULT_BANK_CONFIG.accountNo}</strong>
-                </p>
-                <p className="text-[11px] text-gray-600">
-                  Chủ TK: <strong>{DEFAULT_BANK_CONFIG.accountName}</strong>
-                </p>
-                <p className="text-[10px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 w-fit mx-auto sm:mx-0 mt-1">
-                  ✓ Tự động điền số tiền: <strong>{formatVND(order.totalAmount)}</strong>
-                </p>
-              </div>
+              )}
             </div>
 
             {/* Cột Phải: Bảng kê tính toán */}

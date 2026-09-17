@@ -51,24 +51,30 @@ export const BankConfigModal: React.FC<BankConfigModalProps> = ({
   };
 
   const handleResetDefault = () => {
-    setBankId(DEFAULT_BANK_CONFIG.bankId);
-    setAccountNo(DEFAULT_BANK_CONFIG.accountNo);
-    setAccountName(DEFAULT_BANK_CONFIG.accountName);
-    setTemplate(DEFAULT_BANK_CONFIG.template);
-    saveActiveBankConfig(DEFAULT_BANK_CONFIG);
-    showToast('Đã khôi phục tài khoản ngân hàng mặc định!', 'info');
+    setBankId('MB');
+    setAccountNo('');
+    setAccountName('');
+    setTemplate('compact2');
+    saveActiveBankConfig({
+      bankId: 'MB',
+      bankName: 'MB Bank (Quân Đội)',
+      accountNo: '',
+      accountName: '',
+      template: 'compact2'
+    });
+    showToast('Đã làm trống thông tin tài khoản ngân hàng!', 'info');
     if (onUpdated) onUpdated();
   };
 
   // Preview QR
-  const previewQrUrl = generateVietQrUrl({
+  const previewQrUrl = accountNo.trim() ? generateVietQrUrl({
     bankId,
-    accountNo: accountNo.trim() || '00000000',
+    accountNo: accountNo.trim(),
     accountName: accountName.trim() || 'TEN CHU TAI KHOAN',
     amount: 500000,
     orderCode: 'BILL-TEST',
     template,
-  });
+  }) : '';
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -124,7 +130,7 @@ export const BankConfigModal: React.FC<BankConfigModalProps> = ({
                 type="text"
                 value={accountNo}
                 onChange={(e) => setAccountNo(e.target.value.replace(/\s+/g, ''))}
-                placeholder="VD: 0795623097"
+                placeholder="Nhập số tài khoản ngân hàng của bạn..."
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 tracking-wider"
                 required
               />
@@ -140,7 +146,7 @@ export const BankConfigModal: React.FC<BankConfigModalProps> = ({
                 type="text"
                 value={accountName}
                 onChange={(e) => setAccountName(e.target.value.toUpperCase())}
-                placeholder="VD: LE TRUNG HIEU"
+                placeholder="VD: NGUYEN VAN A..."
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold uppercase text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                 required
               />
@@ -191,10 +197,10 @@ export const BankConfigModal: React.FC<BankConfigModalProps> = ({
                 type="button"
                 onClick={handleResetDefault}
                 className="px-3 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-medium flex items-center gap-1 transition-colors"
-                title="Khôi phục mặc định của hệ thống"
+                title="Để trống thông tin tài khoản ngân hàng"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Mặc định</span>
+                <span>Làm trống</span>
               </button>
             </div>
           </form>
@@ -202,20 +208,27 @@ export const BankConfigModal: React.FC<BankConfigModalProps> = ({
           {/* Realtime QR Preview (5 cols) */}
           <div className="md:col-span-5 bg-gray-50 rounded-2xl p-4 border border-gray-200 flex flex-col items-center justify-center text-center">
             <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Xem Trước Mã VietQR</span>
-            <div className="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 max-w-[220px]">
-              <img
-                src={previewQrUrl}
-                alt="VietQR Preview"
-                className="w-full h-auto rounded-xl object-contain"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
-            </div>
+            {accountNo.trim() ? (
+              <div className="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 max-w-[220px]">
+                <img
+                  src={previewQrUrl}
+                  alt="VietQR Preview"
+                  className="w-full h-auto rounded-xl object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-40 h-40 rounded-2xl border-2 border-dashed border-gray-300 bg-white flex flex-col items-center justify-center p-4 text-gray-400">
+                <QrCode className="w-10 h-10 mb-2 text-gray-300" />
+                <span className="text-[11px] leading-snug">Vui lòng nhập Số Tài Khoản để tạo mã QR</span>
+              </div>
+            )}
             <div className="mt-3 text-[11px] text-gray-600 space-y-0.5">
               <p>Ngân hàng: <strong className="text-gray-900">{bankId}</strong></p>
-              <p>Số TK: <strong className="text-brand-700 font-mono">{accountNo || '---'}</strong></p>
-              <p>Chủ TK: <strong className="text-gray-900 uppercase">{accountName || '---'}</strong></p>
+              <p>Số TK: <strong className="text-brand-700 font-mono">{accountNo || '(Chưa nhập)'}</strong></p>
+              <p>Chủ TK: <strong className="text-gray-900 uppercase">{accountName || '(Chưa nhập)'}</strong></p>
             </div>
           </div>
         </div>

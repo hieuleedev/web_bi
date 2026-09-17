@@ -11,13 +11,13 @@ export interface BankConfig {
   template: 'compact2' | 'compact' | 'qr_only' | 'print';
 }
 
-// Cấu hình STK Ngân Hàng mặc định của Shop Bi Bi
+// Cấu hình STK Ngân Hàng mặc định của Shop (Để trống để chủ shop tự cấu hình)
 export const DEFAULT_BANK_CONFIG: BankConfig = {
   bankId: 'MB', // Ngân hàng Quân Đội (MB Bank)
   bankName: 'MB Bank (Ngân hàng TMCP Quân Đội)',
-  accountNo: '0795623097',
-  accountName: 'LE TRUNG HIEU',
-  template: 'compact2' // Giao diện QR có logo ngân hàng và thông tin chuyển khoản đẹp mắt
+  accountNo: '',
+  accountName: '',
+  template: 'compact2'
 };
 
 // Danh sách các ngân hàng phổ biến tại Việt Nam để dễ dàng chuyển đổi
@@ -34,14 +34,16 @@ export const SUPPORTED_BANKS = [
   { id: 'VIB', name: 'VIB (Quốc Tế)' }
 ];
 
-const BANK_STORAGE_KEY = 'bibi_custom_bank_config_v1';
+const BANK_STORAGE_KEY = 'bibi_custom_bank_config_v2';
 
 export function getActiveBankConfig(): BankConfig {
   try {
+    // Clear legacy hardcoded config
+    localStorage.removeItem('bibi_custom_bank_config_v1');
     const saved = localStorage.getItem(BANK_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.accountNo && parsed.bankId) return parsed;
+      if (parsed && parsed.bankId) return parsed;
     }
   } catch (e) {}
   return DEFAULT_BANK_CONFIG;
