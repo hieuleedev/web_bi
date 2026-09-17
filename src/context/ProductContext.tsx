@@ -298,6 +298,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         addRentalBookingToProduct,
         removeRentalBookingFromProduct,
         getProductById,
+        refreshProducts,
       }}
     >
       {children}
