@@ -1,4 +1,4 @@
-﻿-- =========================================================
+-- =========================================================
 -- BI BI FASHION MARKETPLACE - SUPABASE DATABASE SCHEMA
 -- Bán & Cho Thuê Quần Áo (Hỗ trợ quản lý lịch thuê và đặt cọc)
 -- =========================================================
@@ -94,4 +94,80 @@ BEGIN
     CREATE POLICY "Public update orders" ON public.orders FOR UPDATE USING (true);
   END IF;
 END
-$\$;
+$$;
+
+-- =========================================================
+-- 4. BẢNG TÀI KHOẢN NGƯỜI DÙNG & KHÁCH HÀNG (Users)
+-- =========================================================
+CREATE TABLE IF NOT EXISTS public.users (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  phone TEXT,
+  avatar TEXT,
+  role TEXT DEFAULT 'buyer' CHECK (role IN ('buyer', 'seller', 'admin')),
+  rating NUMERIC(3, 2) DEFAULT 5.0,
+  rating_count INTEGER DEFAULT 0,
+  location TEXT DEFAULT 'Việt Nam',
+  bio TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =========================================================
+-- 5. BẢNG ĐÁNH GIÁ & NHẬN XÉT (Reviews / Comments)
+-- =========================================================
+CREATE TABLE IF NOT EXISTS public.reviews (
+  id TEXT PRIMARY KEY,
+  product_id TEXT REFERENCES public.products(id) ON DELETE CASCADE,
+  user_id TEXT,
+  user_name TEXT NOT NULL,
+  user_avatar TEXT,
+  rating INTEGER DEFAULT 5 CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT NOT NULL,
+  type TEXT DEFAULT 'rent' CHECK (type IN ('buy', 'rent')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =========================================================
+-- 6. BẢNG TIN NHẮN TRÒ CHUYỆN (Messages)
+-- =========================================================
+CREATE TABLE IF NOT EXISTS public.messages (
+  id TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  sender_id TEXT NOT NULL,
+  sender_name TEXT NOT NULL,
+  sender_avatar TEXT,
+  content TEXT NOT NULL,
+  image_url TEXT,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Bật RLS và cấp quyền Public cho 3 bảng mới
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public all users') THEN
+    CREATE POLICY "Public all users" ON public.users FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public all reviews') THEN
+    CREATE POLICY "Public all reviews" ON public.reviews FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public all messages') THEN
+    CREATE POLICY "Public all messages" ON public.messages FOR ALL USING (true) WITH CHECK (true);
+  END IF;
+END
+$$;
+
+-- Seed tài khoản mẫu vào bảng users
+INSERT INTO public.users (id, name, email, phone, avatar, role, rating, location, bio)
+VALUES
+  ('user-seller-1', 'Bi Bi Boutique (Linh Bi)', 'bibi.fashion@gmail.com', '0795623097', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80', 'seller', 4.9, 'Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng', 'Chuyên cung cấp và cho thuê đầm dạ hội, áo dài cưới thiết kế thủ công tinh xảo.'),
+  ('user-admin', 'Quản Trị Viên Bi Bi', 'admin@bibifashion.vn', '0901234567', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80', 'admin', 5.0, 'Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng', 'Ban Quản Trị Hệ Thống Sàn Thương Mại Điện Tử Thời Trang Bi Bi.'),
+  ('user-buyer-1', 'Hoàng Mai Yến', 'maiyen.hoang@gmail.com', '0912349876', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80', 'buyer', 5.0, 'Cầu Giấy, Hà Nội', 'Đam mê thời trang tiệc và chụp ảnh ngoại cảnh.')
+ON CONFLICT (id) DO NOTHING;
