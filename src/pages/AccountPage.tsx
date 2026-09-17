@@ -184,26 +184,26 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* User Card Top */}
-        <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-sm mb-8 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
-          <div className="flex flex-col md:flex-row items-center gap-5 text-center md:text-left">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 lg:p-8 border border-gray-100 shadow-sm mb-6 sm:mb-8 flex flex-col md:flex-row items-center md:items-start justify-between gap-5 sm:gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 text-center sm:text-left w-full md:w-auto">
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-20 h-20 rounded-full object-cover ring-4 ring-brand-500/20 shadow-md"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-brand-500/20 shadow-md shrink-0"
             />
-            <div>
-              <div className="flex items-center gap-2 justify-center md:justify-start">
-                <h1 className="font-serif text-xl font-bold text-gray-900">{currentUser.name}</h1>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                <h1 className="font-serif text-lg sm:text-xl font-bold text-gray-900">{currentUser.name}</h1>
                 <span className="bg-brand-50 text-brand-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-brand-200">
                   {currentUser.role === 'seller' ? 'Chủ Shop' : currentUser.role === 'admin' ? 'Quản Trị Viên' : 'Khách Mua Hàng'}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mt-1 flex items-center gap-3 justify-center md:justify-start">
+              <p className="text-xs text-gray-500 mt-1 flex items-center gap-2 justify-center sm:justify-start flex-wrap">
                 <span>{currentUser.email}</span>
                 <span>•</span>
                 <span>{currentUser.phone}</span>
               </p>
-              <div className="flex items-center gap-3 mt-2 text-xs text-gray-600 justify-center md:justify-start">
+              <div className="flex items-center gap-3 mt-2 text-xs text-gray-600 justify-center sm:justify-start">
                 <div className="flex items-center gap-1 text-amber-500 font-semibold">
                   <Star className="w-3.5 h-3.5 fill-amber-400" />
                   <span>{currentUser.rating} ({currentUser.ratingCount} đánh giá)</span>
@@ -214,11 +214,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto justify-center sm:justify-start">
             {isOwner && (
               <button
                 onClick={onNavigateSell}
-                className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-1.5 transition-all"
+                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 flex items-center justify-center gap-1.5 transition-all"
               >
                 <PlusCircle className="w-4 h-4" />
                 <span>Đăng Mẫu Váy Mới</span>
@@ -226,7 +226,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             )}
             <button
               onClick={onOpenChat}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
             >
               <MessageSquare className="w-4 h-4 text-brand-600" />
               <span>Tin nhắn với shop</span>
@@ -234,11 +234,43 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           </div>
         </div>
 
+        {/* Mobile Horizontal Tabs Bar (Only on mobile & tablet) */}
+        <div className="lg:hidden flex overflow-x-auto no-scrollbar gap-2 pb-3 mb-5 -mx-4 px-4 scroll-smooth">
+          {menuTabs.map((tab: any) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                activeTab === tab.id
+                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
+                  : 'bg-white text-gray-700 border border-gray-200/80 shadow-2xs hover:bg-gray-50'
+              }`}
+            >
+              <tab.icon className={`w-3.5 h-3.5 ${activeTab === tab.id ? 'text-white' : 'text-gray-400'}`} />
+              <span>{tab.label}</span>
+              {tab.badge && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  activeTab === tab.id ? 'bg-white text-brand-700' : (tab.badgeColor || 'bg-gray-100 text-gray-700')
+                }`}>
+                  {tab.badge}
+                </span>
+              )}
+            </button>
+          ))}
+          <button
+            onClick={logout}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Đăng xuất</span>
+          </button>
+        </div>
+
         {/* 2-column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Sidebar Menu (3 cols) */}
-          <div className="lg:col-span-3 space-y-2">
+          {/* Sidebar Menu (3 cols - Desktop Only) */}
+          <div className="hidden lg:block lg:col-span-3 space-y-2">
             <div className="bg-white rounded-3xl p-3 border border-gray-100 shadow-sm space-y-1">
               {menuTabs.map((tab: any) => (
                 <button
@@ -280,8 +312,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             {/* TAB: OVERVIEW */}
             {activeTab === 'overview' && (
               <div className="space-y-6">
-                {/* Stats cards */}
-                <div className={`grid grid-cols-1 sm:grid-cols-2 ${isOwner ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
+                {/* Stats cards - 2 cols on mobile, 4 on desktop */}
+                <div className={`grid grid-cols-2 ${isOwner ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 sm:gap-4`}>
                   <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
                     <span className="text-xs text-gray-500 font-medium">Sản phẩm đang kinh doanh</span>
                     <h3 className="font-serif text-2xl font-bold text-gray-900 mt-1">{myProducts.length}</h3>

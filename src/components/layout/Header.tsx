@@ -462,6 +462,48 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Bảng điều khiển Quản trị</span>
             </button>
           </div>
+
+          {/* User Account / Auth in Mobile Drawer */}
+          <div className="pt-2 border-t border-gray-100">
+            {currentUser ? (
+              <div className="p-3 bg-brand-50/50 rounded-2xl border border-brand-100/80 space-y-2">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-brand-500/30 shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-gray-900 truncate">{currentUser.name}</p>
+                    <span className="inline-block text-[10px] font-semibold text-brand-700 bg-white px-2 py-0.5 rounded-full border border-brand-200 mt-0.5">
+                      {currentUser.role === 'seller' ? '👑 Chủ shop' : currentUser.role === 'admin' ? '🛡️ Admin' : '🛍️ Khách mua'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Đăng xuất tài khoản</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsAuthModalOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Đăng Nhập / Đăng Ký Ngay</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
