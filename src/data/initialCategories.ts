@@ -1,4 +1,11 @@
-﻿import { Category } from '../types';
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  description: string;
+  image: string;
+}
 
 export const CATEGORIES: Category[] = [
   {
