@@ -271,13 +271,22 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleChatWithSeller}
-                    className="px-3 py-1.5 rounded-xl bg-white border border-brand-300 text-brand-700 text-xs font-medium hover:bg-brand-50 flex items-center gap-1.5 transition-colors shadow-sm"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span>Nhắn tin</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href="https://zalo.me/0795623097"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold hover:bg-blue-100 flex items-center gap-1.5 transition-colors shadow-sm"
+                    >
+                      <span>Chat Zalo Shop</span>
+                    </a>
+                    <a
+                      href="tel:0795623097"
+                      className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 flex items-center gap-1.5 transition-colors shadow-sm"
+                    >
+                      <span>Gọi shop</span>
+                    </a>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-200/60 text-center text-[10px] text-gray-600">
