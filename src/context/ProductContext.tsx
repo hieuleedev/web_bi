@@ -62,7 +62,25 @@ function mapDbToProduct(row: any): Product {
     careInstructions: row.care_instructions,
     sizeGuide: row.size_guide,
     bookedDates: row.booked_dates || [],
-    reviews: row.reviews || []
+    reviews: (() => {
+      try {
+        const saved = localStorage.getItem(`bibi_reviews_${row.id}`);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+      if (row.id === 'prod-1') {
+        return [{
+          id: 'rev-1',
+          userId: 'user-buyer-1',
+          userName: 'Hoàng Mai Yến',
+          userAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
+          rating: 5,
+          comment: 'Váy ở ngoài đẹp xuất sắc! Vải tơ mềm nhẹ, form dáng tiểu thư chụp ảnh lên màu trắng rất trong trẻo.',
+          createdAt: '2024-03-05T14:30:00Z',
+          type: 'rent'
+        }];
+      }
+      return [];
+    })()
   };
 }
 
@@ -223,12 +241,15 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
   };
 
-  const addReview = (productId: string, reviewData: Omit<Review, 'id' | 'createdAt'>) => {
+  const addReview = async (productId: string, reviewData: Omit<Review, 'id' | 'createdAt'>) => {
     const newReview: Review = {
       ...reviewData,
       id: `rev-${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
+
+    let updatedRating = 5.0;
+    let updatedCount = 1;
 
     setProducts((prev) =>
       prev.map((p) => {
@@ -240,6 +261,14 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
           nextReviews.reduce((sum, r) => sum + r.rating, 0) / nextCount
         ).toFixed(1);
 
+        updatedRating = nextRating;
+        updatedCount = nextCount;
+
+        // Save reviews per product in localStorage
+        try {
+          localStorage.setItem(`bibi_reviews_${productId}`, JSON.stringify(nextReviews));
+        } catch (e) {}
+
         return {
           ...p,
           reviews: nextReviews,
@@ -248,6 +277,16 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         };
       })
     );
+
+    // Sync updated rating and reviewsCount directly into Supabase Cloud DB
+    try {
+      await supabase.from('products').update({
+        rating: updatedRating,
+        reviews_count: updatedCount
+      }).eq('id', productId);
+    } catch (err) {
+      console.warn('Could not sync review rating to Supabase', err);
+    }
   };
 
   const adminUpdateStatus = (productId: string, status: ProductStatus) => {
