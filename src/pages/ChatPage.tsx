@@ -26,11 +26,23 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onBack, onViewProduct }) => 
   const activeConv = conversations.find((c) => c.id === activeConversationId) || conversations[0];
   const currentMessages = activeConv ? messages[activeConv.id] || [] : [];
 
+  const guestUser: any = currentUser || {
+    id: 'guest-customer',
+    name: 'Khách hàng',
+    email: 'guest@bibifashion.vn',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    role: 'buyer',
+    rating: 5.0,
+    ratingCount: 1,
+    location: 'Việt Nam',
+    joinedDate: new Date().toISOString(),
+  };
+
   const handleSend = async (textToSend?: string) => {
     const text = textToSend || inputMessage;
-    if (!text.trim() || !activeConv || !currentUser) return;
+    if (!text.trim() || !activeConv) return;
 
-    await sendMessage(activeConv.id, text.trim(), currentUser);
+    await sendMessage(activeConv.id, text.trim(), guestUser);
     setInputMessage('');
   };
 
@@ -159,7 +171,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onBack, onViewProduct }) => 
                 {/* Messages Feed */}
                 <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-[#faf9f8]/60">
                   {currentMessages.map((msg) => {
-                    const isMe = msg.senderId === currentUser?.id;
+                    const isMe = msg.senderId === guestUser.id || (currentUser && msg.senderId === currentUser.id);
 
                     return (
                       <div

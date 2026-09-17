@@ -145,28 +145,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </div>
 
-          {mode === 'register' && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Loại tài khoản</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRole('buyer')}
-                  className={role === 'buyer' ? 'py-2 text-xs rounded-xl border text-center font-medium bg-brand-50 border-brand-500 text-brand-700' : 'py-2 text-xs rounded-xl border text-center font-medium border-gray-200 text-gray-600'}
-                >
-                  Khách mua & thuê đồ
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('seller')}
-                  className={role === 'seller' ? 'py-2 text-xs rounded-xl border text-center font-medium bg-brand-50 border-brand-500 text-brand-700' : 'py-2 text-xs rounded-xl border text-center font-medium border-gray-200 text-gray-600'}
-                >
-                  Chủ shop / Cho thuê
-                </button>
-              </div>
-            </div>
-          )}
-
           <button
             type="submit"
             className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center gap-2"

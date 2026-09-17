@@ -98,6 +98,7 @@ export function AppContent() {
             productId={selectedProductId}
             onBack={() => setCurrentView('shop')}
             onGoToCart={() => setCurrentView('cart')}
+            onOpenChat={() => setCurrentView('chat')}
           />
         )}
 

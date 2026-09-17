@@ -18,7 +18,7 @@ import {
   ChevronRight,
   Send
 } from 'lucide-react';
-import { Product, Review } from '../types';
+import { Product, Review, User } from '../types';
 import { formatVND, formatDateVN, calculateRentalDays, calculateRentalPrice, checkRentalOverlap } from '../utils/helpers';
 import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
@@ -31,12 +31,14 @@ interface ProductDetailPageProps {
   productId: string;
   onBack: () => void;
   onGoToCart: () => void;
+  onOpenChat?: () => void;
 }
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   productId,
   onBack,
   onGoToCart,
+  onOpenChat,
 }) => {
   const { getProductById, wishlistIds, toggleLike, addReview } = useProducts();
   const { addToCart } = useCart();
@@ -271,20 +273,43 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const guestUser: User = currentUser || {
+                          id: `guest-${Date.now()}`,
+                          name: 'Khách hàng',
+                          email: 'guest@bibifashion.vn',
+                          phone: '0795623097',
+                          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+                          role: 'buyer' as const,
+                          rating: 5.0,
+                          ratingCount: 1,
+                          location: 'Việt Nam',
+                          joinedDate: new Date().toISOString(),
+                        };
+                        startProductChat(product, guestUser);
+                        if (onOpenChat) onOpenChat();
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-brand-600 text-white text-xs font-semibold hover:bg-brand-700 flex items-center gap-1.5 transition-colors shadow-sm shadow-brand-500/20"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>Nhắn tin tư vấn</span>
+                    </button>
                     <a
                       href="https://zalo.me/0795623097"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold hover:bg-blue-100 flex items-center gap-1.5 transition-colors shadow-sm"
                     >
-                      <span>Chat Zalo Shop</span>
+                      <span>Zalo shop</span>
                     </a>
                     <a
                       href="tel:0795623097"
                       className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 flex items-center gap-1.5 transition-colors shadow-sm"
                     >
-                      <span>Gọi shop</span>
+                      <span>Gọi Hotline</span>
                     </a>
                   </div>
                 </div>

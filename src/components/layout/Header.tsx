@@ -55,11 +55,15 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  const isOwnerOrAdmin = currentUser?.role === 'seller' || currentUser?.role === 'admin';
+
   const navItems = [
     { label: 'Trang Chủ', view: 'home' },
     { label: 'Mua Quần Áo', view: 'shop' },
     { label: 'Thuê Quần Áo', view: 'rent', badge: 'Hot' },
-    { label: 'Đăng Sản Phẩm', view: 'sell', icon: PlusCircle, highlight: true },
+    ...(isOwnerOrAdmin
+      ? [{ label: 'Đăng Mẫu Váy (Chủ Shop)', view: 'sell', icon: PlusCircle, highlight: true }]
+      : []),
   ];
 
   return (
@@ -287,15 +291,22 @@ export const Header: React.FC<HeaderProps> = ({
                           className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                         >
                           <Package className="w-4 h-4 text-gray-400" />
-                          <span>Đơn hàng & Đơn thuê của tôi</span>
+                          <span>Đơn hàng & Lịch thuê của tôi</span>
                         </button>
-                        {(currentUser.role === 'seller' || currentUser.role === 'admin') && (
+                        <button
+                          onClick={() => setCurrentView('chat')}
+                          className="w-full px-4 py-2 text-left text-xs text-brand-600 hover:bg-brand-50 flex items-center gap-2 font-medium"
+                        >
+                          <MessageSquare className="w-4 h-4 text-brand-600" />
+                          <span>Nhắn tin với Chủ Shop</span>
+                        </button>
+                        {isOwnerOrAdmin && (
                           <button
                             onClick={() => setCurrentView('my-products')}
-                            className="w-full px-4 py-2 text-left text-xs text-brand-700 font-medium hover:bg-brand-50 flex items-center gap-2"
+                            className="w-full px-4 py-2 text-left text-xs text-brand-700 font-semibold hover:bg-brand-50 flex items-center gap-2"
                           >
                             <Layers className="w-4 h-4 text-brand-500" />
-                            <span>Quản lý sản phẩm shop ({currentUser.role === 'seller' ? 'Chủ Shop' : 'Admin'})</span>
+                            <span>Quản lý kho váy của shop</span>
                           </button>
                         )}
                         {currentUser.role === 'admin' && (

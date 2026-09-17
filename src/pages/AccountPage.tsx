@@ -91,12 +91,18 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     showToast('Đã cập nhật thông tin cá nhân lên hệ thống thành công!', 'success');
   };
 
+  const isOwner = currentUser.role === 'seller' || currentUser.role === 'admin';
+
   const menuTabs = [
     { id: 'overview', label: 'Tổng quan tài khoản', icon: UserIcon },
-    { id: 'my-products', label: `Sản phẩm của tôi (${myProducts.length})`, icon: Layers },
-    { id: 'orders', label: `Đơn mua & Đơn thuê (${myOrders.length})`, icon: Package },
-    { id: 'seller-orders', label: `Đơn khách đặt (${sellerOrders.length})`, icon: Calendar },
-    { id: 'wishlist', label: `Yêu thích (${wishlistProducts.length})`, icon: Heart },
+    ...(isOwner
+      ? [
+          { id: 'my-products', label: `Quản lý kho váy (${myProducts.length})`, icon: Layers },
+          { id: 'seller-orders', label: `Đơn khách đặt thuê/mua (${sellerOrders.length})`, icon: Calendar },
+        ]
+      : []),
+    { id: 'orders', label: `Lịch sử đơn mua & thuê (${myOrders.length})`, icon: Package },
+    { id: 'wishlist', label: `Váy yêu thích (${wishlistProducts.length})`, icon: Heart },
     { id: 'profile', label: 'Chỉnh sửa thông tin', icon: Settings },
   ];
 
@@ -136,19 +142,21 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           </div>
 
           <div className="flex gap-2">
-            <button
-              onClick={onNavigateSell}
-              className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-1.5 transition-all"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Đăng Món Đồ Mới</span>
-            </button>
+            {isOwner && (
+              <button
+                onClick={onNavigateSell}
+                className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-1.5 transition-all"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Đăng Mẫu Váy Mới</span>
+              </button>
+            )}
             <button
               onClick={onOpenChat}
               className="px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <MessageSquare className="w-4 h-4 text-brand-600" />
-              <span>Tin nhắn</span>
+              <span>Tin nhắn với shop</span>
             </button>
           </div>
         </div>
