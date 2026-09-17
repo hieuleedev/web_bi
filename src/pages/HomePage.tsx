@@ -114,19 +114,19 @@ export const HomePage: React.FC<HomePageProps> = ({
                 {/* Main Hero Card */}
                 <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[3/4] bg-gray-100 group">
                   <img
-                    src="https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80"
-                    alt="Thời trang dạ hội Bi Bi"
+                    src="https://images.unsplash.com/photo-1516575334481-f85287c2c82d?auto=format&fit=crop&w=800&q=80"
+                    alt="Thời trang nàng thơ Bi Bi"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6 text-white">
                     <span className="bg-brand-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full w-fit mb-2">
-                      Bộ Sưu Tập Mới 2026
+                      Bộ Sưu Tập Nàng Thơ 2026
                     </span>
                     <h3 className="font-serif text-lg font-bold">
-                      Đầm Dạ Hội Sparkling Rose Gold
+                      Đầm Trắng Nàng Thơ Cổ Vuông Tay Bồng
                     </h3>
                     <p className="text-xs text-gray-300 mt-1">
-                      Giá thuê chỉ từ <strong className="text-emerald-400">450.000 ₫</strong> /ngày
+                      Giá thuê chỉ từ <strong className="text-emerald-400">250.000 ₫</strong> /ngày
                     </p>
                   </div>
                 </div>
