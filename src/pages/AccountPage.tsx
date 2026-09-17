@@ -436,9 +436,31 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   <div className="space-y-4">
                     {sellerOrders.map((order) => (
                       <div key={order.id} className="p-5 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-3">
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200/60 text-xs">
-                          <span className="font-mono font-bold text-brand-700">{order.code}</span>
-                          <span className="font-semibold text-gray-700">Khách: {order.customerName} ({order.customerPhone})</span>
+                        <div className="flex flex-wrap justify-between items-center pb-2 border-b border-gray-200/60 text-xs gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-brand-700">{order.code}</span>
+                            <span className="text-gray-400">•</span>
+                            <span className="font-semibold text-gray-800">{order.customerName}</span>
+                          </div>
+                          
+                          {/* Quick customer actions */}
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={`tel:${order.customerPhone}`}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[11px] hover:bg-emerald-100 flex items-center gap-1"
+                            >
+                              <Phone className="w-3 h-3" />
+                              <span>Gọi: {order.customerPhone}</span>
+                            </a>
+                            <a
+                              href={`https://zalo.me/${order.customerPhone.replace(/\s+/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold text-[11px] hover:bg-blue-100 flex items-center gap-1"
+                            >
+                              <span>Zalo khách</span>
+                            </a>
+                          </div>
                         </div>
 
                         <div className="text-xs text-gray-600 space-y-1">
