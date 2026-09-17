@@ -43,7 +43,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const [customPrice, setCustomPrice] = useState<number>(
     selectedProduct?.rentPrice3Days || selectedProduct?.rentPrice1Day || 350000
   );
-  const [customDeposit, setCustomDeposit] = useState<number>(selectedProduct?.deposit || 500000);
+  const [customDeposit, setCustomDeposit] = useState<number>(selectedProduct?.deposit || 0);
   const [quantity, setQuantity] = useState(1);
 
   // Customer Info
@@ -75,7 +75,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
     if (prod) {
       if (mode === 'rent') {
         setCustomPrice(prod.rentPrice3Days || prod.rentPrice1Day || 300000);
-        setCustomDeposit(prod.deposit || 500000);
+        setCustomDeposit(prod.deposit || 0);
       } else {
         setCustomPrice(prod.buyPrice || 1200000);
         setCustomDeposit(0);
@@ -88,7 +88,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
     if (selectedProduct) {
       if (newMode === 'rent') {
         setCustomPrice(selectedProduct.rentPrice3Days || selectedProduct.rentPrice1Day || 300000);
-        setCustomDeposit(selectedProduct.deposit || 500000);
+        setCustomDeposit(selectedProduct.deposit || 0);
       } else {
         setCustomPrice(selectedProduct.buyPrice || 1200000);
         setCustomDeposit(0);

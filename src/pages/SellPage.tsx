@@ -35,13 +35,13 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   const [colorsInput, setColorsInput] = useState('Trắng, Đen, Hồng pastel');
 
   // Type & Pricing
-  const [productType, setProductType] = useState<ProductType>('both');
+  const [productType, setProductType] = useState<ProductType>('rent');
   const [buyPrice, setBuyPrice] = useState<number>(1500000);
   const [originalPrice, setOriginalPrice] = useState<number>(1850000);
   const [rentPrice1Day, setRentPrice1Day] = useState<number>(200000);
   const [rentPrice3Days, setRentPrice3Days] = useState<number>(450000);
   const [rentPrice7Days, setRentPrice7Days] = useState<number>(800000);
-  const [deposit, setDeposit] = useState<number>(800000);
+  const [deposit, setDeposit] = useState<number>(0);
 
   // Description & Location
   const [description, setDescription] = useState('');
@@ -53,9 +53,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   const [shippingArea] = useState('Toàn quốc');
 
   // Image Upload state
-  const [images, setImages] = useState<string[]>([
-    'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80'
-  ]);
+  const [images, setImages] = useState<string[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
 
   const handleSubmit = async (isDraft = false) => {

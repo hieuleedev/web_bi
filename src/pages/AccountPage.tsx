@@ -74,7 +74,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [productSearch, setProductSearch] = useState('');
   const [productCategory, setProductCategory] = useState('all');
   const [productRentalFilter, setProductRentalFilter] = useState<'all' | 'renting_now' | 'available' | 'hidden'>('all');
-  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'rent' | 'buy' | 'both'>('all');
+  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'rent' | 'buy' | 'both'>('rent');
   const [productPage, setProductPage] = useState(1);
   const productsPerPage = 6;
 
@@ -571,9 +571,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                   {Boolean(p.buyPrice) && p.buyPrice! > 0 && (
                                     <span>Giá bán: <strong className="text-gray-900 font-semibold">{formatVND(p.buyPrice!)}</strong></span>
                                   )}
-                                  {Boolean(p.deposit) && p.deposit! > 0 && (
-                                    <span>Cọc: <strong className="text-amber-800 font-semibold">{formatVND(p.deposit!)}</strong></span>
-                                  )}
+                                  <span>Cọc: <strong className="text-emerald-700 font-semibold">{p.deposit && p.deposit > 0 ? formatVND(p.deposit) : '0 đ (Miễn cọc)'}</strong></span>
                                 </div>
 
                                 {/* Stats row */}
