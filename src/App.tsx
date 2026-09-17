@@ -170,6 +170,26 @@ export function AppContent() {
           }}
         />
       )}
+
+      {/* Floating Hotline & Zalo Contact Widget */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2.5">
+        <a
+          href="https://zalo.me/0795623097"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30 text-xs font-bold transition-all hover:scale-105 group"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Chat Zalo</span>
+        </a>
+
+        <a
+          href="tel:0795623097"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-500/30 text-xs font-bold transition-all hover:scale-105"
+        >
+          <span>Hotline: 079 562 3097</span>
+        </a>
+      </div>
     </div>
   );
 }

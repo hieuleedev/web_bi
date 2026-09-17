@@ -15,13 +15,15 @@ import {
   Package,
   Layers,
   Settings,
-  LogOut
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useProducts } from '../../context/ProductContext';
 import { useChat } from '../../context/ChatContext';
 import { UserRole } from '../../types';
+import { AuthModal } from '../auth/AuthModal';
 
 interface HeaderProps {
   currentView: string;
@@ -43,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,42 +64,60 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all">
-      {/* Top bar */}
+      {/* Top bar with Hotline, Zalo and Login */}
       <div className="bg-dark-900 text-brand-100 text-xs py-2 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
           <div className="flex items-center gap-2 text-center sm:text-left">
             <span className="bg-brand-500/20 text-brand-300 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-brand-500/30">
-              Ưu đãi Bi Bi
+              Hotline Cửa Hàng
             </span>
-            <span>Miễn phí giao nhận cho đơn thuê từ 2 sản phẩm • Giặt hấp chuẩn 5 sao</span>
+            <span>Núi Thành - Đà Nẵng: <strong className="text-white">(+84) 79 562 3097</strong> • Miễn phí giặt hấp chuẩn 5 sao</span>
           </div>
 
-          <div className="flex items-center gap-4 text-[11px]">
-            {/* Fast Role Switcher for easy testing and demonstration */}
-            <div className="flex items-center gap-1.5 bg-dark-800 px-2.5 py-1 rounded-full border border-gray-700">
-              <span className="text-gray-400">Đang thử nghiệm vai trò:</span>
-              {(['seller', 'buyer', 'admin'] as UserRole[]).map((role) => (
-                <button
-                  key={role}
-                  onClick={() => switchRole(role)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                    currentUser?.role === role
-                      ? 'bg-brand-500 text-white shadow-sm'
-                      : 'text-gray-300 hover:text-white'
-                  }`}
-                >
-                  {role === 'seller' ? 'Chủ Shop' : role === 'admin' ? 'Admin' : 'Khách Hàng'}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setCurrentView('admin')}
-              className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors font-medium"
+          <div className="flex items-center gap-3 text-[11px]">
+            {/* Zalo Direct Chat */}
+            <a
+              href="https://zalo.me/0795623097"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-colors"
             >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Quản Trị</span>
-            </button>
+              <span>Chat Zalo</span>
+            </a>
+
+            {/* Admin shortcut if user is admin */}
+            {currentUser?.role === 'admin' && (
+              <button
+                onClick={() => setCurrentView('admin')}
+                className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors font-semibold"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Quản Trị Admin</span>
+              </button>
+            )}
+
+            {/* Auth Action */}
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <span className="text-gray-300">
+                  Chào, <strong>{currentUser.name}</strong> ({currentUser.role === 'admin' ? '🛡️ Admin' : currentUser.role === 'seller' ? '👑 Chủ Shop' : '🛍️ Khách Hàng'})
+                </span>
+                <button
+                  onClick={logout}
+                  className="text-gray-400 hover:text-rose-400 transition-colors underline ml-1"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="flex items-center gap-1 text-brand-300 hover:text-white font-semibold transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Đăng Nhập / Đăng Ký</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -251,46 +272,65 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                   )}
 
-                  <div className="py-1">
-                    <button
-                      onClick={() => setCurrentView('account')}
-                      className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <UserIcon className="w-4 h-4 text-gray-400" />
-                      <span>Thông tin tài khoản</span>
-                    </button>
-                    <button
-                      onClick={() => setCurrentView('orders')}
-                      className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <Package className="w-4 h-4 text-gray-400" />
-                      <span>Đơn hàng & Đơn thuê của tôi</span>
-                    </button>
-                    <button
-                      onClick={() => setCurrentView('my-products')}
-                      className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <Layers className="w-4 h-4 text-gray-400" />
-                      <span>Quản lý sản phẩm đã đăng</span>
-                    </button>
-                    <button
-                      onClick={() => setCurrentView('admin')}
-                      className="w-full px-4 py-2 text-left text-xs text-amber-600 font-medium hover:bg-amber-50 flex items-center gap-2"
-                    >
-                      <ShieldCheck className="w-4 h-4 text-amber-500" />
-                      <span>Trang Quản Trị Hệ Thống</span>
-                    </button>
-                  </div>
+                  {currentUser ? (
+                    <>
+                      <div className="py-1">
+                        <button
+                          onClick={() => setCurrentView('account')}
+                          className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <UserIcon className="w-4 h-4 text-gray-400" />
+                          <span>Thông tin tài khoản</span>
+                        </button>
+                        <button
+                          onClick={() => setCurrentView('orders')}
+                          className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Package className="w-4 h-4 text-gray-400" />
+                          <span>Đơn hàng & Đơn thuê của tôi</span>
+                        </button>
+                        {(currentUser.role === 'seller' || currentUser.role === 'admin') && (
+                          <button
+                            onClick={() => setCurrentView('my-products')}
+                            className="w-full px-4 py-2 text-left text-xs text-brand-700 font-medium hover:bg-brand-50 flex items-center gap-2"
+                          >
+                            <Layers className="w-4 h-4 text-brand-500" />
+                            <span>Quản lý sản phẩm shop ({currentUser.role === 'seller' ? 'Chủ Shop' : 'Admin'})</span>
+                          </button>
+                        )}
+                        {currentUser.role === 'admin' && (
+                          <button
+                            onClick={() => setCurrentView('admin')}
+                            className="w-full px-4 py-2 text-left text-xs text-amber-600 font-bold hover:bg-amber-50 flex items-center gap-2"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-amber-500" />
+                            <span>Bảng Điều Khiển Quản Trị Hệ Thống</span>
+                          </button>
+                        )}
+                      </div>
 
-                  <div className="border-t border-gray-100 pt-1 mt-1">
-                    <button
-                      onClick={logout}
-                      className="w-full px-4 py-2 text-left text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
-                    >
-                      <LogOut className="w-4 h-4 text-rose-500" />
-                      <span>Đăng xuất</span>
-                    </button>
-                  </div>
+                      <div className="border-t border-gray-100 pt-1 mt-1">
+                        <button
+                          onClick={logout}
+                          className="w-full px-4 py-2 text-left text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                        >
+                          <LogOut className="w-4 h-4 text-rose-500" />
+                          <span>Đăng xuất tài khoản</span>
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-3">
+                      <p className="text-xs text-gray-600 mb-3 text-center">Bạn chưa đăng nhập vào hệ thống</p>
+                      <button
+                        onClick={() => setIsAuthModalOpen(true)}
+                        className="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center justify-center gap-1.5"
+                      >
+                        <LogIn className="w-4 h-4" />
+                        <span>Đăng Nhập / Đăng Ký</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -366,6 +406,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       )}
+
+      {/* Auth Modal for Real Login / Registration */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </header>
   );
 };
