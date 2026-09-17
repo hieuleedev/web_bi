@@ -128,7 +128,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
   }, [orders]);
 
-  // Sync orders from Supabase on mount
+  // Sync orders from Supabase on mount and Realtime
   useEffect(() => {
     async function fetchOrders() {
       try {
@@ -164,6 +164,22 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
     }
     fetchOrders();
+
+    // Supabase Realtime for orders
+    const channel = supabase
+      .channel('realtime_orders')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => {
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const createOrder = async (params: CreateOrderParams): Promise<Order | null> => {

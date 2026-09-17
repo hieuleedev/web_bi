@@ -77,6 +77,70 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
 
+  // Fetch and sync messages realtime from Supabase
+  useEffect(() => {
+    async function fetchAllMessages() {
+      try {
+        const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
+        if (!error && data && data.length > 0) {
+          const grouped: Record<string, ChatMessage[]> = {};
+          data.forEach((row: any) => {
+            const msg: ChatMessage = {
+              id: row.id,
+              conversationId: row.conversation_id,
+              senderId: row.sender_id,
+              senderName: row.sender_name,
+              senderAvatar: row.sender_avatar,
+              content: row.content,
+              imageUrl: row.image_url,
+              timestamp: row.created_at,
+              isRead: row.is_read
+            };
+            if (!grouped[row.conversation_id]) {
+              grouped[row.conversation_id] = [];
+            }
+            grouped[row.conversation_id].push(msg);
+          });
+          setMessages(grouped);
+        }
+      } catch (e) {
+        console.warn('Error fetching messages from Supabase', e);
+      }
+    }
+    fetchAllMessages();
+
+    // Subscribe to new incoming messages realtime
+    const channel = supabase
+      .channel('realtime_messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload: any) => {
+          const row = payload.new;
+          const incoming: ChatMessage = {
+            id: row.id,
+            conversationId: row.conversation_id,
+            senderId: row.sender_id,
+            senderName: row.sender_name,
+            senderAvatar: row.sender_avatar,
+            content: row.content,
+            imageUrl: row.image_url,
+            timestamp: row.created_at,
+            isRead: row.is_read
+          };
+          setMessages((prev) => ({
+            ...prev,
+            [row.conversation_id]: [...(prev[row.conversation_id] || []), incoming]
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   useEffect(() => {
     localStorage.setItem(CHAT_CONV_KEY, JSON.stringify(conversations));
   }, [conversations]);
