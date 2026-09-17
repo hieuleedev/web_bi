@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProductProvider } from './context/ProductContext';
@@ -22,15 +23,13 @@ import { RentalCalendarModal } from './components/product/RentalCalendarModal';
 import { Product } from './types';
 
 export function AppContent() {
-  const [currentView, setCurrentView] = useState<string>('home');
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [calendarProduct, setCalendarProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const handleViewProduct = (productId: string) => {
-    setSelectedProductId(productId);
-    setCurrentView('product-detail');
+    navigate(`/product/${productId}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -40,13 +39,20 @@ export function AppContent() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setCurrentView('shop');
+    navigate('/shop');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSelectCategory = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    setCurrentView('shop');
+    navigate('/shop');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleGenericNavigate = (view: string) => {
+    if (view === 'home') navigate('/');
+    else if (view === 'my-products') navigate('/quan-ly-shop');
+    else navigate(`/${view}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -54,108 +60,207 @@ export function AppContent() {
     <div className="flex flex-col min-h-screen bg-[#faf9f8]">
       {/* Header */}
       <Header
-        currentView={currentView}
-        setCurrentView={(view) => {
-          setCurrentView(view);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
         onOpenProductDetail={handleViewProduct}
         onSearch={handleSearch}
       />
 
-      {/* Main Pages */}
+      {/* Main Pages with Full URL Routing */}
       <main className="flex-1">
-        {currentView === 'home' && (
-          <HomePage
-            onNavigate={(view) => {
-              setCurrentView(view);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onViewProduct={handleViewProduct}
-            onOpenRentalCalendar={handleOpenRentalCalendar}
-            onSelectCategory={handleSelectCategory}
-          />
-        )}
-
-        {currentView === 'shop' && (
-          <ShopPage
-            initialSearch={searchQuery}
-            initialCategory={selectedCategory}
-            onViewProduct={handleViewProduct}
-            onOpenRentalCalendar={handleOpenRentalCalendar}
-          />
-        )}
-
-        {currentView === 'rent' && (
-          <RentPage
-            onViewProduct={handleViewProduct}
-            onOpenRentalCalendar={handleOpenRentalCalendar}
-          />
-        )}
-
-        {currentView === 'product-detail' && selectedProductId && (
-          <ProductDetailPage
-            productId={selectedProductId}
-            onBack={() => setCurrentView('shop')}
-            onGoToCart={() => setCurrentView('cart')}
-            onOpenChat={() => setCurrentView('chat')}
-          />
-        )}
-
-        {currentView === 'cart' && (
-          <CartPage
-            onContinueShopping={() => setCurrentView('shop')}
-            onProceedCheckout={() => setCurrentView('checkout')}
-            onViewProduct={handleViewProduct}
-          />
-        )}
-
-        {currentView === 'checkout' && (
-          <CheckoutPage
-            onBackToCart={() => setCurrentView('cart')}
-            onGoToOrderList={() => setCurrentView('orders')}
-          />
-        )}
-
-        {currentView === 'sell' && (
-          <SellPage
-            onSuccess={(newId) => {
-              handleViewProduct(newId);
-            }}
-            onCancel={() => setCurrentView('home')}
-          />
-        )}
-
-        {(currentView === 'account' ||
-          currentView === 'orders' ||
-          currentView === 'my-products' ||
-          currentView === 'wishlist') && (
-          <AccountPage
-            initialTab={
-              currentView === 'orders'
-                ? 'orders'
-                : currentView === 'my-products'
-                ? 'my-products'
-                : currentView === 'wishlist'
-                ? 'wishlist'
-                : 'overview'
+        <Routes>
+          {/* Home */}
+          <Route
+            path="/"
+            element={
+              <HomePage
+                onNavigate={handleGenericNavigate}
+                onViewProduct={handleViewProduct}
+                onOpenRentalCalendar={handleOpenRentalCalendar}
+                onSelectCategory={handleSelectCategory}
+              />
             }
-            onNavigateSell={() => setCurrentView('sell')}
-            onViewProduct={handleViewProduct}
-            onOpenChat={() => setCurrentView('chat')}
           />
-        )}
 
-        {currentView === 'chat' && (
-          <ChatPage
-            onBack={() => setCurrentView('home')}
-            onViewProduct={handleViewProduct}
+          {/* Shop */}
+          <Route
+            path="/shop"
+            element={
+              <ShopPage
+                initialSearch={searchQuery}
+                initialCategory={selectedCategory}
+                onViewProduct={handleViewProduct}
+                onOpenRentalCalendar={handleOpenRentalCalendar}
+              />
+            }
           />
-        )}
 
-        {currentView === 'admin' && (
-          <AdminPage onViewProduct={handleViewProduct} />
-        )}
+          {/* Rent */}
+          <Route
+            path="/rent"
+            element={
+              <RentPage
+                onViewProduct={handleViewProduct}
+                onOpenRentalCalendar={handleOpenRentalCalendar}
+              />
+            }
+          />
+
+          {/* Dedicated product detail URLs */}
+          <Route
+            path="/product/:id"
+            element={
+              <ProductDetailPage
+                onBack={() => navigate('/shop')}
+                onGoToCart={() => navigate('/cart')}
+                onOpenChat={() => navigate('/chat')}
+              />
+            }
+          />
+          <Route
+            path="/san-pham/:id"
+            element={
+              <ProductDetailPage
+                onBack={() => navigate('/shop')}
+                onGoToCart={() => navigate('/cart')}
+                onOpenChat={() => navigate('/chat')}
+              />
+            }
+          />
+
+          {/* Shop Inventory Management Route (/quan-ly-shop) */}
+          <Route
+            path="/quan-ly-shop"
+            element={
+              <AccountPage
+                initialTab="my-products"
+                onNavigateSell={() => navigate('/sell')}
+                onViewProduct={handleViewProduct}
+                onOpenChat={() => navigate('/chat')}
+              />
+            }
+          />
+          <Route
+            path="/seller/products"
+            element={
+              <AccountPage
+                initialTab="my-products"
+                onNavigateSell={() => navigate('/sell')}
+                onViewProduct={handleViewProduct}
+                onOpenChat={() => navigate('/chat')}
+              />
+            }
+          />
+          <Route
+            path="/seller/orders"
+            element={
+              <AccountPage
+                initialTab="seller-orders"
+                onNavigateSell={() => navigate('/sell')}
+                onViewProduct={handleViewProduct}
+                onOpenChat={() => navigate('/chat')}
+              />
+            }
+          />
+
+          {/* Account / User Profile / Customer Orders */}
+          <Route
+            path="/account"
+            element={
+              <AccountPage
+                initialTab="overview"
+                onNavigateSell={() => navigate('/sell')}
+                onViewProduct={handleViewProduct}
+                onOpenChat={() => navigate('/chat')}
+              />
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <AccountPage
+                initialTab="orders"
+                onNavigateSell={() => navigate('/sell')}
+                onViewProduct={handleViewProduct}
+                onOpenChat={() => navigate('/chat')}
+              />
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <AccountPage
+                initialTab="wishlist"
+                onNavigateSell={() => navigate('/sell')}
+                onViewProduct={handleViewProduct}
+                onOpenChat={() => navigate('/chat')}
+              />
+            }
+          />
+
+          {/* Cart & Checkout */}
+          <Route
+            path="/cart"
+            element={
+              <CartPage
+                onContinueShopping={() => navigate('/shop')}
+                onProceedCheckout={() => navigate('/checkout')}
+                onViewProduct={handleViewProduct}
+              />
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <CheckoutPage
+                onBackToCart={() => navigate('/cart')}
+                onGoToOrderList={() => navigate('/orders')}
+              />
+            }
+          />
+
+          {/* Sell / Upload New Dress */}
+          <Route
+            path="/sell"
+            element={
+              <SellPage
+                onSuccess={(newId) => {
+                  handleViewProduct(newId);
+                }}
+                onCancel={() => navigate('/')}
+              />
+            }
+          />
+          <Route
+            path="/dang-vay"
+            element={
+              <SellPage
+                onSuccess={(newId) => {
+                  handleViewProduct(newId);
+                }}
+                onCancel={() => navigate('/')}
+              />
+            }
+          />
+
+          {/* Chat */}
+          <Route
+            path="/chat"
+            element={
+              <ChatPage
+                onBack={() => navigate('/')}
+                onViewProduct={handleViewProduct}
+              />
+            }
+          />
+
+          {/* Admin Management */}
+          <Route
+            path="/admin"
+            element={<AdminPage onViewProduct={handleViewProduct} />}
+          />
+
+          {/* Catch-all redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {/* Footer */}

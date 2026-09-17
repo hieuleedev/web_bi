@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Heart,
@@ -28,53 +29,48 @@ import { useToast } from '../context/ToastContext';
 import { ProductScheduleManagerModal } from '../components/product/ProductScheduleManagerModal';
 
 interface ProductDetailPageProps {
-  productId: string;
-  onBack: () => void;
-  onGoToCart: () => void;
+  productId?: string;
+  onBack?: () => void;
+  onGoToCart?: () => void;
   onOpenChat?: () => void;
 }
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
-  productId,
+  productId: propProductId,
   onBack,
   onGoToCart,
   onOpenChat,
 }) => {
+  const params = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const effectiveId = propProductId || params.id || '';
+
   const { getProductById, wishlistIds, toggleLike, addReview } = useProducts();
   const { addToCart } = useCart();
   const { currentUser } = useAuth();
   const { startProductChat } = useChat();
   const { showToast } = useToast();
 
-  const product = getProductById(productId);
+  const product = getProductById(effectiveId);
 
-  if (!product) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-xl font-bold text-gray-800">Không tìm thấy sản phẩm!</h2>
-        <button
-          onClick={onBack}
-          className="mt-4 px-5 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700"
-        >
-          Quay lại danh sách
-        </button>
-      </div>
-    );
-  }
-
-  // Active image
-  const [activeImage, setActiveImage] = useState(product.featuredImage);
-  const isLiked = wishlistIds.includes(product.id);
+  const [activeImage, setActiveImage] = useState<string>('');
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-
-  // Buy or Rent Mode Tab
-  const [activeMode, setActiveMode] = useState<'buy' | 'rent'>(
-    product.type === 'rent' ? 'rent' : 'buy'
-  );
-
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0] || 'M');
-  const [selectedColor, setSelectedColor] = useState(product.colors[0] || 'Mặc định');
+  const [activeMode, setActiveMode] = useState<'buy' | 'rent'>('buy');
+  const [selectedSize, setSelectedSize] = useState<string>('M');
+  const [selectedColor, setSelectedColor] = useState<string>('Trắng');
   const [buyQuantity, setBuyQuantity] = useState(1);
+
+  useEffect(() => {
+    if (product) {
+      setActiveImage(product.featuredImage);
+      setActiveMode(product.type === 'rent' ? 'rent' : 'buy');
+      setSelectedSize(product.sizes?.[0] || 'M');
+      setSelectedColor(product.colors?.[0] || 'Trắng');
+    }
+  }, [product?.id]);
+
+  const isLiked = product ? wishlistIds.includes(product.id) : false;
+
 
   // Rental Dates
   const tomorrowStr = useMemo(() => {
@@ -94,23 +90,74 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
   // Overlap verification
   const overlapCheck = useMemo(() => {
-    if (activeMode !== 'rent' || !startDate || !endDate) return { hasConflict: false };
+    if (!product || activeMode !== 'rent' || !startDate || !endDate) return { hasConflict: false };
     return checkRentalOverlap(startDate, endDate, product.bookedDates);
-  }, [activeMode, startDate, endDate, product.bookedDates]);
+  }, [product, activeMode, startDate, endDate]);
 
   const rentalDays = useMemo(() => {
     return calculateRentalDays(startDate, endDate);
   }, [startDate, endDate]);
 
   const rentalFee = useMemo(() => {
+    if (!product) return 0;
     return calculateRentalPrice(product, rentalDays);
   }, [product, rentalDays]);
 
-  const deposit = product.deposit || 0;
+  const deposit = product?.deposit || 0;
 
   // Review state
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/shop');
+    }
+  };
+
+  const handleGoToCartAction = () => {
+    if (onGoToCart) {
+      onGoToCart();
+    } else {
+      navigate('/cart');
+    }
+  };
+
+  const handleOpenChatAction = () => {
+    if (onOpenChat) {
+      onOpenChat();
+    } else {
+      navigate('/chat');
+    }
+  };
+
+  if (!product) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-24 text-center">
+        <div className="w-16 h-16 mx-auto mb-4 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 shadow-sm">
+          <ShoppingBag className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-800">Không tìm thấy mẫu váy này!</h2>
+        <p className="text-gray-500 text-sm mt-1 mb-6">Mã sản phẩm không tồn tại hoặc đã ngừng cung cấp.</p>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => navigate('/shop')}
+            className="px-6 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 transition-all shadow-md shadow-brand-500/20"
+          >
+            Xem bộ sưu tập váy
+          </button>
+          <button
+            onClick={() => navigate('/')}
+            className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-all"
+          >
+            Về trang chủ
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleAddReview = (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +191,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         rentalEndDate: endDate,
       });
       if (ok && instantCheckout) {
-        onGoToCart();
+        handleGoToCartAction();
       }
     } else {
       const ok = addToCart({
@@ -155,7 +202,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         quantity: buyQuantity,
       });
       if (ok && instantCheckout) {
-        onGoToCart();
+        handleGoToCartAction();
       }
     }
   };
@@ -172,7 +219,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <button
-            onClick={onBack}
+            onClick={handleBack}
             className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-brand-600 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -290,7 +337,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                           joinedDate: new Date().toISOString(),
                         };
                         startProductChat(product, guestUser);
-                        if (onOpenChat) onOpenChat();
+                        handleOpenChatAction();
                       }}
                       className="px-3 py-1.5 rounded-xl bg-brand-600 text-white text-xs font-semibold hover:bg-brand-700 flex items-center gap-1.5 transition-colors shadow-sm shadow-brand-500/20"
                     >

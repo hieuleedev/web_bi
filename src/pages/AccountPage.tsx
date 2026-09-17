@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User as UserIcon,
   Package,
@@ -20,15 +20,25 @@ import {
   MapPin,
   Phone,
   Mail,
-  ShieldCheck
+  ShieldCheck,
+  Search,
+  CreditCard,
+  FileText,
+  Filter,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
 import { useOrders } from '../context/OrderContext';
 import { formatVND, formatDateVN } from '../utils/helpers';
-import { OrderStatus, ProductStatus, Product } from '../types';
+import { OrderStatus, ProductStatus, Product, Order } from '../types';
 import { useToast } from '../context/ToastContext';
+import { CATEGORIES } from '../data/initialCategories';
+import { Pagination } from '../components/ui/Pagination';
 import { ProductScheduleManagerModal } from '../components/product/ProductScheduleManagerModal';
+import { QuickCreateOrderModal } from '../components/order/QuickCreateOrderModal';
+import { BankConfigModal } from '../components/admin/BankConfigModal';
+import { OrderInvoiceModal } from '../components/order/OrderInvoiceModal';
 
 interface AccountPageProps {
   initialTab?: string;
@@ -49,7 +59,27 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [scheduleProduct, setScheduleProduct] = useState<Product | null>(null);
+
+  // Warehouse Search, Filter & Pagination states
+  const [productSearch, setProductSearch] = useState('');
+  const [productCategory, setProductCategory] = useState('all');
+  const [productRentalFilter, setProductRentalFilter] = useState<'all' | 'renting_now' | 'available' | 'hidden'>('all');
+  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'rent' | 'buy' | 'both'>('all');
+  const [productPage, setProductPage] = useState(1);
+  const productsPerPage = 6;
+
+  // Modals for Quick Order & Bank Config & Bill Printing
+  const [isQuickOrderOpen, setIsQuickOrderOpen] = useState(false);
+  const [quickOrderInitialProdId, setQuickOrderInitialProdId] = useState<string | undefined>(undefined);
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
 
   // Profile edit state
   const [name, setName] = useState(currentUser?.name || '');
@@ -267,104 +297,370 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             )}
 
             {/* TAB: MY PRODUCTS */}
-            {activeTab === 'my-products' && (
-              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-5">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-gray-100">
-                  <div>
-                    <h3 className="font-serif font-bold text-lg text-gray-900">Quản Lý Sản Phẩm Của Tôi</h3>
-                    <p className="text-xs text-gray-500">Danh sách các món đồ bạn đã đăng bán hoặc cho thuê</p>
-                  </div>
-                  <button
-                    onClick={onNavigateSell}
-                    className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold flex items-center gap-1.5"
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    <span>Đăng thêm sản phẩm</span>
-                  </button>
-                </div>
+            {activeTab === 'my-products' && (() => {
+              const todayDate = new Date().toISOString().split('T')[0];
 
-                {myProducts.length > 0 ? (
-                  <div className="divide-y divide-gray-100">
-                    {myProducts.map((p) => (
-                      <div key={p.id} className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex gap-3.5">
-                          <img
-                            src={p.featuredImage}
-                            alt={p.title}
-                            className="w-16 h-20 rounded-xl object-cover shrink-0"
-                          />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
-                                {p.type === 'both' ? 'Bán & Thuê' : p.type === 'rent' ? 'Cho thuê' : 'Bán'}
-                              </span>
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                p.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                              }`}>
-                                {p.status === 'approved' ? 'Đang hoạt động' : 'Chờ duyệt'}
-                              </span>
+              // Filtering logic
+              const filteredMyProducts = myProducts.filter((p) => {
+                // Search query: match title or sku or id
+                if (productSearch.trim()) {
+                  const q = productSearch.toLowerCase().trim();
+                  const matchTitle = p.title.toLowerCase().includes(q);
+                  const matchSku = p.sku ? p.sku.toLowerCase().includes(q) : false;
+                  const matchId = p.id.toLowerCase().includes(q);
+                  if (!matchTitle && !matchSku && !matchId) return false;
+                }
+
+                // Category filter
+                if (productCategory !== 'all' && p.category !== productCategory) {
+                  return false;
+                }
+
+                // Type filter (rent/buy/both)
+                if (productTypeFilter !== 'all') {
+                  if (productTypeFilter === 'rent' && p.type !== 'rent' && p.type !== 'both') return false;
+                  if (productTypeFilter === 'buy' && p.type !== 'buy' && p.type !== 'both') return false;
+                  if (productTypeFilter === 'both' && p.type !== 'both') return false;
+                }
+
+                // Rental status filter
+                const isCurrentlyRented = (p.bookedDates || []).some(
+                  (b) => b.startDate <= todayDate && b.endDate >= todayDate && b.status !== 'cancelled'
+                );
+
+                if (productRentalFilter === 'renting_now') {
+                  return isCurrentlyRented;
+                }
+                if (productRentalFilter === 'available') {
+                  return p.status === 'approved' && !isCurrentlyRented;
+                }
+                if (productRentalFilter === 'hidden') {
+                  return p.status === 'hidden';
+                }
+
+                return true;
+              });
+
+              // Pagination
+              const totalProductPages = Math.ceil(filteredMyProducts.length / productsPerPage) || 1;
+              const paginatedMyProducts = filteredMyProducts.slice(
+                (productPage - 1) * productsPerPage,
+                productPage * productsPerPage
+              );
+
+              // Count currently rented products today
+              const totalRentingNow = myProducts.filter((p) =>
+                (p.bookedDates || []).some(
+                  (b) => b.startDate <= todayDate && b.endDate >= todayDate && b.status !== 'cancelled'
+                )
+              ).length;
+
+              return (
+                <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-sm space-y-6">
+                  {/* Top Bar: Title & Action Buttons */}
+                  <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 pb-4 border-b border-gray-100">
+                    <div>
+                      <h3 className="font-serif font-bold text-xl text-gray-900 flex items-center gap-2.5">
+                        <span>Quản Lý Kho Váy Của Tôi</span>
+                        <span className="text-xs bg-brand-50 text-brand-700 font-bold px-2.5 py-0.5 rounded-full border border-brand-200">
+                          {filteredMyProducts.length}/{myProducts.length} món
+                        </span>
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Hiện có <strong className="text-emerald-600 font-semibold">{totalRentingNow} món</strong> đang được khách thuê hôm nay • Dễ dàng lên đơn và in bill trực tiếp
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <button
+                        onClick={() => {
+                          setQuickOrderInitialProdId(undefined);
+                          setIsQuickOrderOpen(true);
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all"
+                        title="Tạo đơn hàng nhanh cho khách đến tiệm hoặc gọi điện"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>+ Tạo Đơn Hàng Mới</span>
+                      </button>
+
+                      <button
+                        onClick={() => setIsBankModalOpen(true)}
+                        className="px-3.5 py-2 rounded-xl border border-gray-200 hover:border-brand-400 bg-gray-50 hover:bg-white text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+                        title="Cấu hình tài khoản ngân hàng để in bill và sinh mã VietQR"
+                      >
+                        <CreditCard className="w-4 h-4 text-brand-600" />
+                        <span>Cài Đặt STK In Bill</span>
+                      </button>
+
+                      <button
+                        onClick={onNavigateSell}
+                        className="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-1.5 transition-all"
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                        <span>Đăng Thêm Váy</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Filter & Search Controls */}
+                  <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-200/70 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+                      {/* Search Bar (5 cols) */}
+                      <div className="lg:col-span-5 relative">
+                        <input
+                          type="text"
+                          value={productSearch}
+                          onChange={(e) => {
+                            setProductSearch(e.target.value);
+                            setProductPage(1);
+                          }}
+                          placeholder="Tìm kiếm theo tên đầm, mã SKU (BB-...)..."
+                          className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-3.5 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-gray-400"
+                        />
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      </div>
+
+                      {/* Category Filter (3 cols) */}
+                      <div className="lg:col-span-3">
+                        <select
+                          value={productCategory}
+                          onChange={(e) => {
+                            setProductCategory(e.target.value);
+                            setProductPage(1);
+                          }}
+                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:border-brand-500"
+                        >
+                          <option value="all">Tất cả danh mục ({CATEGORIES.length})</option>
+                          {CATEGORIES.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Rental Status Filter (2 cols) */}
+                      <div className="lg:col-span-2">
+                        <select
+                          value={productRentalFilter}
+                          onChange={(e) => {
+                            setProductRentalFilter(e.target.value as any);
+                            setProductPage(1);
+                          }}
+                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-800 focus:outline-none focus:border-brand-500"
+                        >
+                          <option value="all">Tất cả trạng thái</option>
+                          <option value="renting_now">🟢 Đang cho thuê hiện tại</option>
+                          <option value="available">⚪ Sẵn sàng trong kho</option>
+                          <option value="hidden">👁️ Đã ẩn đi</option>
+                        </select>
+                      </div>
+
+                      {/* Product Type Filter (2 cols) */}
+                      <div className="lg:col-span-2">
+                        <select
+                          value={productTypeFilter}
+                          onChange={(e) => {
+                            setProductTypeFilter(e.target.value as any);
+                            setProductPage(1);
+                          }}
+                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:border-brand-500"
+                        >
+                          <option value="all">Bán & Thuê</option>
+                          <option value="rent">Chỉ Cho Thuê</option>
+                          <option value="buy">Chỉ Bán Đứt</option>
+                          <option value="both">Cả Bán & Thuê</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Product List */}
+                  {paginatedMyProducts.length > 0 ? (
+                    <div className="divide-y divide-gray-100">
+                      {paginatedMyProducts.map((p) => {
+                        const activeBookingToday = (p.bookedDates || []).find(
+                          (b) => b.startDate <= todayDate && b.endDate >= todayDate && b.status !== 'cancelled'
+                        );
+                        const isRentingNow = !!activeBookingToday;
+                        const categoryObj = CATEGORIES.find((c) => c.id === p.category);
+                        const skuDisplay = p.sku || (p.id ? p.id.replace('prod-', 'BB-') : 'BB-001');
+
+                        return (
+                          <div
+                            key={p.id}
+                            className={`py-4.5 px-3 rounded-2xl transition-colors flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 ${
+                              isRentingNow ? 'bg-emerald-50/40 border border-emerald-100/80 mb-2' : 'hover:bg-gray-50/60'
+                            }`}
+                          >
+                            <div className="flex gap-4">
+                              <div className="relative shrink-0">
+                                <img
+                                  src={p.featuredImage}
+                                  alt={p.title}
+                                  className="w-20 h-24 rounded-2xl object-cover shadow-xs border border-gray-100"
+                                />
+                                {isRentingNow && (
+                                  <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white p-1 rounded-full shadow-xs" title="Đang có khách thuê hôm nay">
+                                    <Clock className="w-3 h-3 animate-spin" />
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  {/* SKU Code */}
+                                  <span className="text-[11px] font-mono font-bold bg-gray-900 text-amber-400 px-2 py-0.5 rounded-lg tracking-wider">
+                                    Mã: {skuDisplay}
+                                  </span>
+
+                                  {/* Category Tag */}
+                                  <span className="text-[10px] font-semibold bg-gray-100 text-gray-700 px-2 py-0.5 rounded-lg border border-gray-200">
+                                    {categoryObj ? categoryObj.name : p.category}
+                                  </span>
+
+                                  {/* Type */}
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-brand-50 text-brand-700 border border-brand-200">
+                                    {p.type === 'both' ? 'Bán & Thuê' : p.type === 'rent' ? 'Cho thuê' : 'Bán'}
+                                  </span>
+
+                                  {/* Status */}
+                                  {isRentingNow ? (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                                      <span>🟢 Đang cho thuê</span>
+                                      <span className="text-emerald-700">({formatDateVN(activeBookingToday.startDate)} → {formatDateVN(activeBookingToday.endDate)})</span>
+                                    </span>
+                                  ) : p.status === 'hidden' ? (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-gray-200 text-gray-700">
+                                      Đã ẩn
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      Sẵn sàng trong kho
+                                    </span>
+                                  )}
+                                </div>
+
+                                <h4 className="text-sm font-bold text-gray-900 line-clamp-1">{p.title}</h4>
+                                
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
+                                  {p.rentPrice3Days && (
+                                    <span>Giá thuê 3 ngày: <strong className="text-brand-700">{formatVND(p.rentPrice3Days)}</strong></span>
+                                  )}
+                                  {p.buyPrice && (
+                                    <span>Giá bán: <strong className="text-gray-900">{formatVND(p.buyPrice)}</strong></span>
+                                  )}
+                                  {p.deposit && (
+                                    <span>Cọc: <strong className="text-gray-700">{formatVND(p.deposit)}</strong></span>
+                                  )}
+                                </div>
+
+                                <div className="text-[11px] text-gray-400 flex items-center gap-3 pt-0.5">
+                                  <span>Lượt xem: {p.views}</span>
+                                  <span>•</span>
+                                  <span>Yêu thích: {p.likes}</span>
+                                  <span>•</span>
+                                  <span className="text-amber-500 font-semibold">Đánh giá: {p.rating}★ ({p.reviewsCount})</span>
+                                </div>
+                              </div>
                             </div>
 
-                            <h4 className="text-xs font-semibold text-gray-900 mt-1 line-clamp-1">{p.title}</h4>
-                            <div className="text-[11px] text-gray-500 mt-1 flex gap-3">
-                              <span>Lượt xem: {p.views}</span>
-                              <span>Yêu thích: {p.likes}</span>
-                              <span>Đánh giá: {p.rating}★</span>
+                            {/* Action Buttons */}
+                            <div className="flex flex-wrap items-center gap-2 self-end lg:self-center">
+                              {/* Quick POS order for this product */}
+                              <button
+                                onClick={() => {
+                                  setQuickOrderInitialProdId(p.id);
+                                  setIsQuickOrderOpen(true);
+                                }}
+                                className="px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                                title="Tạo đơn hàng nhanh cho váy này"
+                              >
+                                <ShoppingBag className="w-3.5 h-3.5 text-brand-600" />
+                                <span>Lên đơn</span>
+                              </button>
+
+                              {(p.type === 'rent' || p.type === 'both') && (
+                                <button
+                                  onClick={() => setScheduleProduct(p)}
+                                  className="px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+                                  title="Quản lý lịch thuê của món này"
+                                >
+                                  <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>Lịch thuê ({(p.bookedDates || []).length})</span>
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => onViewProduct(p.id)}
+                                className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
+                                title="Xem chi tiết sản phẩm"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  const newStatus = p.status === 'hidden' ? 'approved' : 'hidden';
+                                  updateProduct(p.id, { status: newStatus });
+                                  showToast(`Đã chuyển sản phẩm sang trạng thái ${newStatus === 'hidden' ? 'Ẩn' : 'Hiện'}`, 'info');
+                                }}
+                                className="px-2.5 py-1.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                              >
+                                {p.status === 'hidden' ? 'Hiện lại' : 'Ẩn đi'}
+                              </button>
+
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm(`Bạn có chắc chắn muốn xóa bài đăng "${p.title}" không? Hành động này sẽ xóa sản phẩm khỏi Database và không thể hoàn tác.`)) {
+                                    await deleteProduct(p.id);
+                                    showToast('Đã xóa bài đăng khỏi hệ thống thành công!', 'success');
+                                  }
+                                }}
+                                className="p-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
+                                title="Xóa bài đăng này"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
-                        </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-400 text-xs space-y-2">
+                      <p>Không tìm thấy sản phẩm nào phù hợp với bộ lọc hiện tại.</p>
+                      <button
+                        onClick={() => {
+                          setProductSearch('');
+                          setProductCategory('all');
+                          setProductRentalFilter('all');
+                          setProductTypeFilter('all');
+                        }}
+                        className="text-brand-600 font-semibold underline text-xs"
+                      >
+                        Xóa toàn bộ bộ lọc
+                      </button>
+                    </div>
+                  )}
 
-                        <div className="flex items-center gap-2 self-end sm:self-center">
-                          {(p.type === 'rent' || p.type === 'both') && (
-                            <button
-                              onClick={() => setScheduleProduct(p)}
-                              className="px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-                              title="Quản lý lịch thuê của món này"
-                            >
-                              <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Lịch thuê ({(p.bookedDates || []).length})</span>
-                            </button>
-                          )}
-                          <button
-                            onClick={() => onViewProduct(p.id)}
-                            className="p-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50"
-                            title="Xem chi tiết"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              const newStatus = p.status === 'hidden' ? 'approved' : 'hidden';
-                              updateProduct(p.id, { status: newStatus });
-                              showToast(`Đã chuyển sản phẩm sang trạng thái ${newStatus}`, 'info');
-                            }}
-                            className="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            {p.status === 'hidden' ? 'Hiện lại' : 'Ẩn đi'}
-                          </button>
-                          <button
-                            onClick={async () => {
-                              if (window.confirm(`Bạn có chắc chắn muốn xóa bài đăng "${p.title}" không? Hành động này sẽ xóa sản phẩm khỏi Database và không thể hoàn tác.`)) {
-                                await deleteProduct(p.id);
-                                showToast('Đã xóa bài đăng khỏi hệ thống thành công!', 'success');
-                              }
-                            }}
-                            className="p-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50"
-                            title="Xóa bài đăng này"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-gray-400 text-xs">
-                    Bạn chưa đăng món đồ nào. Hãy nhấn "Đăng món đồ mới" để bắt đầu!
-                  </div>
-                )}
-              </div>
-            )}
+                  {/* Pagination */}
+                  {totalProductPages > 1 && (
+                    <div className="pt-4 border-t border-gray-100">
+                      <Pagination
+                        currentPage={productPage}
+                        totalPages={totalProductPages}
+                        onPageChange={(p) => {
+                          setProductPage(p);
+                          window.scrollTo({ top: 300, behavior: 'smooth' });
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* TAB: BUYER ORDERS */}
             {activeTab === 'orders' && (
@@ -703,6 +999,37 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         <ProductScheduleManagerModal
           product={scheduleProduct}
           onClose={() => setScheduleProduct(null)}
+        />
+      )}
+
+      {/* Modal Tạo đơn hàng nhanh tại quầy (POS) */}
+      <QuickCreateOrderModal
+        isOpen={isQuickOrderOpen}
+        initialProductId={quickOrderInitialProdId}
+        onClose={() => {
+          setIsQuickOrderOpen(false);
+          setQuickOrderInitialProdId(undefined);
+        }}
+        onOrderCreated={(createdOrder) => {
+          setInvoiceOrder(createdOrder);
+        }}
+      />
+
+      {/* Modal Cấu hình STK Ngân Hàng VietQR In Bill */}
+      <BankConfigModal
+        isOpen={isBankModalOpen}
+        onClose={() => setIsBankModalOpen(false)}
+        onUpdated={() => {
+          showToast('Đã đồng bộ thông tin tài khoản in bill mới nhất!', 'success');
+        }}
+      />
+
+      {/* Modal In Hóa Đơn Bill Ngay Lập Tức */}
+      {invoiceOrder && (
+        <OrderInvoiceModal
+          isOpen={!!invoiceOrder}
+          order={invoiceOrder}
+          onClose={() => setInvoiceOrder(null)}
         />
       )}
     </div>

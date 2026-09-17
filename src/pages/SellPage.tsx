@@ -19,9 +19,15 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   const { showToast } = useToast();
 
   // Basic Information
+  const [sku, setSku] = useState(() => `BB-${Math.floor(100 + Math.random() * 900)}`);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0].id);
   const [gender, setGender] = useState<GenderCategory>('women');
+
+  const handleGenerateSku = () => {
+    const prefix = category ? category.substring(0, 2).toUpperCase() : 'BB';
+    setSku(`BB-${prefix}${Math.floor(100 + Math.random() * 900)}`);
+  };
   const [brand, setBrand] = useState('Thiết Kế Tự May');
   const [condition, setCondition] = useState('99% Like New');
   const [material, setMaterial] = useState('Lụa cao cấp, voan tơ');
@@ -67,6 +73,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
     const colorsArray = colorsInput.split(',').map((c) => c.trim()).filter(Boolean);
 
     const newProd = await addProduct({
+      sku: sku.trim() || `BB-${Date.now().toString().slice(-4)}`,
       title: title.trim(),
       description: description.trim() || 'Trang phục thời trang cao cấp phù hợp cho các sự kiện, dạ hội hoặc dạo phố.',
       category,
@@ -139,7 +146,31 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
               2. Thông Tin Chi Tiết Trang Phục
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* SKU code input */}
+              <div className="md:col-span-1">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700">
+                    Mã sản phẩm (SKU)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateSku}
+                    className="text-[10px] text-brand-600 hover:text-brand-700 font-bold underline"
+                  >
+                    Tự sinh mã
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={sku}
+                  onChange={(e) => setSku(e.target.value.toUpperCase())}
+                  placeholder="VD: BB-VC01"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 uppercase tracking-wider"
+                />
+              </div>
+
+              {/* Product Title input */}
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                   Tên sản phẩm <span className="text-rose-500">*</span>

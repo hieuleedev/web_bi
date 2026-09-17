@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   ShoppingBag,
   Heart,
@@ -26,8 +27,8 @@ import { UserRole } from '../../types';
 import { AuthModal } from '../auth/AuthModal';
 
 interface HeaderProps {
-  currentView: string;
-  setCurrentView: (view: string) => void;
+  currentView?: string;
+  setCurrentView?: (view: string) => void;
   onOpenProductDetail?: (productId: string) => void;
   onSearch?: (query: string) => void;
 }
@@ -37,6 +38,9 @@ export const Header: React.FC<HeaderProps> = ({
   setCurrentView,
   onSearch,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const { currentUser, switchRole, logout } = useAuth();
   const { totalCount } = useCart();
   const { wishlistIds } = useProducts();
@@ -47,22 +51,38 @@ export const Header: React.FC<HeaderProps> = ({
   const [searchInput, setSearchInput] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+  const goTo = (path: string, view?: string) => {
+    navigate(path);
+    if (setCurrentView && view) {
+      setCurrentView(view);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const isCurrent = (path: string, view: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path) || currentView === view;
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSearch) {
       onSearch(searchInput);
-      setCurrentView('shop');
+      goTo('/shop', 'shop');
     }
   };
 
   const isOwnerOrAdmin = currentUser?.role === 'seller' || currentUser?.role === 'admin';
 
   const navItems = [
-    { label: 'Trang Chủ', view: 'home' },
-    { label: 'Mua Quần Áo', view: 'shop' },
-    { label: 'Thuê Quần Áo', view: 'rent', badge: 'Hot' },
+    { label: 'Trang Chủ', path: '/', view: 'home' },
+    { label: 'Mua Quần Áo', path: '/shop', view: 'shop' },
+    { label: 'Thuê Quần Áo', path: '/rent', view: 'rent', badge: 'Hot' },
     ...(isOwnerOrAdmin
-      ? [{ label: 'Đăng Mẫu Váy', view: 'sell', icon: PlusCircle, highlight: true }]
+      ? [
+          { label: 'Quản Lý Shop', path: '/quan-ly-shop', view: 'my-products', icon: Layers, highlight: false },
+          { label: 'Đăng Mẫu Váy', path: '/sell', view: 'sell', icon: PlusCircle, highlight: true }
+        ]
       : []),
   ];
 
@@ -89,10 +109,22 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Chat Zalo</span>
             </a>
 
+            {/* Shop management shortcut if user is seller or admin */}
+            {isOwnerOrAdmin && (
+              <button
+                onClick={() => goTo('/quan-ly-shop', 'my-products')}
+                className="flex items-center gap-1 text-emerald-300 hover:text-emerald-200 transition-colors font-semibold whitespace-nowrap bg-emerald-900/60 px-2.5 py-0.5 rounded-full border border-emerald-500/40"
+                title="Vào trang quản lý kho & đơn hàng"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Quản Lý Shop</span>
+              </button>
+            )}
+
             {/* Admin shortcut if user is admin */}
             {currentUser?.role === 'admin' && (
               <button
-                onClick={() => setCurrentView('admin')}
+                onClick={() => goTo('/admin', 'admin')}
                 className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors font-semibold whitespace-nowrap"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -133,7 +165,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Logo */}
           <div className="flex items-center gap-3 shrink-0">
             <button
-              onClick={() => setCurrentView('home')}
+              onClick={() => goTo('/', 'home')}
               className="text-left group flex items-center gap-2.5"
             >
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform shrink-0">
@@ -152,29 +184,32 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1 lg:gap-2 shrink-0">
-            {navItems.map((item) => (
-              <button
-                key={item.view}
-                onClick={() => setCurrentView(item.view)}
-                className={`relative px-3 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
-                  currentView === item.view
-                    ? 'text-brand-600 bg-brand-50 font-semibold shadow-xs'
-                    : item.highlight
-                    ? 'text-brand-700 bg-brand-100/80 hover:bg-brand-100 font-semibold border border-brand-200'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 whitespace-nowrap">
-                  {item.icon && <item.icon className="w-4 h-4 text-brand-600 shrink-0" />}
-                  <span className="whitespace-nowrap">{item.label}</span>
-                  {item.badge && (
-                    <span className="text-[10px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-bold leading-tight">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-              </button>
-            ))}
+            {navItems.map((item) => {
+              const active = isCurrent(item.path, item.view);
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => goTo(item.path, item.view)}
+                  className={`relative px-3 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
+                    active
+                      ? 'text-brand-600 bg-brand-50 font-semibold shadow-xs'
+                      : item.highlight
+                      ? 'text-brand-700 bg-brand-100/80 hover:bg-brand-100 font-semibold border border-brand-200'
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 whitespace-nowrap">
+                    {item.icon && <item.icon className="w-4 h-4 text-brand-600 shrink-0" />}
+                    <span className="whitespace-nowrap">{item.label}</span>
+                    {item.badge && (
+                      <span className="text-[10px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-bold leading-tight">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </nav>
 
           {/* Search bar */}
@@ -196,7 +231,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Chat Icon */}
             <button
-              onClick={() => setCurrentView('chat')}
+              onClick={() => goTo('/chat', 'chat')}
               className="relative p-2 text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-full transition-colors shrink-0"
               title="Tin nhắn trò chuyện"
             >
@@ -210,7 +245,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Wishlist */}
             <button
-              onClick={() => setCurrentView('wishlist')}
+              onClick={() => goTo('/wishlist', 'wishlist')}
               className="relative p-2 text-gray-700 hover:text-rose-500 hover:bg-gray-50 rounded-full transition-colors shrink-0"
               title="Sản phẩm yêu thích"
             >
@@ -224,7 +259,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Cart Button */}
             <button
-              onClick={() => setCurrentView('cart')}
+              onClick={() => goTo('/cart', 'cart')}
               className="relative p-2 text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-full transition-colors flex items-center gap-1.5 shrink-0"
               title="Giỏ hàng & Đơn thuê"
             >
@@ -280,21 +315,21 @@ export const Header: React.FC<HeaderProps> = ({
                     <>
                       <div className="py-1">
                         <button
-                          onClick={() => setCurrentView('account')}
+                          onClick={() => goTo('/account', 'account')}
                           className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                         >
                           <UserIcon className="w-4 h-4 text-gray-400" />
                           <span>Thông tin tài khoản</span>
                         </button>
                         <button
-                          onClick={() => setCurrentView('orders')}
+                          onClick={() => goTo('/orders', 'orders')}
                           className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                         >
                           <Package className="w-4 h-4 text-gray-400" />
                           <span>Đơn hàng & Lịch thuê của tôi</span>
                         </button>
                         <button
-                          onClick={() => setCurrentView('chat')}
+                          onClick={() => goTo('/chat', 'chat')}
                           className="w-full px-4 py-2 text-left text-xs text-brand-600 hover:bg-brand-50 flex items-center gap-2 font-medium"
                         >
                           <MessageSquare className="w-4 h-4 text-brand-600" />
@@ -302,16 +337,16 @@ export const Header: React.FC<HeaderProps> = ({
                         </button>
                         {isOwnerOrAdmin && (
                           <button
-                            onClick={() => setCurrentView('my-products')}
-                            className="w-full px-4 py-2 text-left text-xs text-brand-700 font-semibold hover:bg-brand-50 flex items-center gap-2"
+                            onClick={() => goTo('/quan-ly-shop', 'my-products')}
+                            className="w-full px-4 py-2 text-left text-xs text-emerald-700 font-semibold hover:bg-emerald-50 flex items-center gap-2"
                           >
-                            <Layers className="w-4 h-4 text-brand-500" />
-                            <span>Quản lý kho váy của shop</span>
+                            <Layers className="w-4 h-4 text-emerald-600" />
+                            <span>Quản lý kho váy của shop (/quan-ly-shop)</span>
                           </button>
                         )}
                         {currentUser.role === 'admin' && (
                           <button
-                            onClick={() => setCurrentView('admin')}
+                            onClick={() => goTo('/admin', 'admin')}
                             className="w-full px-4 py-2 text-left text-xs text-amber-600 font-bold hover:bg-amber-50 flex items-center gap-2"
                           >
                             <ShieldCheck className="w-4 h-4 text-amber-500" />
@@ -373,42 +408,54 @@ export const Header: React.FC<HeaderProps> = ({
           </form>
 
           <div className="grid grid-cols-2 gap-2 pt-2">
-            {navItems.map((item) => (
-              <button
-                key={item.view}
-                onClick={() => {
-                  setCurrentView(item.view);
-                  setMobileMenuOpen(false);
-                }}
-                className={`flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-medium border text-center ${
-                  currentView === item.view
-                    ? 'bg-brand-50 border-brand-300 text-brand-600 font-semibold'
-                    : 'border-gray-200 text-gray-700'
-                }`}
-              >
-                {item.icon && <item.icon className="w-4 h-4 text-brand-600" />}
-                <span>{item.label}</span>
-              </button>
-            ))}
+            {navItems.map((item) => {
+              const active = isCurrent(item.path, item.view);
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => {
+                    goTo(item.path, item.view);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-medium border text-center ${
+                    active
+                      ? 'bg-brand-50 border-brand-300 text-brand-600 font-semibold'
+                      : 'border-gray-200 text-gray-700'
+                  }`}
+                >
+                  {item.icon && <item.icon className="w-4 h-4 text-brand-600" />}
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="border-t border-gray-100 pt-3 flex flex-col gap-1.5 text-xs">
+            {isOwnerOrAdmin && (
+              <button
+                onClick={() => { goTo('/quan-ly-shop', 'my-products'); setMobileMenuOpen(false); }}
+                className="p-2 text-left text-emerald-700 font-semibold hover:bg-emerald-50 rounded-lg flex items-center gap-2"
+              >
+                <Layers className="w-4 h-4 text-emerald-600" />
+                <span>Quản lý kho váy của shop (/quan-ly-shop)</span>
+              </button>
+            )}
             <button
-              onClick={() => { setCurrentView('account'); setMobileMenuOpen(false); }}
+              onClick={() => { goTo('/account', 'account'); setMobileMenuOpen(false); }}
               className="p-2 text-left text-gray-700 font-medium hover:bg-gray-50 rounded-lg flex items-center gap-2"
             >
               <UserIcon className="w-4 h-4 text-gray-400" />
               <span>Tài khoản cá nhân</span>
             </button>
             <button
-              onClick={() => { setCurrentView('orders'); setMobileMenuOpen(false); }}
+              onClick={() => { goTo('/orders', 'orders'); setMobileMenuOpen(false); }}
               className="p-2 text-left text-gray-700 font-medium hover:bg-gray-50 rounded-lg flex items-center gap-2"
             >
               <Package className="w-4 h-4 text-gray-400" />
               <span>Đơn hàng & Đơn thuê</span>
             </button>
             <button
-              onClick={() => { setCurrentView('admin'); setMobileMenuOpen(false); }}
+              onClick={() => { goTo('/admin', 'admin'); setMobileMenuOpen(false); }}
               className="p-2 text-left text-amber-600 font-semibold hover:bg-amber-50 rounded-lg flex items-center gap-2"
             >
               <ShieldCheck className="w-4 h-4 text-amber-500" />
@@ -426,3 +473,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+

@@ -27,6 +27,7 @@ const WISHLIST_KEY = 'bibi_wishlist_ids';
 function mapDbToProduct(row: any): Product {
   return {
     id: row.id,
+    sku: row.sku || (row.id ? row.id.replace('prod-', 'BB-') : 'BB-001'),
     title: row.title || '',
     description: row.description || '',
     category: row.category || 'party-dress',

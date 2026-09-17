@@ -34,6 +34,25 @@ export const SUPPORTED_BANKS = [
   { id: 'VIB', name: 'VIB (Quốc Tế)' }
 ];
 
+const BANK_STORAGE_KEY = 'bibi_custom_bank_config_v1';
+
+export function getActiveBankConfig(): BankConfig {
+  try {
+    const saved = localStorage.getItem(BANK_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.accountNo && parsed.bankId) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_BANK_CONFIG;
+}
+
+export function saveActiveBankConfig(config: BankConfig): void {
+  try {
+    localStorage.setItem(BANK_STORAGE_KEY, JSON.stringify(config));
+  } catch (e) {}
+}
+
 export interface VietQrOptions {
   bankId?: string;
   accountNo?: string;
@@ -49,12 +68,14 @@ export interface VietQrOptions {
  * @returns Đường dẫn hình ảnh QR code chuẩn
  */
 export function generateVietQrUrl(options: VietQrOptions): string {
-  const bank = options.bankId || DEFAULT_BANK_CONFIG.bankId;
-  const accNo = options.accountNo || DEFAULT_BANK_CONFIG.accountNo;
-  const accName = encodeURIComponent(options.accountName || DEFAULT_BANK_CONFIG.accountName);
-  const template = options.template || DEFAULT_BANK_CONFIG.template;
+  const activeBank = getActiveBankConfig();
+  const bank = options.bankId || activeBank.bankId;
+  const accNo = options.accountNo || activeBank.accountNo;
+  const accName = encodeURIComponent(options.accountName || activeBank.accountName);
+  const template = options.template || activeBank.template;
   const amount = Math.round(options.amount || 0);
   const addInfo = encodeURIComponent(options.orderCode || 'Thanh toan don hang');
 
   return `https://img.vietqr.io/image/${bank}-${accNo}-${template}.png?amount=${amount}&addInfo=${addInfo}&accountName=${accName}`;
 }
+
