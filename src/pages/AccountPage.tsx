@@ -26,7 +26,9 @@ import {
   FileText,
   Filter,
   Sparkles,
-  Printer
+  Printer,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
@@ -73,7 +75,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   // Warehouse Search, Filter & Pagination states
   const [productSearch, setProductSearch] = useState('');
   const [productCategory, setProductCategory] = useState('all');
-  const [productRentalFilter, setProductRentalFilter] = useState<'all' | 'renting_now' | 'available' | 'hidden'>('all');
+  const [productRentalFilter, setProductRentalFilter] = useState<'all' | 'renting_now' | 'available' | 'hidden' | 'overdue'>('all');
   const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'rent' | 'buy' | 'both'>('rent');
   const [productPage, setProductPage] = useState(1);
   const productsPerPage = 6;
@@ -99,6 +101,10 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
   // Orders filter
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
+  const [sellerOrderFilter, setSellerOrderFilter] = useState<'all' | 'overdue' | 'rented' | 'pending' | 'completed'>('all');
+
+  // Today's date string YYYY-MM-DD
+  const todayDate = new Date().toISOString().split('T')[0];
 
   if (!currentUser) {
     return (
@@ -117,6 +123,26 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   // Filter seller incoming orders
   const sellerOrders = getSellerOrders(currentUser.id);
 
+  // Check if an order is overdue and not yet returned
+  const isOrderOverdue = (order: Order) => {
+    if (['returned', 'completed', 'cancelled'].includes(order.status)) return false;
+    const rentItem = order.items.find((i) => i.mode === 'rent' && i.rentalEndDate);
+    if (!rentItem || !rentItem.rentalEndDate) return false;
+    return rentItem.rentalEndDate < todayDate;
+  };
+
+  const getOverdueDays = (order: Order) => {
+    const rentItem = order.items.find((i) => i.mode === 'rent' && i.rentalEndDate);
+    if (!rentItem || !rentItem.rentalEndDate) return 0;
+    const diff = new Date(todayDate).getTime() - new Date(rentItem.rentalEndDate).getTime();
+    return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  };
+
+  const overdueOrders = sellerOrders.filter(isOrderOverdue);
+  const overdueProductIds = new Set(
+    overdueOrders.flatMap((o) => o.items.filter((i) => i.mode === 'rent').map((i) => i.productId))
+  );
+
   // Wishlist products
   const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id));
 
@@ -132,8 +158,20 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     { id: 'overview', label: 'Tổng quan tài khoản', icon: UserIcon },
     ...(isOwner
       ? [
-          { id: 'my-products', label: `Quản lý kho váy (${myProducts.length})`, icon: Layers },
-          { id: 'seller-orders', label: `Đơn khách đặt thuê/mua (${sellerOrders.length})`, icon: Calendar },
+          {
+            id: 'my-products',
+            label: `Quản lý kho váy (${myProducts.length})`,
+            icon: Layers,
+            badge: overdueProductIds.size > 0 ? `${overdueProductIds.size} trễ` : undefined,
+            badgeColor: 'bg-rose-500 text-white',
+          },
+          {
+            id: 'seller-orders',
+            label: `Đơn khách đặt (${sellerOrders.length})`,
+            icon: Calendar,
+            badge: overdueOrders.length > 0 ? `⚠️ ${overdueOrders.length} quá hạn` : undefined,
+            badgeColor: 'bg-rose-600 text-white animate-pulse',
+          },
         ]
       : []),
     { id: 'orders', label: `Lịch sử đơn mua & thuê (${myOrders.length})`, icon: Package },
@@ -202,18 +240,25 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           {/* Sidebar Menu (3 cols) */}
           <div className="lg:col-span-3 space-y-2">
             <div className="bg-white rounded-3xl p-3 border border-gray-100 shadow-sm space-y-1">
-              {menuTabs.map((tab) => (
+              {menuTabs.map((tab: any) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold transition-all text-left ${
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-semibold transition-all text-left ${
                     activeTab === tab.id
                       ? 'bg-brand-50 text-brand-700 font-bold shadow-sm'
                       : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-brand-600' : 'text-gray-400'}`} />
-                  <span>{tab.label}</span>
+                  <div className="flex items-center gap-3">
+                    <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-brand-600' : 'text-gray-400'}`} />
+                    <span>{tab.label}</span>
+                  </div>
+                  {tab.badge && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-xs ${tab.badgeColor || 'bg-gray-100 text-gray-700'}`}>
+                      {tab.badge}
+                    </span>
+                  )}
                 </button>
               ))}
 
@@ -236,7 +281,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             {activeTab === 'overview' && (
               <div className="space-y-6">
                 {/* Stats cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className={`grid grid-cols-1 sm:grid-cols-2 ${isOwner ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
                   <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
                     <span className="text-xs text-gray-500 font-medium">Sản phẩm đang kinh doanh</span>
                     <h3 className="font-serif text-2xl font-bold text-gray-900 mt-1">{myProducts.length}</h3>
@@ -254,6 +299,39 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     <h3 className="font-serif text-2xl font-bold text-gray-900 mt-1">{wishlistProducts.length}</h3>
                     <span className="text-[11px] text-rose-500 font-semibold mt-1 block">Trong danh sách ước</span>
                   </div>
+
+                  {isOwner && (
+                    <div
+                      onClick={() => {
+                        setActiveTab('seller-orders');
+                        setSellerOrderFilter('overdue');
+                      }}
+                      className={`p-5 rounded-3xl border shadow-sm cursor-pointer transition-all hover:scale-[1.02] ${
+                        overdueOrders.length > 0
+                          ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-500/20'
+                          : 'bg-white border-gray-100'
+                      }`}
+                      title={overdueOrders.length > 0 ? 'Bấm để xem ngay danh sách đơn quá hạn' : ''}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-medium ${overdueOrders.length > 0 ? 'text-rose-700 font-bold' : 'text-gray-500'}`}>
+                          Váy Quá Hạn Chưa Trả
+                        </span>
+                        {overdueOrders.length > 0 && (
+                          <span className="flex h-2.5 w-2.5 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
+                          </span>
+                        )}
+                      </div>
+                      <h3 className={`font-serif text-2xl font-bold mt-1 ${overdueOrders.length > 0 ? 'text-rose-600' : 'text-gray-900'}`}>
+                        {overdueOrders.length} <span className="text-xs font-normal text-gray-500">đơn</span>
+                      </h3>
+                      <span className={`text-[11px] font-semibold mt-1 block ${overdueOrders.length > 0 ? 'text-rose-600 underline' : 'text-emerald-600'}`}>
+                        {overdueOrders.length > 0 ? '⚠️ Cần thu hồi gấp (Nhấn xem)' : '✓ Đã hoàn trả đúng hạn'}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Bio & Intro */}
@@ -333,6 +411,9 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   (b) => b.startDate <= todayDate && b.endDate >= todayDate && b.status !== 'cancelled'
                 );
 
+                if (productRentalFilter === 'overdue') {
+                  return overdueProductIds.has(p.id);
+                }
                 if (productRentalFilter === 'renting_now') {
                   return isCurrentlyRented;
                 }
@@ -456,6 +537,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-800 focus:outline-none focus:border-brand-500"
                         >
                           <option value="all">Tất cả trạng thái</option>
+                          <option value="overdue">🔴 Quá hạn thuê chưa trả ({overdueProductIds.size})</option>
                           <option value="renting_now">🟢 Đang cho thuê hôm nay</option>
                           <option value="available">⚪ Sẵn sàng trong kho</option>
                           <option value="hidden">👁️ Đã ẩn đi</option>
@@ -489,6 +571,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           (b) => b.startDate <= todayDate && b.endDate >= todayDate && b.status !== 'cancelled'
                         );
                         const isRentingNow = !!activeBookingToday;
+                        const isOverdueDress = overdueProductIds.has(p.id);
                         const categoryObj = CATEGORIES.find((c) => c.id === p.category);
                         const skuDisplay = p.sku || (p.id ? p.id.replace('prod-', 'BB-') : 'BB-001');
 
@@ -496,7 +579,9 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                           <div
                             key={p.id}
                             className={`p-4 rounded-2xl border transition-all flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 ${
-                              isRentingNow
+                              isOverdueDress
+                                ? 'bg-rose-50/40 border-rose-300 ring-2 ring-rose-400/20 shadow-2xs'
+                                : isRentingNow
                                 ? 'bg-emerald-50/30 border-emerald-200/80 shadow-2xs'
                                 : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-xs'
                             }`}
@@ -509,11 +594,15 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                   alt={p.title}
                                   className="w-20 h-24 rounded-xl object-cover shadow-xs border border-gray-200/60"
                                 />
-                                {isRentingNow && (
+                                {isOverdueDress ? (
+                                  <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white p-1 rounded-full shadow-xs animate-pulse" title="Váy quá hạn thuê - khách chưa hoàn trả">
+                                    <AlertTriangle className="w-3 h-3" />
+                                  </span>
+                                ) : isRentingNow ? (
                                   <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white p-1 rounded-full shadow-xs" title="Đang có khách thuê hôm nay">
                                     <Clock className="w-3 h-3 animate-spin" />
                                   </span>
-                                )}
+                                ) : null}
                               </div>
 
                               <div className="space-y-1.5 min-w-0 flex-1">
@@ -534,6 +623,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                     {p.type === 'both' ? 'Bán & Thuê' : p.type === 'rent' ? 'Cho thuê' : 'Bán'}
                                   </span>
 
+                                  {/* Overdue Badge */}
+                                  {isOverdueDress && (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-rose-600 text-white flex items-center gap-1 shadow-xs animate-pulse">
+                                      <span>🔴 Quá hạn chưa trả</span>
+                                    </span>
+                                  )}
+
                                   {/* Status */}
                                   {isRentingNow ? (
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
@@ -544,11 +640,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-gray-200 text-gray-700">
                                       Đã ẩn
                                     </span>
-                                  ) : (
+                                  ) : !isOverdueDress ? (
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
                                       Sẵn sàng trong kho
                                     </span>
-                                  )}
+                                  ) : null}
                                 </div>
 
                                 {/* Title */}
@@ -766,123 +862,280 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             {/* TAB: SELLER INCOMING ORDERS */}
             {activeTab === 'seller-orders' && (
               <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-5">
-                <div className="pb-3 border-b border-gray-100">
-                  <h3 className="font-serif font-bold text-lg text-gray-900">Đơn Khách Đặt Của Shop</h3>
-                  <p className="text-xs text-gray-500">Quản lý khách đặt mua và khách thuê đồ của bạn</p>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-gray-100">
+                  <div>
+                    <h3 className="font-serif font-bold text-lg text-gray-900">Đơn Khách Đặt Của Shop</h3>
+                    <p className="text-xs text-gray-500">Quản lý khách đặt mua và khách thuê đồ • Theo dõi trả đồ & in hóa đơn POS</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setQuickOrderInitialProdId(undefined);
+                      setIsQuickOrderOpen(true);
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Tạo Đơn Mới</span>
+                  </button>
                 </div>
 
-                {sellerOrders.length > 0 ? (
-                  <div className="space-y-4">
-                    {sellerOrders.map((order) => (
-                      <div key={order.id} className="p-5 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-3">
-                        <div className="flex flex-wrap justify-between items-center pb-2 border-b border-gray-200/60 text-xs gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-brand-700">{order.code}</span>
-                            <span className="text-gray-400">•</span>
-                            <span className="font-semibold text-gray-800">{order.customerName}</span>
-                          </div>
-                          
-                          {/* Order actions: Edit, Print bill, Call, Zalo, Delete */}
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <button
-                              onClick={() => setEditingOrder(order)}
-                              className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-semibold text-[11px] hover:bg-amber-100 flex items-center gap-1 transition-colors shadow-2xs"
-                              title="Chỉnh sửa thông tin đơn hàng này"
-                            >
-                              <Edit3 className="w-3 h-3 text-amber-600" />
-                              <span>Sửa đơn</span>
-                            </button>
-                            <button
-                              onClick={() => setInvoiceOrder(order)}
-                              className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold text-[11px] hover:bg-indigo-100 flex items-center gap-1 transition-colors shadow-2xs"
-                              title="In hóa đơn / bill"
-                            >
-                              <Printer className="w-3 h-3 text-indigo-600" />
-                              <span>In bill</span>
-                            </button>
-                            <a
-                              href={`tel:${order.customerPhone}`}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[11px] hover:bg-emerald-100 flex items-center gap-1"
-                            >
-                              <Phone className="w-3 h-3" />
-                              <span>Gọi</span>
-                            </a>
-                            <a
-                              href={`https://zalo.me/${order.customerPhone.replace(/\s+/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold text-[11px] hover:bg-blue-100 flex items-center gap-1"
-                            >
-                              <span>Zalo</span>
-                            </a>
-                            <button
-                              onClick={() => {
-                                if (window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${order.code}? Thao tác này không thể hoàn tác.`)) {
-                                  deleteOrder(order.id);
-                                }
-                              }}
-                              className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                              title="Xóa đơn hàng"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="text-xs text-gray-600 space-y-1">
-                          <p><strong>Địa chỉ giao / lấy:</strong> {order.shippingAddress || 'Khách nhận tại shop'}</p>
-                          <p><strong>Sản phẩm:</strong> {order.items.map((i) => i.productTitle).join(', ')}</p>
-                          {(() => {
-                            const rentItem = order.items.find((i) => i.mode === 'rent' && i.rentalStartDate && i.rentalEndDate);
-                            return rentItem ? (
-                              <p className="text-emerald-700 font-medium">
-                                📅 <strong>Lịch thuê:</strong> {formatDateVN(rentItem.rentalStartDate!)} ➔ {formatDateVN(rentItem.rentalEndDate!)} ({rentItem.rentalDays || 1} ngày)
-                              </p>
-                            ) : null;
-                          })()}
-                          {order.depositTotal > 0 ? (
-                            <p className="text-amber-800 font-medium">
-                              💰 <strong>Tiền cọc:</strong> {formatVND(order.depositTotal)}
-                            </p>
-                          ) : null}
-                          {order.notes && (
-                            <p className="italic text-gray-500 bg-white/60 p-1.5 rounded border border-gray-100">
-                              <strong>Ghi chú:</strong> {order.notes}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex justify-between items-center pt-2 border-t border-gray-200/60 text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-500">Đổi trạng thái:</span>
-                            <select
-                              value={order.status}
-                              onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
-                              className="bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs font-medium text-gray-800 focus:ring-1 focus:ring-brand-500"
-                            >
-                              <option value="pending">Chờ xác nhận</option>
-                              <option value="preparing">Đang chuẩn bị</option>
-                              <option value="shipping">Đang giao</option>
-                              <option value="rented">Đang cho thuê</option>
-                              <option value="returned">Đã nhận lại đồ</option>
-                              <option value="completed">Đã hoàn cọc / Hoàn thành</option>
-                              <option value="cancelled">Đã hủy đơn</option>
-                            </select>
-                          </div>
-
-                          <div className="text-right">
-                            <span className="text-gray-400 text-[10px] block">Tổng thanh toán</span>
-                            <span className="font-bold text-sm text-brand-600">{formatVND(order.totalAmount)}</span>
-                          </div>
-                        </div>
+                {/* Overdue Warning Alert Banner */}
+                {overdueOrders.length > 0 && (
+                  <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm animate-pulse mt-0.5">
+                        <AlertTriangle className="w-5 h-5" />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-gray-400 text-xs">
-                    Chưa có đơn hàng nào từ khách.
+                      <div>
+                        <h4 className="text-xs font-bold text-rose-950">
+                          🚨 CẢNH BÁO: Có {overdueOrders.length} đơn hàng ĐÃ QUÁ HẠN THUÊ nhưng khách chưa hoàn trả đồ!
+                        </h4>
+                        <p className="text-[11px] text-rose-800 mt-0.5">
+                          Vui lòng bấm Zalo hoặc Gọi điện bên dưới để nhắc khách trả đồ kịp thời cho đợt khách tiếp theo.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSellerOrderFilter('overdue')}
+                      className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shrink-0 transition-colors shadow-xs flex items-center gap-1.5"
+                    >
+                      <span>Lọc {overdueOrders.length} đơn trễ hạn</span>
+                    </button>
                   </div>
                 )}
+
+                {/* Filter Pills */}
+                <div className="flex flex-wrap items-center gap-2 pb-1">
+                  <button
+                    onClick={() => setSellerOrderFilter('all')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      sellerOrderFilter === 'all'
+                        ? 'bg-gray-900 text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Tất cả ({sellerOrders.length})
+                  </button>
+
+                  <button
+                    onClick={() => setSellerOrderFilter('overdue')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                      sellerOrderFilter === 'overdue'
+                        ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-300'
+                        : overdueOrders.length > 0
+                        ? 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-100'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span>🔴 Quá hạn chưa trả</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                      sellerOrderFilter === 'overdue' ? 'bg-white text-rose-700' : 'bg-rose-600 text-white'
+                    }`}>
+                      {overdueOrders.length}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setSellerOrderFilter('rented')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      sellerOrderFilter === 'rented'
+                        ? 'bg-brand-600 text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Đang cho thuê ({sellerOrders.filter((o) => o.status === 'rented').length})
+                  </button>
+
+                  <button
+                    onClick={() => setSellerOrderFilter('pending')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      sellerOrderFilter === 'pending'
+                        ? 'bg-amber-600 text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Chờ xác nhận ({sellerOrders.filter((o) => o.status === 'pending').length})
+                  </button>
+
+                  <button
+                    onClick={() => setSellerOrderFilter('completed')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      sellerOrderFilter === 'completed'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Đã trả / Hoàn tất ({sellerOrders.filter((o) => ['returned', 'completed'].includes(o.status)).length})
+                  </button>
+                </div>
+
+                {(() => {
+                  const filteredSellerOrders = sellerOrders.filter((order) => {
+                    if (sellerOrderFilter === 'overdue') return isOrderOverdue(order);
+                    if (sellerOrderFilter === 'rented') return order.status === 'rented';
+                    if (sellerOrderFilter === 'pending') return order.status === 'pending';
+                    if (sellerOrderFilter === 'completed') return ['returned', 'completed'].includes(order.status);
+                    return true;
+                  });
+
+                  return filteredSellerOrders.length > 0 ? (
+                    <div className="space-y-4">
+                      {filteredSellerOrders.map((order) => {
+                        const isOverdue = isOrderOverdue(order);
+                        const overdueDays = isOverdue ? getOverdueDays(order) : 0;
+                        const rentItem = order.items.find((i) => i.mode === 'rent' && i.rentalStartDate && i.rentalEndDate);
+
+                        return (
+                          <div
+                            key={order.id}
+                            className={`p-5 rounded-2xl border space-y-3 transition-all ${
+                              isOverdue
+                                ? 'bg-rose-50/40 border-rose-300 ring-2 ring-rose-400/20 shadow-xs'
+                                : 'bg-gray-50 border-gray-200/80'
+                            }`}
+                          >
+                            {/* Prominent Overdue Notification Inside Order Card */}
+                            {isOverdue && (
+                              <div className="flex flex-wrap items-center justify-between gap-2 bg-rose-100/90 border border-rose-300 p-2.5 rounded-xl text-xs text-rose-950 font-bold">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping shrink-0" />
+                                  <span>🚨 ĐÃ QUÁ HẠN {overdueDays} NGÀY — Hạn trả: {formatDateVN(rentItem?.rentalEndDate!)} (Khách chưa trả đồ)</span>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    updateOrderStatus(order.id, 'returned');
+                                    showToast(`Đã xác nhận nhận lại đồ từ đơn ${order.code}!`, 'success');
+                                  }}
+                                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-colors flex items-center gap-1"
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  <span>Đã nhận lại đồ</span>
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Header row */}
+                            <div className="flex flex-wrap justify-between items-center pb-2 border-b border-gray-200/60 text-xs gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-brand-700">{order.code}</span>
+                                <span className="text-gray-400">•</span>
+                                <span className="font-semibold text-gray-800">{order.customerName}</span>
+                                {isOverdue && (
+                                  <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md animate-pulse">
+                                    TRỄ {overdueDays} NGÀY
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {/* Action buttons */}
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <button
+                                  onClick={() => setEditingOrder(order)}
+                                  className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-semibold text-[11px] hover:bg-amber-100 flex items-center gap-1 transition-colors shadow-2xs"
+                                  title="Chỉnh sửa thông tin đơn hàng này"
+                                >
+                                  <Edit3 className="w-3 h-3 text-amber-600" />
+                                  <span>Sửa đơn</span>
+                                </button>
+                                <button
+                                  onClick={() => setInvoiceOrder(order)}
+                                  className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold text-[11px] hover:bg-indigo-100 flex items-center gap-1 transition-colors shadow-2xs"
+                                  title="In hóa đơn POS nhiệt 80mm"
+                                >
+                                  <Printer className="w-3 h-3 text-indigo-600" />
+                                  <span>In bill POS</span>
+                                </button>
+                                <a
+                                  href={`tel:${order.customerPhone}`}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[11px] hover:bg-emerald-100 flex items-center gap-1"
+                                >
+                                  <Phone className="w-3 h-3" />
+                                  <span>Gọi</span>
+                                </a>
+                                <a
+                                  href={`https://zalo.me/${order.customerPhone.replace(/\s+/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] flex items-center gap-1 ${
+                                    isOverdue
+                                      ? 'bg-rose-600 text-white hover:bg-rose-700 shadow-xs'
+                                      : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                                  }`}
+                                  title={isOverdue ? 'Mở Zalo nhắn nhắc trả đồ' : 'Mở Zalo khách'}
+                                >
+                                  <span>{isOverdue ? 'Zalo nhắc trả' : 'Zalo'}</span>
+                                </a>
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${order.code}? Thao tác này không thể hoàn tác.`)) {
+                                      deleteOrder(order.id);
+                                    }
+                                  }}
+                                  className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                  title="Xóa đơn hàng"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="text-xs text-gray-600 space-y-1">
+                              <p><strong>Địa chỉ giao / lấy:</strong> {order.shippingAddress || 'Khách nhận tại shop'}</p>
+                              <p><strong>Sản phẩm:</strong> {order.items.map((i) => i.productTitle).join(', ')}</p>
+                              {rentItem ? (
+                                <p className={`font-medium ${isOverdue ? 'text-rose-700' : 'text-emerald-700'}`}>
+                                  📅 <strong>Lịch thuê:</strong> {formatDateVN(rentItem.rentalStartDate!)} ➔ {formatDateVN(rentItem.rentalEndDate!)} ({rentItem.rentalDays || 1} ngày)
+                                </p>
+                              ) : null}
+                              {order.depositTotal > 0 ? (
+                                <p className="text-amber-800 font-medium">
+                                  💰 <strong>Tiền cọc:</strong> {formatVND(order.depositTotal)}
+                                </p>
+                              ) : null}
+                              {order.notes && (
+                                <p className="italic text-gray-500 bg-white/60 p-1.5 rounded border border-gray-100">
+                                  <strong>Ghi chú:</strong> {order.notes}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-200/60 text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-500">Đổi trạng thái:</span>
+                                <select
+                                  value={order.status}
+                                  onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
+                                  className={`border rounded-lg px-2.5 py-1 text-xs font-medium focus:ring-1 focus:ring-brand-500 ${
+                                    isOverdue ? 'bg-rose-50 border-rose-300 text-rose-900 font-bold' : 'bg-white border-gray-200 text-gray-800'
+                                  }`}
+                                >
+                                  <option value="pending">Chờ xác nhận</option>
+                                  <option value="preparing">Đang chuẩn bị</option>
+                                  <option value="shipping">Đang giao</option>
+                                  <option value="rented">Đang cho thuê</option>
+                                  <option value="returned">Đã nhận lại đồ</option>
+                                  <option value="completed">Đã hoàn cọc / Hoàn thành</option>
+                                  <option value="cancelled">Đã hủy đơn</option>
+                                </select>
+                              </div>
+
+                              <div className="text-right">
+                                <span className="text-gray-400 text-[10px] block">Tổng thanh toán</span>
+                                <span className="font-bold text-sm text-brand-600">{formatVND(order.totalAmount)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-400 text-xs">
+                      {sellerOrderFilter === 'overdue'
+                        ? 'Không có đơn hàng nào bị quá hạn thuê! Tất cả đơn đều đúng hạn.'
+                        : 'Không tìm thấy đơn hàng nào phù hợp với bộ lọc.'}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 

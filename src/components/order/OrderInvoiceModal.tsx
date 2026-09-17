@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, X, ShieldCheck, QrCode } from 'lucide-react';
+import { Printer, X } from 'lucide-react';
 import { Order } from '../../types';
 import { formatVND, formatDateVN } from '../../utils/helpers';
 import { generateVietQrUrl, getActiveBankConfig } from '../../utils/vietqr';
@@ -26,7 +26,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
     bankId: bankConfig.bankId,
     accountNo: bankConfig.accountNo,
     accountName: bankConfig.accountName,
-    template: bankConfig.template
+    template: 'qr_only'
   }) : '');
 
   const handlePrint = () => {
@@ -34,253 +34,184 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
       <div className="fixed inset-0" onClick={onClose} />
 
-      {/* Invoice Container */}
-      <div className="relative bg-white rounded-3xl shadow-2xl max-w-3xl w-full p-6 sm:p-10 my-8 z-10 border border-gray-100 max-h-[90vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:m-0 print:p-6">
+      {/* POS Receipt Modal Container */}
+      <div className="relative bg-white rounded-3xl shadow-2xl max-w-[420px] w-full p-4 sm:p-6 my-6 z-10 border border-gray-100 max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:m-0 print:p-0 print:w-[80mm] print:max-w-[80mm]">
         
-        {/* Action Buttons (Ẩn khi In Bill) */}
-        <div className="flex justify-between items-center pb-4 mb-6 border-b border-gray-100 print:hidden">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-gray-700">Phiếu In Hóa Đơn & Mã VietQR Tự Động</span>
+        {/* Modal Controls (Hidden when printing) */}
+        <div className="flex justify-between items-center pb-3 mb-3 border-b border-gray-100 print:hidden">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-bold text-gray-800">Hóa Đơn Máy POS (Khổ 80mm)</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold shadow-md transition-all"
+              title="In hóa đơn ra máy POS nhiệt"
             >
-              <Printer className="w-4 h-4" />
-              <span>In Hóa Đơn / Xuất PDF</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span>In Máy POS</span>
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* ================= INVOICE CONTENT (KHU VỰC IN) ================= */}
-        <div className="invoice-print-area space-y-6 text-gray-800 font-sans">
-          
-          {/* Header Thông Tin Cửa Hàng */}
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b-2 border-brand-800/20 pb-6">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-brand-600 text-white font-serif font-black flex items-center justify-center text-sm shadow">
-                  Bi
-                </span>
-                <h1 className="font-serif text-2xl font-black tracking-tight text-gray-900">
-                  BI BI BOUTIQUE & RENTAL
-                </h1>
-              </div>
-              <p className="text-[11px] text-gray-500 uppercase tracking-widest mt-1 font-semibold">
-                Nền Tảng Thời Trang Thiết Kế & Cho Thuê Trang Phục Cao Cấp
-              </p>
-              <div className="text-xs text-gray-600 mt-2 space-y-0.5">
-                <p>📍 <strong>Showroom:</strong> Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng</p>
-                <p>📞 <strong>Hotline:</strong> 0795 623 097 | ✉️ <strong>Email:</strong> bibi.fashion@gmail.com</p>
-              </div>
-            </div>
-
-            <div className="sm:text-right">
-              <span className="inline-block px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold border border-brand-200">
-                HÓA ĐƠN BÁN & CHO THUÊ
-              </span>
-              <p className="font-mono text-base font-black text-gray-900 mt-1">
-                Mã: {order.code}
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')} {new Date(order.createdAt).toLocaleTimeString('vi-VN')}
-              </p>
-            </div>
+        {/* ================= POS RECEIPT AREA (KHỔ NHIỆT 80MM) ================= */}
+        <div className="pos-bill bg-white p-3 sm:p-4 text-gray-900 font-mono text-xs leading-tight print:p-2">
+          {/* Header */}
+          <div className="text-center space-y-1 pb-3 border-b border-dashed border-gray-400">
+            <h2 className="font-serif font-black text-base uppercase tracking-tight text-gray-950">
+              BI BI BOUTIQUE
+            </h2>
+            <p className="text-[11px] text-gray-600">Cho Thuê & Bán Đầm Dạ Hội, Váy Cưới</p>
+            <p className="text-[11px] text-gray-600">Đ/C: Khối 1 - Xã Núi Thành - TP. Đà Nẵng</p>
+            <p className="text-[11px] font-bold text-gray-900">Hotline / Zalo: 0795.623.097</p>
           </div>
 
-          {/* Thông Tin Khách Hàng */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/80 p-4 rounded-2xl border border-gray-200 text-xs">
-            <div>
-              <span className="text-[11px] uppercase font-bold text-gray-400 block mb-1">
-                Người Nhận Hàng:
-              </span>
-              <p className="font-bold text-sm text-gray-900">{order.customerName}</p>
-              <p className="font-mono text-gray-700 mt-0.5">SĐT: <strong>{order.customerPhone}</strong></p>
-              {order.customerEmail && <p className="text-gray-500">Email: {order.customerEmail}</p>}
-            </div>
-
-            <div>
-              <span className="text-[11px] uppercase font-bold text-gray-400 block mb-1">
-                Giao Nhận & Thanh Toán:
-              </span>
-              <p className="text-gray-700">
-                <strong>Địa chỉ:</strong> {order.shippingAddress}
-              </p>
-              <p className="text-gray-700 mt-0.5">
-                <strong>Hình thức:</strong> {order.deliveryMethod === 'pickup' ? 'Nhận tại Showroom' : 'Giao tận nơi'}
-              </p>
-              <p className="text-gray-700 mt-0.5">
-                <strong>Thanh toán:</strong>{' '}
-                <span className="font-semibold text-brand-700 uppercase">
-                  {order.paymentMethod === 'bank_transfer' ? 'Chuyển khoản VietQR' : order.paymentMethod.toUpperCase()}
-                </span>{' '}
-                ({order.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Thu tiền khi giao'})
-              </p>
-            </div>
-          </div>
-
-          {/* Bảng Chi Tiết Sản Phẩm */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border border-gray-200 rounded-xl overflow-hidden">
-              <thead className="bg-gray-100 text-gray-700 font-bold uppercase text-[10px] tracking-wider border-b border-gray-200">
-                <tr>
-                  <th className="py-2.5 px-3">STT</th>
-                  <th className="py-2.5 px-3">Tên Trang Phục</th>
-                  <th className="py-2.5 px-3">Hình Thức</th>
-                  <th className="py-2.5 px-3">Size / Màu</th>
-                  <th className="py-2.5 px-3 text-center">SL</th>
-                  <th className="py-2.5 px-3 text-right">Giá / Tiền Thuê</th>
-                  <th className="py-2.5 px-3 text-right">Tiền Cọc</th>
-                  <th className="py-2.5 px-3 text-right">Thành Tiền</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {order.items.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50/50">
-                    <td className="py-2.5 px-3 text-gray-400 font-mono">{idx + 1}</td>
-                    <td className="py-2.5 px-3 font-semibold text-gray-900">
-                      <div>{item.productTitle}</div>
-                      {item.mode === 'rent' && item.rentalStartDate && item.rentalEndDate && (
-                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-medium block mt-0.5 w-fit">
-                          Lịch thuê: {formatDateVN(item.rentalStartDate)} → {formatDateVN(item.rentalEndDate)} ({item.rentalDays} ngày)
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        item.mode === 'rent' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800'
-                      }`}>
-                        {item.mode === 'rent' ? 'Thuê đồ' : 'Mua đứt'}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-gray-600">
-                      {item.size} / {item.color}
-                    </td>
-                    <td className="py-2.5 px-3 text-center font-bold">{item.quantity}</td>
-                    <td className="py-2.5 px-3 text-right font-mono">{formatVND(item.price)}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-amber-600">
-                      {item.deposit && item.deposit > 0 ? formatVND(item.deposit) : '0 ₫'}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-bold text-gray-900 font-mono">
-                      {formatVND((item.price * item.quantity) + ((item.deposit || 0) * item.quantity))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Phần Tổng Tiền & Mã VietQR Tự Động */}
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 pt-2">
-            
-            {/* Cột Trái: Mã VietQR tự động khớp số tiền để quét thanh toán */}
-            <div className="sm:col-span-6 bg-gradient-to-br from-brand-50/50 to-amber-50/40 p-4 rounded-2xl border border-brand-200 flex flex-col sm:flex-row items-center gap-4">
-              {hasBank && qrUrl ? (
-                <>
-                  <div className="w-32 h-32 bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm shrink-0 flex items-center justify-center">
-                    <img
-                      src={qrUrl}
-                      alt="Mã VietQR thanh toán tự động"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-
-                  <div className="text-xs space-y-1 text-center sm:text-left">
-                    <div className="flex items-center gap-1 justify-center sm:justify-start text-brand-800 font-bold text-xs">
-                      <QrCode className="w-3.5 h-3.5" />
-                      <span>Quét Mã VietQR Thanh Toán</span>
-                    </div>
-                    <p className="text-[11px] text-gray-600">
-                      Ngân hàng: <strong>{bankConfig.bankName}</strong>
-                    </p>
-                    <p className="text-[11px] text-gray-600">
-                      STK: <strong className="font-mono text-brand-700 text-xs">{bankConfig.accountNo}</strong>
-                    </p>
-                    <p className="text-[11px] text-gray-600">
-                      Chủ TK: <strong>{bankConfig.accountName}</strong>
-                    </p>
-                    <p className="text-[10px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 w-fit mx-auto sm:mx-0 mt-1">
-                      ✓ Tự động điền: <strong>{formatVND(order.totalAmount)}</strong>
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <div className="w-full text-center py-4 space-y-1 text-gray-500">
-                  <QrCode className="w-8 h-8 text-gray-400 mx-auto mb-1" />
-                  <p className="text-xs font-semibold text-gray-700">Chưa cài đặt số tài khoản ngân hàng</p>
-                  <p className="text-[11px] text-gray-400">Vào mục Quản lý shop ➔ Cài Đặt STK In Bill để thêm số tài khoản của bạn</p>
-                </div>
-              )}
-            </div>
-
-            {/* Cột Phải: Bảng kê tính toán */}
-            <div className="sm:col-span-6 space-y-2 text-xs">
-              <div className="flex justify-between text-gray-600">
-                <span>Tiền hàng (Mua & Thuê):</span>
-                <span className="font-mono font-semibold">{formatVND(order.subtotal)}</span>
-              </div>
-
-              {order.depositTotal > 0 && (
-                <div className="flex justify-between text-amber-700 font-medium bg-amber-50/60 px-2 py-1 rounded">
-                  <span>Tiền cọc giữ đồ (Hoàn 100% khi trả):</span>
-                  <span className="font-mono font-bold">+{formatVND(order.depositTotal)}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between text-gray-600">
-                <span>Phí vận chuyển giao tận nơi:</span>
-                <span className="font-mono font-semibold">+{formatVND(order.shippingFee)}</span>
-              </div>
-
-              <div className="pt-2 border-t-2 border-gray-900 flex justify-between items-baseline font-bold text-sm">
-                <span className="text-gray-900">TỔNG CỘNG THANH TOÁN:</span>
-                <span className="text-brand-700 font-serif text-lg font-black font-mono">
-                  {formatVND(order.totalAmount)}
-                </span>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Cam Kết & Chính Sách */}
-          <div className="text-[11px] text-gray-500 bg-gray-50 p-3.5 rounded-xl border border-gray-200 space-y-1">
-            <p className="font-bold text-gray-700 flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              Chính sách & Quy định Bi Bi Boutique:
+          {/* Title & Order info */}
+          <div className="py-2.5 text-center space-y-1 border-b border-dashed border-gray-400">
+            <h3 className="font-bold text-sm uppercase tracking-wider text-gray-900">
+              PHIẾU CHO THUÊ ĐỒ
+            </h3>
+            <p className="text-xs font-bold text-gray-900">
+              Số: <span className="font-mono">{order.code}</span>
             </p>
-            <p>1. Tiền đặt cọc sẽ được hoàn trả lại quý khách trong vòng 24 giờ sau khi nhận lại đồ nguyên vẹn.</p>
-            <p>2. Trang phục được miễn phí giặt hấp chuẩn tiệm. Quý khách vui lòng không tự ý tẩy giặt bằng hóa chất mạnh.</p>
+            <p className="text-[10px] text-gray-500">
+              {new Date(order.createdAt).toLocaleDateString('vi-VN')} {new Date(order.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+            </p>
           </div>
 
-          {/* Chữ Ký Hai Bên */}
-          <div className="grid grid-cols-2 text-center text-xs pt-4 border-t border-gray-200">
-            <div>
-              <p className="font-bold text-gray-900 uppercase">Khách Hàng</p>
-              <p className="text-[10px] text-gray-400 italic">(Ký và ghi rõ họ tên)</p>
-              <div className="h-14" />
-              <p className="font-semibold text-gray-800">{order.customerName}</p>
+          {/* Customer info */}
+          <div className="py-2 space-y-1 border-b border-dashed border-gray-400 text-[11px]">
+            <p>
+              Khách hàng: <strong className="text-gray-950 text-xs">{order.customerName}</strong>
+            </p>
+            <p>
+              Điện thoại: <strong className="font-mono text-gray-950">{order.customerPhone}</strong>
+            </p>
+            {order.shippingAddress && (
+              <p className="text-[10px] text-gray-600">
+                Địa chỉ: {order.shippingAddress}
+              </p>
+            )}
+            {order.deliveryMethod && (
+              <p className="text-[10px] text-gray-600">
+                Nhận đồ: {order.deliveryMethod === 'pickup' ? 'Lấy tại tiệm' : 'Giao tận nơi'}
+              </p>
+            )}
+          </div>
+
+          {/* Items List */}
+          <div className="py-2 space-y-2 border-b border-dashed border-gray-400">
+            <div className="flex justify-between font-bold text-[10px] text-gray-500 uppercase pb-1 border-b border-gray-200">
+              <span>Sản phẩm</span>
+              <span>T.Tiền</span>
             </div>
-            <div>
-              <p className="font-bold text-gray-900 uppercase">Đại Diện Bi Bi Boutique</p>
-              <p className="text-[10px] text-gray-400 italic">(Ký, đóng dấu hoặc xác nhận điện tử)</p>
-              <div className="h-14" />
-              <p className="font-semibold text-brand-700">Linh Bi (Bi Bi Fashion)</p>
+
+            {order.items.map((item, idx) => (
+              <div key={idx} className="space-y-0.5 text-[11px]">
+                <div className="flex justify-between items-start gap-2">
+                  <span className="font-bold text-gray-950 flex-1">
+                    {idx + 1}. {item.productTitle}
+                  </span>
+                  <span className="font-bold text-gray-950 shrink-0">
+                    {formatVND(item.price * item.quantity)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-[10px] text-gray-500">
+                  <span>
+                    {item.mode === 'rent' ? '[Thuê]' : '[Mua]'} Size: {item.size} | SL: {item.quantity}
+                  </span>
+                  <span>Đ.Giá: {formatVND(item.price)}</span>
+                </div>
+
+                {item.mode === 'rent' && item.rentalStartDate && item.rentalEndDate && (
+                  <div className="text-[10px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded font-medium">
+                    📅 {formatDateVN(item.rentalStartDate)} → {formatDateVN(item.rentalEndDate)} ({item.rentalDays || 1} ngày)
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Totals Calculation */}
+          <div className="py-2.5 space-y-1.5 border-b-2 border-dashed border-gray-900 text-xs">
+            <div className="flex justify-between text-gray-600">
+              <span>Tiền thuê đồ:</span>
+              <span>{formatVND(order.subtotal)}</span>
+            </div>
+
+            <div className="flex justify-between text-gray-600">
+              <span>Tiền cọc giữ đồ:</span>
+              <span className={order.depositTotal > 0 ? 'font-bold text-amber-700' : 'text-gray-500'}>
+                {order.depositTotal > 0 ? formatVND(order.depositTotal) : '0 đ (Miễn cọc)'}
+              </span>
+            </div>
+
+            {order.shippingFee > 0 && (
+              <div className="flex justify-between text-gray-600">
+                <span>Phí giao hàng:</span>
+                <span>+{formatVND(order.shippingFee)}</span>
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-dashed border-gray-300 flex justify-between items-baseline">
+              <span className="font-bold text-sm uppercase text-gray-950">TỔNG CỘNG:</span>
+              <span className="font-black text-base text-gray-950 font-mono">
+                {formatVND(order.totalAmount)}
+              </span>
+            </div>
+
+            <div className="flex justify-between text-[11px] pt-1">
+              <span>Trạng thái:</span>
+              <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
+                order.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+              }`}>
+                {order.paymentStatus === 'paid' ? '✓ ĐÃ THANH TOÁN' : '⏳ CHƯA THANH TOÁN'}
+              </span>
             </div>
           </div>
 
+          {/* VietQR Code on POS receipt */}
+          {hasBank && qrUrl && (
+            <div className="py-3 text-center space-y-1.5 border-b border-dashed border-gray-400">
+              <p className="text-[10px] font-bold uppercase text-gray-700">
+                Quét QR Chuyển Khoản Nhanh
+              </p>
+              <div className="w-28 h-28 mx-auto bg-white p-1 border border-gray-300 rounded-lg flex items-center justify-center">
+                <img
+                  src={qrUrl}
+                  alt="VietQR"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="text-[10px] text-gray-600 leading-none space-y-0.5">
+                <p>NH: <strong>{bankConfig.bankName}</strong></p>
+                <p>STK: <strong className="font-mono text-gray-900">{bankConfig.accountNo}</strong></p>
+                <p>Tên: <strong className="uppercase">{bankConfig.accountName}</strong></p>
+              </div>
+            </div>
+          )}
+
+          {/* Footer Notice & Thank You (NO SIGNATURES) */}
+          <div className="pt-3 text-center space-y-1 text-[10px] text-gray-600">
+            <p className="italic">✓ Quý khách vui lòng giữ gìn trang phục và trả đồ đúng hạn.</p>
+            <p className="italic">✓ Miễn phí giặt hấp chuẩn tiệm sau khi trả đồ.</p>
+            <p className="font-bold text-xs pt-1 text-gray-950 tracking-wider">
+              *** CẢM ƠN QUÝ KHÁCH ***
+            </p>
+          </div>
         </div>
 
       </div>

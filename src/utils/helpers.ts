@@ -68,27 +68,31 @@ export function calculateRentalPrice(product: Product, days: number): number {
 
 /**
  * Check if rental date range overlaps with any confirmed or active bookings
- * Overlap formula: requested_start < existing_end && requested_end > existing_start
+ * Overlap formula: newStart <= existing_end && newEnd >= existing_start (inclusive calendar day check)
  */
 export function checkRentalOverlap(
   newStart: string,
   newEnd: string,
-  existingBookings: RentalBookingDate[] = []
+  existingBookings: RentalBookingDate[] = [],
+  excludeBookingId?: string
 ): { hasConflict: boolean; conflictingBooking?: RentalBookingDate } {
   if (!newStart || !newEnd || !existingBookings || existingBookings.length === 0) {
     return { hasConflict: false };
   }
 
-  const reqStart = new Date(newStart).getTime();
-  const reqEnd = new Date(newEnd).getTime();
+  const s = newStart.split('T')[0];
+  const e = newEnd.split('T')[0];
 
   for (const booking of existingBookings) {
     if (booking.status === 'cancelled') continue;
-    const existStart = new Date(booking.startDate).getTime();
-    const existEnd = new Date(booking.endDate).getTime();
+    if (excludeBookingId && booking.id === excludeBookingId) continue;
+    if (!booking.startDate || !booking.endDate) continue;
 
-    // Standard interval overlap check
-    if (reqStart < existEnd && reqEnd > existStart) {
+    const bStart = booking.startDate.split('T')[0];
+    const bEnd = booking.endDate.split('T')[0];
+
+    // Standard inclusive calendar date overlap: s <= bEnd && e >= bStart
+    if (s <= bEnd && e >= bStart) {
       return { hasConflict: true, conflictingBooking: booking };
     }
   }

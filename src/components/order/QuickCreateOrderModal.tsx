@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Calendar, User, Phone, MapPin, DollarSign, Check, FileText } from 'lucide-react';
+import { X, ShoppingBag, Calendar, User, Phone, MapPin, DollarSign, Check, FileText, AlertTriangle } from 'lucide-react';
 import { Product, Order, OrderItem } from '../../types';
 import { useProducts } from '../../context/ProductContext';
 import { useOrders } from '../../context/OrderContext';
 import { useToast } from '../../context/ToastContext';
-import { formatVND, generateOrderCode } from '../../utils/helpers';
+import { formatVND, formatDateVN, generateOrderCode, checkRentalOverlap } from '../../utils/helpers';
 import { generateVietQrUrl, getActiveBankConfig } from '../../utils/vietqr';
 
 interface QuickCreateOrderModalProps {
@@ -68,6 +68,12 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const shippingFee = deliveryMethod === 'shipping' ? 30000 : 0;
   const grandTotal = itemTotal + depositTotal + shippingFee;
 
+  // Check rental dates conflict with existing bookings on the selected dress
+  const rentalConflict = mode === 'rent' && selectedProduct
+    ? checkRentalOverlap(startDate, endDate, selectedProduct.bookedDates || [])
+    : { hasConflict: false };
+  const hasRentalConflict = rentalConflict.hasConflict;
+
   // Handle product selection change
   const handleProductChange = (prodId: string) => {
     setSelectedProductId(prodId);
@@ -101,6 +107,13 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
 
     if (!selectedProduct) {
       showToast('Vui lòng chọn sản phẩm trong kho!', 'error');
+      return;
+    }
+    if (mode === 'rent' && hasRentalConflict) {
+      showToast(
+        `Không thể tạo đơn! Váy đã có lịch trùng từ ${formatDateVN(rentalConflict.conflictingBooking?.startDate!)} đến ${formatDateVN(rentalConflict.conflictingBooking?.endDate!)} (${rentalConflict.conflictingBooking?.renterName || 'Đã khóa'})!`,
+        'error'
+      );
       return;
     }
     if (!customerName.trim()) {
@@ -290,7 +303,9 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full px-2.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className={`w-full px-2.5 py-2 bg-white border rounded-xl text-xs font-semibold focus:outline-none ${
+                          hasRentalConflict ? 'border-rose-400 text-rose-800 bg-rose-50/30' : 'border-gray-200'
+                        }`}
                         required
                       />
                     </div>
@@ -301,11 +316,46 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                         value={endDate}
                         min={startDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full px-2.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className={`w-full px-2.5 py-2 bg-white border rounded-xl text-xs font-semibold focus:outline-none ${
+                          hasRentalConflict ? 'border-rose-400 text-rose-800 bg-rose-50/30' : 'border-gray-200'
+                        }`}
                         required
                       />
                     </div>
                   </div>
+
+                  {/* Conflict Warning */}
+                  {hasRentalConflict && (
+                    <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl flex items-start gap-2 text-xs text-rose-900 animate-pulse">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">
+                          ⚠️ TRÙNG LỊCH: Váy đã có lịch thuê trong khoảng ngày này!
+                        </p>
+                        <p className="text-[11px] text-rose-700 mt-0.5">
+                          Đã có khách đặt từ <strong>{formatDateVN(rentalConflict.conflictingBooking?.startDate!)}</strong> đến <strong>{formatDateVN(rentalConflict.conflictingBooking?.endDate!)}</strong> ({rentalConflict.conflictingBooking?.renterName || 'Đã khóa'}). Không thể tạo trùng đơn!
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Existing bookings on this dress */}
+                  {selectedProduct && (selectedProduct.bookedDates || []).filter((b) => b.status !== 'cancelled').length > 0 && (
+                    <div className="text-[11px] bg-amber-50/80 p-2.5 rounded-xl border border-amber-200/80 space-y-1">
+                      <span className="font-bold text-amber-900 flex items-center gap-1">
+                        <span>🔒 Các khoảng ngày váy đã bận / đã có người đặt:</span>
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        {(selectedProduct.bookedDates || [])
+                          .filter((b) => b.status !== 'cancelled')
+                          .map((b, i) => (
+                            <span key={i} className="bg-white px-2 py-0.5 rounded-md border border-amber-200 text-amber-900 text-[10px] font-medium shadow-2xs">
+                              {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)} ({b.renterName})
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -474,10 +524,15 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-2 transition-all"
+              disabled={hasRentalConflict}
+              className={`px-6 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center gap-2 transition-all ${
+                hasRentalConflict
+                  ? 'bg-rose-400 text-white cursor-not-allowed shadow-none opacity-80'
+                  : 'bg-brand-600 hover:bg-brand-700 text-white shadow-brand-500/20'
+              }`}
             >
               <FileText className="w-4 h-4" />
-              <span>Tạo Đơn Hàng & Mở In Bill Ngay</span>
+              <span>{hasRentalConflict ? '⚠️ Trùng Lịch Thuê (Không Thể Tạo Đơn)' : 'Tạo Đơn Hàng & Mở In Bill Ngay'}</span>
             </button>
           </div>
         </form>
