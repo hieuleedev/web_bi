@@ -1,0 +1,670 @@
+import React, { useState, useMemo } from 'react';
+import {
+  ArrowLeft,
+  Heart,
+  Share2,
+  Star,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  Sparkles,
+  Calendar,
+  ShoppingBag,
+  MessageSquare,
+  AlertCircle,
+  CheckCircle2,
+  MapPin,
+  ChevronRight,
+  Send
+} from 'lucide-react';
+import { Product, Review } from '../types';
+import { formatVND, formatDateVN, calculateRentalDays, calculateRentalPrice, checkRentalOverlap } from '../utils/helpers';
+import { useProducts } from '../context/ProductContext';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useChat } from '../context/ChatContext';
+import { useToast } from '../context/ToastContext';
+
+interface ProductDetailPageProps {
+  productId: string;
+  onBack: () => void;
+  onGoToCart: () => void;
+}
+
+export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
+  productId,
+  onBack,
+  onGoToCart,
+}) => {
+  const { getProductById, wishlistIds, toggleLike, addReview } = useProducts();
+  const { addToCart } = useCart();
+  const { currentUser } = useAuth();
+  const { startProductChat } = useChat();
+  const { showToast } = useToast();
+
+  const product = getProductById(productId);
+
+  if (!product) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+        <h2 className="text-xl font-bold text-gray-800">Không tìm thấy sản phẩm!</h2>
+        <button
+          onClick={onBack}
+          className="mt-4 px-5 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700"
+        >
+          Quay lại danh sách
+        </button>
+      </div>
+    );
+  }
+
+  // Active image
+  const [activeImage, setActiveImage] = useState(product.featuredImage);
+  const isLiked = wishlistIds.includes(product.id);
+
+  // Buy or Rent Mode Tab
+  const [activeMode, setActiveMode] = useState<'buy' | 'rent'>(
+    product.type === 'rent' ? 'rent' : 'buy'
+  );
+
+  const [selectedSize, setSelectedSize] = useState(product.sizes[0] || 'M');
+  const [selectedColor, setSelectedColor] = useState(product.colors[0] || 'Mặc định');
+  const [buyQuantity, setBuyQuantity] = useState(1);
+
+  // Rental Dates
+  const tomorrowStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  }, []);
+
+  const defaultEndStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 4);
+    return d.toISOString().split('T')[0];
+  }, []);
+
+  const [startDate, setStartDate] = useState(tomorrowStr);
+  const [endDate, setEndDate] = useState(defaultEndStr);
+
+  // Overlap verification
+  const overlapCheck = useMemo(() => {
+    if (activeMode !== 'rent' || !startDate || !endDate) return { hasConflict: false };
+    return checkRentalOverlap(startDate, endDate, product.bookedDates);
+  }, [activeMode, startDate, endDate, product.bookedDates]);
+
+  const rentalDays = useMemo(() => {
+    return calculateRentalDays(startDate, endDate);
+  }, [startDate, endDate]);
+
+  const rentalFee = useMemo(() => {
+    return calculateRentalPrice(product, rentalDays);
+  }, [product, rentalDays]);
+
+  const deposit = product.deposit || 0;
+
+  // Review state
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState('');
+
+  const handleAddReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    addReview(product.id, {
+      userId: currentUser?.id || 'guest',
+      userName: currentUser?.name || 'Khách hàng ẩn danh',
+      userAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+      rating: newRating,
+      comment: newComment.trim(),
+      type: activeMode,
+    });
+
+    setNewComment('');
+    showToast('Cảm ơn bạn đã gửi đánh giá sản phẩm!', 'success');
+  };
+
+  const handleAddToCart = (instantCheckout = false) => {
+    if (activeMode === 'rent') {
+      if (overlapCheck.hasConflict) {
+        showToast('Khoảng thời gian này đã bị trùng lịch, vui lòng chọn ngày khác!', 'error');
+        return;
+      }
+      const ok = addToCart({
+        product,
+        mode: 'rent',
+        selectedSize,
+        selectedColor,
+        rentalStartDate: startDate,
+        rentalEndDate: endDate,
+      });
+      if (ok && instantCheckout) {
+        onGoToCart();
+      }
+    } else {
+      const ok = addToCart({
+        product,
+        mode: 'buy',
+        selectedSize,
+        selectedColor,
+        quantity: buyQuantity,
+      });
+      if (ok && instantCheckout) {
+        onGoToCart();
+      }
+    }
+  };
+
+  const handleChatWithSeller = () => {
+    if (currentUser) {
+      startProductChat(product, currentUser);
+    }
+  };
+
+  return (
+    <div className="bg-[#faf9f8] min-h-screen pb-20">
+      {/* Breadcrumb & Navigation */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-brand-600 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Quay lại danh mục</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => toggleLike(product.id)}
+              className={`p-2 rounded-full border transition-all ${
+                isLiked
+                  ? 'bg-rose-50 border-rose-200 text-rose-500'
+                  : 'bg-white border-gray-200 text-gray-600 hover:text-rose-500'
+              }`}
+              title="Yêu thích"
+            >
+              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+            </button>
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText(window.location.href);
+                showToast('Đã sao chép liên kết sản phẩm!', 'info');
+              }}
+              className="p-2 rounded-full border border-gray-200 bg-white text-gray-600 hover:text-gray-900"
+              title="Chia sẻ"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-6 lg:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            
+            {/* Gallery Section - Left (5 cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              {/* Main Image with Zoom Effect */}
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 group border border-gray-100">
+                <img
+                  src={activeImage}
+                  alt={product.title}
+                  className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                />
+
+                {/* Badge */}
+                <div className="absolute top-4 left-4">
+                  {product.type === 'both' ? (
+                    <span className="bg-gradient-to-r from-amber-500 to-brand-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                      Bán & Cho Thuê
+                    </span>
+                  ) : product.type === 'rent' ? (
+                    <span className="bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                      Cho Thuê Theo Ngày
+                    </span>
+                  ) : (
+                    <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                      Sản Phẩm Bán
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Thumbnail carousel */}
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+                {product.images.map((img: string, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImage(img)}
+                    className={`w-20 h-24 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
+                      activeImage === img
+                        ? 'border-brand-600 ring-2 ring-brand-500/20 shadow-md'
+                        : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+
+              {/* Store & Seller Guarantee Box */}
+              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={product.sellerAvatar}
+                      alt={product.sellerName}
+                      className="w-11 h-11 rounded-full object-cover ring-2 ring-brand-500/20"
+                    />
+                    <div>
+                      <h4 className="font-semibold text-xs text-gray-900">{product.sellerName}</h4>
+                      <p className="text-[11px] text-gray-500 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-gray-400" />
+                        {product.location}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleChatWithSeller}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-brand-300 text-brand-700 text-xs font-medium hover:bg-brand-50 flex items-center gap-1.5 transition-colors shadow-sm"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Nhắn tin</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-200/60 text-center text-[10px] text-gray-600">
+                  <div>
+                    <span className="block font-bold text-gray-900 text-xs">{product.sellerRating} ★</span>
+                    <span>Uy tín shop</span>
+                  </div>
+                  <div>
+                    <span className="block font-bold text-gray-900 text-xs">100%</span>
+                    <span>Form chuẩn</span>
+                  </div>
+                  <div>
+                    <span className="block font-bold text-gray-900 text-xs">Hoàn cọc</span>
+                    <span>Trong 24h</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Product Info & Action Selection - Right (7 cols) */}
+            <div className="lg:col-span-7 space-y-6">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-bold uppercase tracking-widest text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-200">
+                    {product.brand}
+                  </span>
+                  <span className="text-xs text-gray-400">•</span>
+                  <span className="text-xs text-gray-500">{product.condition}</span>
+                </div>
+
+                <h1 className="font-serif text-2xl lg:text-3xl font-bold text-gray-900 leading-snug">
+                  {product.title}
+                </h1>
+
+                {/* Rating & reviews */}
+                <div className="flex items-center gap-4 mt-2.5 text-xs text-gray-600">
+                  <div className="flex items-center gap-1 text-amber-500 font-semibold">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    <span>{product.rating}</span>
+                  </div>
+                  <span>•</span>
+                  <span>{product.reviewsCount} Đánh giá</span>
+                  <span>•</span>
+                  <span>{product.views} Lượt xem</span>
+                </div>
+              </div>
+
+              {/* Mode Switcher: Buy vs Rent */}
+              {product.type === 'both' && (
+                <div className="flex p-1.5 bg-gray-100 rounded-2xl gap-2">
+                  <button
+                    onClick={() => setActiveMode('rent')}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                      activeMode === 'rent'
+                        ? 'bg-white text-emerald-700 shadow-md'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <Calendar className="w-4 h-4 text-emerald-600" />
+                    <span>Thuê Trang Phục (Theo Ngày)</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveMode('buy')}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                      activeMode === 'buy'
+                        ? 'bg-white text-gray-900 shadow-md'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <ShoppingBag className="w-4 h-4 text-brand-600" />
+                    <span>Mua Đứt Sản Phẩm</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Pricing Box */}
+              <div className="p-5 rounded-2xl bg-brand-50/40 border border-brand-100">
+                {activeMode === 'rent' ? (
+                  <div className="space-y-3">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-xs font-semibold text-gray-600">Giá thuê 1 ngày:</span>
+                      <div>
+                        <span className="text-2xl font-serif font-bold text-emerald-600">
+                          {formatVND(product.rentPrice1Day)}
+                        </span>
+                        <span className="text-xs text-gray-500"> /ngày</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-brand-100/80 text-xs">
+                      <div className="bg-white p-2.5 rounded-xl border border-gray-100">
+                        <span className="text-gray-500 block text-[11px]">Gói 3 ngày:</span>
+                        <span className="font-bold text-gray-900">
+                          {formatVND(product.rentPrice3Days || (product.rentPrice1Day || 0) * 2.5)}
+                        </span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-xl border border-gray-100">
+                        <span className="text-gray-500 block text-[11px]">Gói 7 ngày (1 tuần):</span>
+                        <span className="font-bold text-gray-900">
+                          {formatVND(product.rentPrice7Days || (product.rentPrice1Day || 0) * 5)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1 text-gray-700">
+                      <span>Tiền cọc yêu cầu (Hoàn trả khi trả đồ):</span>
+                      <span className="font-bold text-amber-600">{formatVND(product.deposit)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-2xl font-serif font-bold text-gray-900">
+                      {formatVND(product.buyPrice)}
+                    </span>
+                    {product.originalPrice && (
+                      <span className="text-sm text-gray-400 line-through">
+                        {formatVND(product.originalPrice)}
+                      </span>
+                    )}
+                    <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      Có sẵn giao ngay
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Sizes and Colors */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-800 mb-2">
+                    Kích Thước (Size)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {product.sizes.map((s: string) => (
+                      <button
+                        key={s}
+                        onClick={() => setSelectedSize(s)}
+                        className={`px-4 py-2 rounded-xl text-xs font-medium border transition-all ${
+                          selectedSize === s
+                            ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                            : 'bg-white text-gray-700 border-gray-200 hover:border-brand-300'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-800 mb-2">
+                    Màu Sắc
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {product.colors.map((c: string) => (
+                      <button
+                        key={c}
+                        onClick={() => setSelectedColor(c)}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+                          selectedColor === c
+                            ? 'bg-gray-900 text-white border-gray-900'
+                            : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Rental Date Selection & Verification (If in Rent Mode) */}
+              {activeMode === 'rent' && (
+                <div className="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-emerald-600" />
+                      Lịch Chọn Ngày Thuê & Kiểm Tra Trùng
+                    </h4>
+                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                      {rentalDays} ngày thuê
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] text-gray-500 mb-1">Ngày bắt đầu</label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        min={new Date().toISOString().split('T')[0]}
+                        onChange={(e) => {
+                          setStartDate(e.target.value);
+                          if (new Date(e.target.value) >= new Date(endDate)) {
+                            const nextDay = new Date(e.target.value);
+                            nextDay.setDate(nextDay.getDate() + 1);
+                            setEndDate(nextDay.toISOString().split('T')[0]);
+                          }
+                        }}
+                        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-brand-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] text-gray-500 mb-1">Ngày trả đồ</label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        min={startDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Overlap message */}
+                  {overlapCheck.hasConflict ? (
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold">Đã có người đặt trước trong khoảng ngày này!</p>
+                        <p className="text-[11px] text-rose-700 mt-0.5">
+                          Trùng lịch ({formatDateVN(overlapCheck.conflictingBooking?.startDate)} - {formatDateVN(overlapCheck.conflictingBooking?.endDate)}). Vui lòng chọn lịch khác.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Lịch khả dụng! Tổng tiền thuê dự kiến: <strong>{formatVND(rentalFee)}</strong> + Cọc: <strong>{formatVND(deposit)}</strong></span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  onClick={() => handleAddToCart(false)}
+                  disabled={activeMode === 'rent' && overlapCheck.hasConflict}
+                  className={`flex-1 py-3.5 px-6 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                    activeMode === 'rent' && overlapCheck.hasConflict
+                      ? 'border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed'
+                      : 'border-brand-600 text-brand-700 bg-brand-50/50 hover:bg-brand-50'
+                  }`}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Thêm Vào Giỏ Hàng</span>
+                </button>
+
+                <button
+                  onClick={() => handleAddToCart(true)}
+                  disabled={activeMode === 'rent' && overlapCheck.hasConflict}
+                  className={`flex-1 py-3.5 px-6 rounded-2xl text-xs font-bold text-white shadow-xl transition-all flex items-center justify-center gap-2 ${
+                    activeMode === 'rent' && overlapCheck.hasConflict
+                      ? 'bg-gray-300 cursor-not-allowed shadow-none'
+                      : 'bg-brand-600 hover:bg-brand-700 shadow-brand-500/25 active:scale-[0.99]'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>{activeMode === 'rent' ? 'Thuê Ngay Bây Giờ' : 'Mua Ngay'}</span>
+                </button>
+              </div>
+
+              {/* Details & Specifications Accordion / Cards */}
+              <div className="pt-6 border-t border-gray-100 space-y-4 text-xs text-gray-600 leading-relaxed">
+                <div>
+                  <h4 className="font-bold text-gray-900 text-sm mb-1.5">Mô Tả Sản Phẩm</h4>
+                  <p>{product.description}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                  <div className="p-3 rounded-xl bg-gray-50">
+                    <span className="text-gray-400 block text-[11px]">Chất liệu vải:</span>
+                    <span className="font-semibold text-gray-900">{product.material}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-50">
+                    <span className="text-gray-400 block text-[11px]">Hướng dẫn chọn size:</span>
+                    <span className="font-semibold text-gray-900">{product.sizeGuide || 'Chuẩn form Việt Nam'}</span>
+                  </div>
+                </div>
+
+                {product.careInstructions && (
+                  <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/60 text-amber-900 text-xs">
+                    <span className="font-bold block mb-1">Lưu ý bảo quản trang phục:</span>
+                    <span>{product.careInstructions}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Reviews Section */}
+          <div className="mt-14 pt-10 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-serif text-xl font-bold text-gray-900">
+                  Đánh Giá & Nhận Xét Từ Khách Hàng
+                </h3>
+                <p className="text-xs text-gray-500">Người mua và người thuê thực tế chia sẻ trải nghiệm</p>
+              </div>
+
+              <div className="flex items-center gap-2 bg-amber-50 px-3.5 py-1.5 rounded-xl border border-amber-200">
+                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <span className="font-bold text-amber-900 text-sm">{product.rating}</span>
+                <span className="text-xs text-amber-700">/ 5.0 ({product.reviewsCount} đánh giá)</span>
+              </div>
+            </div>
+
+            {/* Submit new review */}
+            <form onSubmit={handleAddReview} className="p-5 rounded-2xl bg-gray-50 border border-gray-200/80 mb-8 space-y-3">
+              <h4 className="text-xs font-bold text-gray-900">Viết đánh giá của bạn</h4>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600">Đánh giá sao:</span>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    type="button"
+                    key={star}
+                    onClick={() => setNewRating(star)}
+                    className="p-1 text-amber-400 hover:scale-110 transition-transform"
+                  >
+                    <Star
+                      className={`w-5 h-5 ${star <= newRating ? 'fill-amber-400' : 'text-gray-300'}`}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Chia sẻ cảm nhận của bạn về độ vừa vặn, chất liệu vải, dịch vụ giao nhận..."
+                rows={3}
+                className="w-full bg-white border border-gray-200 rounded-xl p-3 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
+              />
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Gửi Nhận Xét</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Reviews List */}
+            <div className="space-y-4">
+              {product.reviews && product.reviews.length > 0 ? (
+                product.reviews.map((rev: Review) => (
+                  <div
+                    key={rev.id}
+                    className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={rev.userAvatar}
+                          alt={rev.userName}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                        <div>
+                          <span className="font-semibold text-xs text-gray-900">{rev.userName}</span>
+                          <span className="text-[10px] text-gray-400 ml-2">
+                            {formatDateVN(rev.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-amber-400">
+                        {Array.from({ length: rev.rating }).map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-gray-700 pl-11">{rev.comment}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-400 text-xs">
+                  Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên trải nghiệm!
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
