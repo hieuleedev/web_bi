@@ -28,7 +28,8 @@ import {
   Sparkles,
   Printer,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
@@ -44,6 +45,7 @@ import { BankConfigModal } from '../components/admin/BankConfigModal';
 import { OrderInvoiceModal } from '../components/order/OrderInvoiceModal';
 import { EditOrderModal } from '../components/order/EditOrderModal';
 import { EditProductModal } from '../components/product/EditProductModal';
+import { SellerRevenueTab } from '../components/seller/SellerRevenueTab';
 
 interface AccountPageProps {
   initialTab?: string;
@@ -171,6 +173,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             icon: Calendar,
             badge: overdueOrders.length > 0 ? `⚠️ ${overdueOrders.length} quá hạn` : undefined,
             badgeColor: 'bg-rose-600 text-white animate-pulse',
+          },
+          {
+            id: 'revenue',
+            label: 'Doanh thu & Báo cáo',
+            icon: TrendingUp,
           },
         ]
       : []),
@@ -1169,6 +1176,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   );
                 })()}
               </div>
+            )}
+
+            {/* TAB: REVENUE & REPORTS */}
+            {activeTab === 'revenue' && isOwner && (
+              <SellerRevenueTab orders={sellerOrders} />
             )}
 
             {/* TAB: WISHLIST */}
