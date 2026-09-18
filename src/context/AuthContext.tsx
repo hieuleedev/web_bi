@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '../types';
 import { MOCK_USERS } from '../data/mockUsers';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -44,12 +44,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return null; // Default to guest (not logged in)
   });
 
-  // Sync users list from Supabase
+  // Sync users list from Backend API
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const { data, error } = await supabase.from('users').select('*');
-        if (!error && data && data.length > 0) {
+        const data = await api.auth.getUsers();
+        if (data && data.length > 0) {
           const mappedUsers: User[] = data.map((u: any) => ({
             id: u.id,
             name: u.name,
@@ -58,16 +58,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
             role: u.role as UserRole,
             rating: u.rating || 5.0,
-            ratingCount: u.rating_count || 0,
+            ratingCount: u.ratingCount || u.rating_count || 0,
             location: u.location || 'Việt Nam',
-            joinedDate: u.created_at ? u.created_at.split('T')[0] : '2026-01-01',
+            joinedDate: u.joinedDate || (u.created_at ? u.created_at.split('T')[0] : '2026-01-01'),
             bio: u.bio
           }));
           setUsers(mappedUsers);
           localStorage.setItem(ALL_USERS_KEY, JSON.stringify(mappedUsers));
         }
       } catch (err) {
-        console.warn('Could not fetch users from Supabase', err);
+        console.warn('Could not fetch users from Backend API', err);
       }
     }
     fetchUsers();
@@ -88,6 +88,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [currentUser, token]);
 
   const login = async (email: string, _password?: string): Promise<boolean> => {
+    try {
+      const res = await api.auth.login(email);
+      if (res?.user && res?.token) {
+        setToken(res.token);
+        setCurrentUser(res.user);
+        localStorage.setItem(AUTH_TOKEN_KEY, res.token);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(res.user));
+        return true;
+      }
+    } catch (err) {
+      console.warn('API login failed, checking local users fallback', err);
+    }
+
+    // Fallback: Tìm trong danh sách users cục bộ
     const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
     if (found) {
       const generatedToken = `bibi_jwt_${found.id}_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
@@ -120,20 +134,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem(AUTH_TOKEN_KEY, generatedToken);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(newUser));
 
-    // Save directly to Supabase users table
+    // Save to Backend API
     try {
-      await supabase.from('users').insert({
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        phone: newUser.phone,
-        avatar: newUser.avatar,
-        role: newUser.role,
-        rating: newUser.rating,
-        location: newUser.location
-      });
+      await api.auth.register(newUser);
     } catch (e) {
-      console.warn('Error saving new user to Supabase', e);
+      console.warn('Error saving new user to Backend API', e);
     }
   };
 
@@ -182,18 +187,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
 
     try {
-      const dbUpdate: any = {};
-      if (updatedData.name) dbUpdate.name = updatedData.name;
-      if (updatedData.phone) dbUpdate.phone = updatedData.phone;
-      if (updatedData.location) dbUpdate.location = updatedData.location;
-      if (updatedData.bio) dbUpdate.bio = updatedData.bio;
-      if (updatedData.avatar) dbUpdate.avatar = updatedData.avatar;
-
-      if (Object.keys(dbUpdate).length > 0) {
-        await supabase.from('users').update(dbUpdate).eq('id', currentUser.id);
-      }
+      await api.auth.updateProfile(currentUser.id, updatedData);
     } catch (e) {
-      console.warn('Error updating profile in Supabase', e);
+      console.warn('Error updating profile in Backend API', e);
     }
   };
 

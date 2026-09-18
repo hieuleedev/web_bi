@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, ProductStatus, RentalBookingDate, Review } from '../types';
 import { INITIAL_PRODUCTS } from '../data/initialProducts';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 interface ProductContextType {
   products: Product[];
@@ -30,56 +30,6 @@ function isLegacyMockId(id: string): boolean {
   if (/^prod-[1-9]$/.test(id)) return true;
   if (id.startsWith('white-') || id.startsWith('demo-')) return true;
   return false;
-}
-
-// Helper to map Supabase row to Product model
-function mapDbToProduct(row: any): Product {
-  return {
-    id: row.id,
-    sku: row.sku || (row.id ? row.id.replace('prod-', 'BB-') : 'BB-001'),
-    title: row.title || '',
-    description: row.description || '',
-    category: row.category || 'party-dress',
-    gender: row.gender || 'women',
-    brand: row.brand || 'Bi Bi Collection',
-    type: row.type || 'both',
-    status: row.status === 'active' ? 'approved' : (row.status || 'approved'),
-    buyPrice: row.buy_price,
-    originalPrice: row.original_price,
-    rentPrice1Day: row.rent_price_1day,
-    rentPrice3Days: row.rent_price_3days,
-    rentPrice7Days: row.rent_price_7days,
-    deposit: row.deposit,
-    sizes: row.sizes && row.sizes.length > 0 ? row.sizes : ['S', 'M', 'L'],
-    colors: row.colors && row.colors.length > 0 ? row.colors : ['Trắng'],
-    material: row.material || '',
-    condition: row.condition || 'Mới 100%',
-    featuredImage: row.featured_image || '',
-    images: row.images && row.images.length > 0 ? row.images : [row.featured_image || ''],
-    sellerId: row.seller_id || 'user-seller-1',
-    sellerName: row.seller_name || 'Bi Bi Boutique (Linh Bi)',
-    sellerAvatar: row.seller_avatar || '',
-    sellerRating: row.seller_rating || 5.0,
-    location: row.location || 'Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng',
-    hasShipping: row.has_shipping ?? true,
-    shippingFee: row.shipping_fee ?? 30000,
-    shippingArea: row.shipping_area || 'Toàn quốc',
-    views: row.views || 1,
-    likes: row.likes || 0,
-    rating: row.rating || 5.0,
-    reviewsCount: row.reviews_count || 0,
-    createdAt: row.created_at || new Date().toISOString(),
-    careInstructions: row.care_instructions,
-    sizeGuide: row.size_guide,
-    bookedDates: row.booked_dates || [],
-    reviews: (() => {
-      try {
-        const saved = localStorage.getItem(`bibi_reviews_${row.id}`);
-        if (saved) return JSON.parse(saved);
-      } catch (e) {}
-      return [];
-    })()
-  };
 }
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -123,45 +73,28 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     return [];
   });
 
-  // Sync with Supabase on mount
+  // Sync with Backend API on mount
   const refreshProducts = async () => {
     try {
-      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-      if (!error && data) {
+      const data = await api.products.getAll({ status: 'all' });
+      if (data && data.length > 0) {
         const realRows = data.filter((row: any) => row.id && !isLegacyMockId(row.id));
-        const mapped = realRows.map(mapDbToProduct);
         setProducts((prev) => {
-          const dbIds = new Set(mapped.map((p) => p.id));
+          const dbIds = new Set(realRows.map((p: any) => p.id));
           // Preserve any newly created products in local storage that haven't been synced or fetched yet
           const localOnly = prev.filter((p) => !dbIds.has(p.id) && !isLegacyMockId(p.id));
-          const merged = [...mapped, ...localOnly];
+          const merged = [...realRows, ...localOnly];
           localStorage.setItem(PRODUCTS_KEY, JSON.stringify(merged));
           return merged;
         });
       }
     } catch (e) {
-      console.warn('Supabase fetch failed, using local/fallback', e);
+      console.warn('Backend API products fetch failed, using local/fallback', e);
     }
   };
 
   useEffect(() => {
     refreshProducts();
-
-    // Subscribe to Supabase Realtime updates on products
-    const channel = supabase
-      .channel('realtime_products')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'products' },
-        () => {
-          refreshProducts();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   useEffect(() => {
@@ -193,38 +126,37 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       return next;
     });
 
-    // Save to Supabase Cloud DB
+    // Save to Backend API Server
     try {
-      await supabase.from('products').insert({
+      await api.products.create({
         id: newProduct.id,
+        sku: newProduct.sku,
         title: newProduct.title,
         description: newProduct.description,
         category: newProduct.category,
+        gender: newProduct.gender,
         brand: newProduct.brand,
         type: newProduct.type,
         status: newProduct.status,
-        buy_price: newProduct.buyPrice || 0,
-        rent_price_1day: newProduct.rentPrice1Day || 0,
-        rent_price_3days: newProduct.rentPrice3Days || 0,
-        rent_price_7days: newProduct.rentPrice7Days || 0,
+        buyPrice: newProduct.buyPrice || 0,
+        rentPrice1Day: newProduct.rentPrice1Day || 0,
+        rentPrice3Days: newProduct.rentPrice3Days || 0,
+        rentPrice7Days: newProduct.rentPrice7Days || 0,
         deposit: newProduct.deposit || 0,
         sizes: newProduct.sizes,
         colors: newProduct.colors,
         material: newProduct.material,
         condition: newProduct.condition,
-        featured_image: newProduct.featuredImage,
+        featuredImage: newProduct.featuredImage,
         images: newProduct.images,
-        seller_id: newProduct.sellerId,
-        seller_name: newProduct.sellerName,
-        seller_avatar: newProduct.sellerAvatar,
-        seller_rating: newProduct.sellerRating,
-        location: newProduct.location,
-        views: newProduct.views,
-        rating: newProduct.rating,
-        reviews_count: newProduct.reviewsCount
+        sellerId: newProduct.sellerId,
+        sellerName: newProduct.sellerName,
+        sellerAvatar: newProduct.sellerAvatar,
+        sellerRating: newProduct.sellerRating,
+        location: newProduct.location
       });
     } catch (err) {
-      console.warn('Error syncing product to Supabase', err);
+      console.warn('Error syncing product to Backend API', err);
     }
 
     return newProduct;
@@ -236,22 +168,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     );
 
     try {
-      const updateData: any = {};
-      if (data.title) updateData.title = data.title;
-      if (data.status) updateData.status = data.status;
-      if (data.buyPrice !== undefined) updateData.buy_price = data.buyPrice;
-      if (data.rentPrice1Day !== undefined) updateData.rent_price_1day = data.rentPrice1Day;
-      if (data.rentPrice3Days !== undefined) updateData.rent_price_3days = data.rentPrice3Days;
-      if (data.rentPrice7Days !== undefined) updateData.rent_price_7days = data.rentPrice7Days;
-      if (data.deposit !== undefined) updateData.deposit = data.deposit;
-      if (data.featuredImage) updateData.featured_image = data.featuredImage;
-      if (data.images) updateData.images = data.images;
-
-      if (Object.keys(updateData).length > 0) {
-        await supabase.from('products').update(updateData).eq('id', id);
-      }
+      await api.products.update(id, data);
     } catch (e) {
-      console.warn('Error updating product in Supabase', e);
+      console.warn('Error updating product in Backend API', e);
     }
   };
 
@@ -262,9 +181,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       return next;
     });
     try {
-      await supabase.from('products').delete().eq('id', id);
+      await api.products.delete(id);
     } catch (e) {
-      console.warn('Error deleting product from Supabase', e);
+      console.warn('Error deleting product from Backend API', e);
     }
   };
 
@@ -286,6 +205,9 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
       return nextWishlist;
     });
+
+    // Notify Backend
+    api.products.like(productId).catch(() => {});
   };
 
   const addReview = async (productId: string, reviewData: Omit<Review, 'id' | 'createdAt'>) => {
@@ -325,37 +247,31 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       })
     );
 
-    // Sync review record into Supabase reviews table
+    // Sync review record into Backend API
     try {
-      await supabase.from('reviews').insert({
-        id: newReview.id,
-        product_id: productId,
-        user_id: newReview.userId,
-        user_name: newReview.userName,
-        user_avatar: newReview.userAvatar,
+      await api.reviews.create({
+        productId,
+        userId: newReview.userId,
+        userName: newReview.userName,
+        userAvatar: newReview.userAvatar,
         rating: newReview.rating,
         comment: newReview.comment,
         type: newReview.type
       });
     } catch (err) {
-      console.warn('Could not insert review to Supabase', err);
-    }
-
-    // Sync updated rating and reviewsCount directly into Supabase Cloud DB
-    try {
-      await supabase.from('products').update({
-        rating: updatedRating,
-        reviews_count: updatedCount
-      }).eq('id', productId);
-    } catch (err) {
-      console.warn('Could not sync review rating to Supabase', err);
+      console.warn('Could not insert review to Backend API', err);
     }
   };
 
-  const adminUpdateStatus = (productId: string, status: ProductStatus) => {
+  const adminUpdateStatus = async (productId: string, status: ProductStatus) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === productId ? { ...p, status } : p))
     );
+    try {
+      await api.products.update(productId, { status });
+    } catch (e) {
+      console.warn('Error updating status in Backend API', e);
+    }
   };
 
   const addRentalBookingToProduct = (productId: string, booking: RentalBookingDate) => {

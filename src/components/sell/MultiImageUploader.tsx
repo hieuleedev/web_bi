@@ -1,6 +1,6 @@
-import React from 'react';
-import { UploadCloud, ImageIcon, X } from 'lucide-react';
-import { fileToBase64 } from '../../utils/helpers';
+import React, { useState } from 'react';
+import { UploadCloud, ImageIcon, X, Loader2 } from 'lucide-react';
+import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 
 interface MultiImageUploaderProps {
@@ -17,23 +17,30 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
   onFeaturedIndexChange,
 }) => {
   const { showToast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
+    const filesArray = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+    if (filesArray.length === 0) {
+      showToast('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP)!', 'warning');
+      return;
+    }
+
+    setIsUploading(true);
     try {
-      const newImages: string[] = [];
-      for (let i = 0; i < e.target.files.length; i++) {
-        const file = e.target.files[i];
-        if (file.type.startsWith('image/')) {
-          const base64 = await fileToBase64(file);
-          newImages.push(base64);
-        }
+      const res = await api.upload.multiple(filesArray);
+      if (res.urls && res.urls.length > 0) {
+        onImagesChange([...images, ...res.urls]);
+        showToast(`Đã tải lên thành công ${res.urls.length} ảnh lên Vietnix S3!`, 'success');
       }
-      onImagesChange([...images, ...newImages]);
-      showToast(`Đã tải lên thành công ${newImages.length} ảnh!`, 'success');
-    } catch (err) {
-      showToast('Lỗi khi tải ảnh lên. Vui lòng thử lại!', 'error');
+    } catch (err: any) {
+      console.error('Lỗi upload ảnh:', err);
+      showToast(`Lỗi tải ảnh lên Vietnix S3: ${err.message || 'Vui lòng thử lại'}`, 'error');
+    } finally {
+      setIsUploading(false);
+      e.target.value = ''; // Reset input để có thể chọn lại cùng file
     }
   };
 
@@ -69,18 +76,37 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
       </div>
 
       {/* Drag & drop upload box */}
-      <label className="border-2 border-dashed border-gray-300 hover:border-brand-500 bg-gray-50/70 hover:bg-brand-50/30 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all">
-        <UploadCloud className="w-10 h-10 text-brand-500 mb-2" />
-        <p className="text-xs font-semibold text-gray-800">
-          Nhấn để chọn ảnh từ máy tính của bạn hoặc kéo thả vào đây
-        </p>
-        <p className="text-[11px] text-gray-500 mt-1">
-          Tối đa 10 ảnh, kích thước ảnh sắc nét sẽ thu hút khách thuê hơn 300%
-        </p>
+      <label className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all ${
+        isUploading 
+          ? 'border-brand-500 bg-brand-50/50 cursor-not-allowed' 
+          : 'border-gray-300 hover:border-brand-500 bg-gray-50/70 hover:bg-brand-50/30 cursor-pointer'
+      }`}>
+        {isUploading ? (
+          <>
+            <Loader2 className="w-10 h-10 text-brand-600 animate-spin mb-2" />
+            <p className="text-xs font-bold text-brand-700">
+              Đang tải ảnh trực tiếp lên Vietnix S3 Cloud Storage...
+            </p>
+            <p className="text-[11px] text-brand-500 mt-1">
+              Vui lòng đợi giây lát trong khi tối ưu và lưu trữ ảnh
+            </p>
+          </>
+        ) : (
+          <>
+            <UploadCloud className="w-10 h-10 text-brand-500 mb-2" />
+            <p className="text-xs font-semibold text-gray-800">
+              Nhấn để chọn ảnh từ máy tính của bạn hoặc kéo thả vào đây
+            </p>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Ảnh tải lên sẽ được lưu trữ an toàn trên đám mây Vietnix S3
+            </p>
+          </>
+        )}
         <input
           type="file"
           multiple
           accept="image/*"
+          disabled={isUploading}
           onChange={handleFileSelect}
           className="hidden"
         />

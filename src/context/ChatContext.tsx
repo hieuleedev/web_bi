@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { ChatMessage, Conversation, Product, User } from '../types';
-import { supabase } from '../lib/supabase';
+import { api, BACKEND_URL } from '../lib/api';
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -23,7 +23,6 @@ const INITIAL_CONVERSATIONS: Conversation[] = [];
 
 const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {};
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5050';
 let socket: Socket | null = null;
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -46,7 +45,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(false);
 
-  // Khởi tạo kết nối Socket.IO Realtime
+  // Khởi tạo kết nối Socket.IO Realtime với Backend
   useEffect(() => {
     try {
       socket = io(BACKEND_URL, {
@@ -107,73 +106,59 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [activeConversationId]);
 
-  // Fetch and sync messages realtime from Supabase (chạy song song dự phòng)
+  // Đồng bộ danh sách hội thoại từ Backend API
   useEffect(() => {
-    async function fetchAllMessages() {
+    async function syncConversations() {
       try {
-        const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
-        if (!error && data && data.length > 0) {
-          const grouped: Record<string, ChatMessage[]> = {};
-          data.forEach((row: any) => {
-            const msg: ChatMessage = {
-              id: row.id,
-              conversationId: row.conversation_id,
-              senderId: row.sender_id,
-              senderName: row.sender_name,
-              senderAvatar: row.sender_avatar,
-              content: row.content,
-              imageUrl: row.image_url,
-              timestamp: row.created_at,
-              isRead: row.is_read
-            };
-            if (!grouped[row.conversation_id]) {
-              grouped[row.conversation_id] = [];
-            }
-            grouped[row.conversation_id].push(msg);
+        const remoteConvs = await api.chat.getConversations();
+        if (remoteConvs && remoteConvs.length > 0) {
+          setConversations((prev) => {
+            const remoteIds = new Set(remoteConvs.map(c => c.id));
+            const localOnly = prev.filter(c => !remoteIds.has(c.id));
+            const merged = [...remoteConvs, ...localOnly];
+            localStorage.setItem(CHAT_CONV_KEY, JSON.stringify(merged));
+            return merged;
           });
-          setMessages(grouped);
         }
-      } catch (e) {
-        console.warn('Error fetching messages from Supabase', e);
+      } catch (err) {
+        console.warn('Không thể lấy danh sách hội thoại từ Backend:', err);
       }
     }
-    fetchAllMessages();
-
-    // Subscribe to new incoming messages realtime from Supabase
-    const channel = supabase
-      .channel('realtime_messages')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
-        (payload: any) => {
-          const row = payload.new;
-          const incoming: ChatMessage = {
-            id: row.id,
-            conversationId: row.conversation_id,
-            senderId: row.sender_id,
-            senderName: row.sender_name,
-            senderAvatar: row.sender_avatar,
-            content: row.content,
-            imageUrl: row.image_url,
-            timestamp: row.created_at,
-            isRead: row.is_read
-          };
-          setMessages((prev) => {
-            const list = prev[row.conversation_id] || [];
-            if (list.some((m) => m.id === incoming.id)) return prev;
-            return {
-              ...prev,
-              [row.conversation_id]: [...list, incoming]
-            };
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    syncConversations();
   }, []);
+
+  // Tải tin nhắn của cuộc hội thoại đang mở từ Backend API
+  useEffect(() => {
+    if (!activeConversationId) return;
+
+    async function loadActiveMessages() {
+      try {
+        const data = await api.chat.getMessages(activeConversationId!);
+        if (data && data.length > 0) {
+          const mapped: ChatMessage[] = data.map((row: any) => ({
+            id: row.id,
+            conversationId: row.conversation_id || row.conversationId,
+            senderId: row.sender_id || row.senderId,
+            senderName: row.sender_name || row.senderName,
+            senderAvatar: row.sender_avatar || row.senderAvatar,
+            content: row.content,
+            imageUrl: row.image_url || row.imageUrl,
+            timestamp: row.created_at || row.timestamp,
+            isRead: row.is_read ?? row.isRead ?? true
+          }));
+
+          setMessages((prev) => ({
+            ...prev,
+            [activeConversationId!]: mapped
+          }));
+        }
+      } catch (e) {
+        console.warn('Lỗi tải tin nhắn từ Backend API', e);
+      }
+    }
+
+    loadActiveMessages();
+  }, [activeConversationId]);
 
   useEffect(() => {
     localStorage.setItem(CHAT_CONV_KEY, JSON.stringify(conversations));
@@ -225,34 +210,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     } else {
       // 2. Gửi qua REST API Backend
-      fetch(`${BACKEND_URL}/api/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId,
-          senderId: sender.id,
-          senderName: sender.name,
-          senderAvatar: sender.avatar,
-          content,
-          imageUrl
-        })
-      }).catch(() => {});
-    }
-
-    // 3. Dự phòng ghi vào Supabase
-    try {
-      await supabase.from('messages').insert({
-        id: newMsg.id,
-        conversation_id: conversationId,
-        sender_id: sender.id,
-        sender_name: sender.name,
-        sender_avatar: sender.avatar,
-        content: newMsg.content,
-        image_url: newMsg.imageUrl || null,
-        is_read: true
-      });
-    } catch (e) {
-      // ignore
+      api.chat.sendMessage({
+        conversationId,
+        senderId: sender.id,
+        senderName: sender.name,
+        senderAvatar: sender.avatar,
+        content,
+        imageUrl
+      }).catch((e) => console.warn('Lỗi gửi tin nhắn qua REST API:', e));
     }
   };
 
