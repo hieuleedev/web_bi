@@ -180,13 +180,17 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
 
     // Lock booked dates on product if rental
     if (mode === 'rent') {
-      addRentalBookingToProduct(selectedProduct.id, {
-        id: `book-${Date.now()}`,
-        startDate,
-        endDate,
-        renterName: customerName.trim(),
-        status: 'confirmed',
-      });
+      try {
+        await addRentalBookingToProduct(selectedProduct.id, {
+          id: `book-${Date.now()}`,
+          startDate,
+          endDate,
+          renterName: customerName.trim(),
+          status: 'confirmed',
+        });
+      } catch (e: any) {
+        console.warn('Lỗi lưu lịch thuê khi tạo đơn nhanh:', e);
+      }
     }
 
     showToast(`Tạo đơn hàng ${orderCode} thành công!`, 'success');

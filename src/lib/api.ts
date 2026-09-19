@@ -137,7 +137,7 @@ export const api = {
   },
 
   // ==========================================
-  // 3. ĐƠN HÀNG (ORDERS) & VIETQR
+  // 4. ĐƠN HÀNG (ORDERS) & VIETQR
   // ==========================================
   orders: {
     getAll: async (params: { phone?: string; status?: string; search?: string } = {}) => {
@@ -230,6 +230,13 @@ export const api = {
     getRenters: async () => {
       const res = await request<{ success: boolean; totalRenters: number; data: any[] }>('/rentals/renters');
       return res.data || [];
+    },
+
+    delete: async (bookingId: string) => {
+      const res = await request<{ success: boolean; message: string }>(`/rentals/${bookingId}`, {
+        method: 'DELETE'
+      });
+      return res.success;
     }
   },
 

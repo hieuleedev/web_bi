@@ -15,8 +15,8 @@ interface ProductContextType {
   toggleLike: (productId: string) => void;
   addReview: (productId: string, review: Omit<Review, 'id' | 'createdAt'>) => void;
   adminUpdateStatus: (productId: string, status: ProductStatus) => void;
-  addRentalBookingToProduct: (productId: string, booking: RentalBookingDate) => void;
-  removeRentalBookingFromProduct: (productId: string, bookingId: string) => void;
+  addRentalBookingToProduct: (productId: string, booking: RentalBookingDate) => Promise<void>;
+  removeRentalBookingFromProduct: (productId: string, bookingId: string) => Promise<void>;
   getProductById: (id: string) => Product | undefined;
   refreshProducts: () => Promise<void>;
 }
@@ -335,19 +335,52 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const addRentalBookingToProduct = (productId: string, booking: RentalBookingDate) => {
+  const addRentalBookingToProduct = async (productId: string, booking: RentalBookingDate) => {
+    // 1. Lưu trực tiếp vào Database Supabase trước!
+    let savedBooking: any;
+    try {
+      savedBooking = await api.rentals.create({
+        productId,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        renterName: booking.renterName,
+        status: booking.status || 'confirmed'
+      });
+    } catch (err: any) {
+      console.error('❌ Lỗi khi lưu lịch thuê lên Database Supabase:', err);
+      throw new Error(err.message || 'Không thể lưu lịch thuê lên máy chủ Database');
+    }
+
+    const finalBooking: RentalBookingDate = savedBooking ? {
+      id: savedBooking.id || booking.id,
+      startDate: savedBooking.start_date || booking.startDate,
+      endDate: savedBooking.end_date || booking.endDate,
+      renterName: savedBooking.renter_name || booking.renterName,
+      status: savedBooking.status || booking.status
+    } : booking;
+
+    // 2. Database lưu thành công mới cập nhật giao diện
     setProducts((prev) =>
       prev.map((p) => {
         if (p.id !== productId) return p;
         return {
           ...p,
-          bookedDates: [...(p.bookedDates || []), booking],
+          bookedDates: [...(p.bookedDates || []), finalBooking],
         };
       })
     );
   };
 
-  const removeRentalBookingFromProduct = (productId: string, bookingId: string) => {
+  const removeRentalBookingFromProduct = async (productId: string, bookingId: string) => {
+    // 1. Xóa trực tiếp trên Database Supabase trước
+    try {
+      await api.rentals.delete(bookingId);
+    } catch (err: any) {
+      console.error('❌ Lỗi xóa lịch thuê trên Database:', err);
+      throw new Error(err.message || 'Không thể xóa lịch thuê trên máy chủ Database');
+    }
+
+    // 2. Database xóa thành công mới cập nhật giao diện
     setProducts((prev) =>
       prev.map((p) => {
         if (p.id !== productId) return p;

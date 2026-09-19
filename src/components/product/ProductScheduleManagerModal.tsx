@@ -72,7 +72,7 @@ export const ProductScheduleManagerModal: React.FC<ProductScheduleManagerModalPr
     });
   };
 
-  const handleAddManualBlock = (e: React.FormEvent) => {
+  const handleAddManualBlock = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!newStartDate || !newEndDate) {
@@ -108,14 +108,22 @@ export const ProductScheduleManagerModal: React.FC<ProductScheduleManagerModalPr
       status: 'confirmed',
     };
 
-    addRentalBookingToProduct(product.id, newBooking);
-    showToast(`Đã khóa lịch cho "${product.title}" từ ${formatDateVN(newStartDate)} đến ${formatDateVN(newEndDate)}!`, 'success');
-    setIsAddingBlock(false);
+    try {
+      await addRentalBookingToProduct(product.id, newBooking);
+      showToast(`Đã khóa lịch cho "${product.title}" từ ${formatDateVN(newStartDate)} đến ${formatDateVN(newEndDate)} (Đã lưu Database)!`, 'success');
+      setIsAddingBlock(false);
+    } catch (err: any) {
+      showToast(`Lỗi khóa lịch: ${err.message || 'Không thể lưu vào Database'}`, 'error');
+    }
   };
 
-  const handleRemoveBooking = (bookingId: string, renterName?: string) => {
-    removeRentalBookingFromProduct(product.id, bookingId);
-    showToast(`Đã mở lại lịch (${renterName || 'Lịch đã chọn'})!`, 'info');
+  const handleRemoveBooking = async (bookingId: string, renterName?: string) => {
+    try {
+      await removeRentalBookingFromProduct(product.id, bookingId);
+      showToast(`Đã mở lại lịch (${renterName || 'Lịch đã chọn'})!`, 'info');
+    } catch (err: any) {
+      showToast(`Lỗi mở lại lịch: ${err.message || 'Không thể xóa trên Database'}`, 'error');
+    }
   };
 
   return (

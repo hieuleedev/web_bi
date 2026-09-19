@@ -179,17 +179,21 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.warn('Lỗi gửi đơn hàng sang Backend API:', e);
     }
 
-    // Cập nhật trạng thái ngày thuê trên giao diện sản phẩm
+    // Cập nhật trạng thái ngày thuê trên giao diện sản phẩm và Database
     for (const item of cartItems) {
       if (item.mode === 'rent' && item.rentalStartDate && item.rentalEndDate) {
         const bookingId = `book-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
-        addRentalBookingToProduct(item.productId, {
-          id: bookingId,
-          startDate: item.rentalStartDate,
-          endDate: item.rentalEndDate,
-          renterName: params.customerName,
-          status: 'confirmed',
-        });
+        try {
+          await addRentalBookingToProduct(item.productId, {
+            id: bookingId,
+            startDate: item.rentalStartDate,
+            endDate: item.rentalEndDate,
+            renterName: params.customerName,
+            status: 'confirmed',
+          });
+        } catch (rentalErr) {
+          console.warn('Lưu lịch thuê tự động thất bại:', rentalErr);
+        }
       }
     }
 
