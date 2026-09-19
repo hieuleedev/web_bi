@@ -159,21 +159,25 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     );
   }
 
-  const handleAddReview = (e: React.FormEvent) => {
+  const handleAddReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    addReview(product.id, {
-      userId: currentUser?.id || 'guest',
-      userName: currentUser?.name || 'Khách hàng ẩn danh',
-      userAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-      rating: newRating,
-      comment: newComment.trim(),
-      type: activeMode,
-    });
+    try {
+      await addReview(product.id, {
+        userId: currentUser?.id || 'guest',
+        userName: currentUser?.name || 'Khách hàng ẩn danh',
+        userAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+        rating: newRating,
+        comment: newComment.trim(),
+        type: activeMode,
+      });
 
-    setNewComment('');
-    showToast('Cảm ơn bạn đã gửi đánh giá sản phẩm!', 'success');
+      setNewComment('');
+      showToast('Cảm ơn bạn đã gửi đánh giá sản phẩm!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Gửi đánh giá thất bại!', 'error');
+    }
   };
 
   const handleAddToCart = (instantCheckout = false) => {

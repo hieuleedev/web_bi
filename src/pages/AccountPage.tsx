@@ -29,8 +29,12 @@ import {
   Printer,
   AlertTriangle,
   CheckCircle,
-  TrendingUp
+  TrendingUp,
+  Camera,
+  Loader2,
+  Upload
 } from 'lucide-react';
+import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
 import { useOrders } from '../context/OrderContext';
@@ -95,6 +99,62 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [phone, setPhone] = useState(currentUser?.phone || '');
   const [location, setLocation] = useState(currentUser?.location || '');
   const [bio, setBio] = useState(currentUser?.bio || '');
+  const [avatar, setAvatar] = useState(currentUser?.avatar || '');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Sync profile form states when currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      setName(currentUser.name || '');
+      setPhone(currentUser.phone || '');
+      setLocation(currentUser.location || '');
+      setBio(currentUser.bio || '');
+      setAvatar(currentUser.avatar || '');
+      setAvatarPreview(null);
+      setAvatarFile(null);
+    }
+  }, [currentUser]);
+
+  const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size limit (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Kích thước ảnh tối đa là 10MB!', 'error');
+      return;
+    }
+
+    // Instant local preview
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+    setAvatarFile(file);
+
+    // Direct upload to S3
+    try {
+      setIsUploadingAvatar(true);
+      showToast('Đang tải ảnh đại diện lên máy chủ...', 'info');
+      const uploadRes = await api.upload.single(file);
+      if (uploadRes && uploadRes.url) {
+        setAvatar(uploadRes.url);
+        // Automatically persist avatar to currentUser profile in database
+        await updateProfile({ avatar: uploadRes.url });
+        showToast('Cập nhật ảnh đại diện shop thành công!', 'success');
+      }
+    } catch (err: any) {
+      console.error('Lỗi khi tải ảnh đại diện:', err);
+      showToast(err.message || 'Tải ảnh đại diện thất bại!', 'error');
+      setAvatarPreview(null);
+      setAvatarFile(null);
+    } finally {
+      setIsUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
 
   // Password change state
   const [oldPassword, setOldPassword] = useState('');
@@ -150,8 +210,15 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateProfile({ name, phone, location, bio });
-    showToast('Đã cập nhật thông tin cá nhân lên hệ thống thành công!', 'success');
+    try {
+      setIsSavingProfile(true);
+      await updateProfile({ name, phone, location, bio, avatar });
+      showToast('Đã cập nhật thông tin cá nhân lên hệ thống thành công!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Lỗi lưu thông tin cá nhân!', 'error');
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const isOwner = currentUser.role === 'seller' || currentUser.role === 'admin';
@@ -193,11 +260,36 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         {/* User Card Top */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 lg:p-8 border border-gray-100 shadow-sm mb-6 sm:mb-8 flex flex-col md:flex-row items-center md:items-start justify-between gap-5 sm:gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 text-center sm:text-left w-full md:w-auto">
-            <img
-              src={currentUser.avatar}
-              alt={currentUser.name}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-brand-500/20 shadow-md shrink-0"
-            />
+            {/* Avatar container with hover camera icon */}
+            <div className="relative group shrink-0">
+              <img
+                src={avatarPreview || currentUser.avatar}
+                alt={currentUser.name}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-brand-500/20 shadow-md"
+              />
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+                className="absolute inset-0 rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all cursor-pointer backdrop-blur-[2px]"
+                title="Đổi ảnh đại diện shop"
+              >
+                {isUploadingAvatar ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <Camera className="w-5 h-5 mb-0.5" />
+                    <span className="text-[9px] font-bold">Đổi ảnh</span>
+                  </>
+                )}
+              </button>
+              {isUploadingAvatar && (
+                <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+
             <div className="min-w-0">
               <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
                 <h1 className="font-serif text-lg sm:text-xl font-bold text-gray-900">{currentUser.name}</h1>
@@ -1225,15 +1317,58 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             {/* TAB: EDIT PROFILE */}
             {activeTab === 'profile' && (
               <div className="space-y-6">
-                <form onSubmit={handleSaveProfile} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+                <form onSubmit={handleSaveProfile} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-6">
                 <div className="pb-3 border-b border-gray-100">
-                  <h3 className="font-serif font-bold text-lg text-gray-900">Thông Tin Cá Nhân & Liên Hệ</h3>
-                  <p className="text-xs text-gray-500">Cập nhật họ tên, số điện thoại và địa chỉ để giao nhận nhanh chóng</p>
+                  <h3 className="font-serif font-bold text-lg text-gray-900">Thông Tin Cá Nhân & Cửa Hàng</h3>
+                  <p className="text-xs text-gray-500">Cập nhật ảnh đại diện shop, họ tên, số điện thoại và địa chỉ giao nhận</p>
+                </div>
+
+                {/* Avatar Edit Section */}
+                <div className="flex flex-col sm:flex-row items-center gap-5 p-4 bg-gray-50 rounded-2xl border border-gray-200/70">
+                  <div className="relative group shrink-0">
+                    <img
+                      src={avatarPreview || avatar || currentUser.avatar}
+                      alt="Ảnh đại diện"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover ring-4 ring-brand-500/20 shadow-md"
+                    />
+                    {isUploadingAvatar && (
+                      <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 text-center sm:text-left flex-1">
+                    <h4 className="text-xs font-bold text-gray-900">Ảnh Đại Diện Shop / Tài Khoản</h4>
+                    <p className="text-[11px] text-gray-500">
+                      Hỗ trợ định dạng JPG, PNG, WEBP tối đa 10MB. Ảnh sẽ được đồng bộ hiển thị trên sản phẩm và tin nhắn.
+                    </p>
+                    <div className="flex items-center gap-2 justify-center sm:justify-start">
+                      <button
+                        type="button"
+                        onClick={() => avatarInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
+                        className="px-3.5 py-1.5 rounded-xl bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                      >
+                        {isUploadingAvatar ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-600" />
+                            <span>Đang tải ảnh...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5 text-brand-600" />
+                            <span>Chọn Ảnh Đại Diện Mới</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Họ và tên</label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Họ và tên / Tên Shop</label>
                     <input
                       type="text"
                       value={name}
@@ -1276,9 +1411,17 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 <div className="flex justify-end pt-2">
                   <button
                     type="submit"
-                    className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors shadow-md shadow-brand-500/20"
+                    disabled={isSavingProfile || isUploadingAvatar}
+                    className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors shadow-md shadow-brand-500/20 flex items-center gap-2"
                   >
-                    Lưu Thông Tin Cá Nhân
+                    {isSavingProfile ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Đang Lưu...</span>
+                      </>
+                    ) : (
+                      <span>Lưu Thông Tin Cá Nhân</span>
+                    )}
                   </button>
                 </div>
               </form>
@@ -1428,6 +1571,15 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           onClose={() => setEditingProduct(null)}
         />
       )}
+
+      {/* Hidden file input for Avatar upload */}
+      <input
+        type="file"
+        ref={avatarInputRef}
+        onChange={handleAvatarFileSelect}
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+      />
     </div>
   );
 };

@@ -153,7 +153,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       updatedAt: new Date().toISOString(),
     };
 
-    // Gửi đơn hàng sang Backend API Server
+    // Gửi đơn hàng sang Backend API Server và Database Supabase
     try {
       const result = await api.orders.create({
         id: orderId,
@@ -175,8 +175,10 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (result?.vietqrUrl) {
         newOrder.vietqrUrl = result.vietqrUrl;
       }
-    } catch (e) {
-      console.warn('Lỗi gửi đơn hàng sang Backend API:', e);
+    } catch (e: any) {
+      console.error('Lỗi lưu đơn hàng sang Backend Database:', e);
+      showToast(e.message || 'Không thể tạo đơn hàng! Vui lòng kiểm tra kết nối mạng/máy chủ.', 'error');
+      throw e;
     }
 
     // Cập nhật trạng thái ngày thuê trên giao diện sản phẩm và Database
@@ -206,51 +208,51 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === orderId
-          ? { ...o, status, updatedAt: new Date().toISOString() }
-          : o
-      )
-    );
-
     try {
       await api.orders.updateStatus(orderId, { status });
-    } catch (e) {
-      console.warn('Error updating order status in Backend API', e);
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? { ...o, status, updatedAt: new Date().toISOString() }
+            : o
+        )
+      );
+      showToast(`Đã cập nhật trạng thái đơn hàng sang "${status}"`, 'info');
+    } catch (e: any) {
+      console.error('Lỗi cập nhật trạng thái đơn hàng lên Backend:', e);
+      showToast(e.message || 'Không thể cập nhật trạng thái đơn hàng trên máy chủ!', 'error');
+      throw e;
     }
-
-    showToast(`Đã cập nhật trạng thái đơn hàng sang "${status}"`, 'info');
   };
 
   const updateOrder = async (orderId: string, data: Partial<Order>) => {
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === orderId
-          ? { ...o, ...data, updatedAt: new Date().toISOString() }
-          : o
-      )
-    );
-
     try {
       await api.orders.update(orderId, data);
-    } catch (e) {
-      console.warn('Error updating order in Backend API', e);
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? { ...o, ...data, updatedAt: new Date().toISOString() }
+            : o
+        )
+      );
+      showToast('Đã lưu thay đổi thông tin đơn hàng!', 'success');
+    } catch (e: any) {
+      console.error('Lỗi cập nhật đơn hàng lên Backend:', e);
+      showToast(e.message || 'Không thể lưu thay đổi đơn hàng lên máy chủ!', 'error');
+      throw e;
     }
-
-    showToast('Đã lưu thay đổi thông tin đơn hàng!', 'success');
   };
 
   const deleteOrder = async (orderId: string) => {
-    setOrders((prev) => prev.filter((o) => o.id !== orderId));
-
     try {
       await api.orders.delete(orderId);
-    } catch (e) {
-      console.warn('Error deleting order in Backend API', e);
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      showToast('Đã xóa đơn hàng khỏi hệ thống!', 'info');
+    } catch (e: any) {
+      console.error('Lỗi xóa đơn hàng trên Backend:', e);
+      showToast(e.message || 'Không thể xóa đơn hàng khỏi máy chủ!', 'error');
+      throw e;
     }
-
-    showToast('Đã xóa đơn hàng khỏi hệ thống!', 'info');
   };
 
   const getOrderById = (orderId: string) => {

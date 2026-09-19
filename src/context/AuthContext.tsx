@@ -182,14 +182,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateProfile = async (updatedData: Partial<User>) => {
     if (!currentUser) return;
-    const updated = { ...currentUser, ...updatedData };
-    setCurrentUser(updated);
-    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
 
+    // Call Backend API first to ensure persistence
     try {
-      await api.auth.updateProfile(currentUser.id, updatedData);
+      const savedUser = await api.auth.updateProfile(currentUser.id, updatedData);
+      const updated = { ...currentUser, ...updatedData, ...(savedUser || {}) };
+      setCurrentUser(updated);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updated));
+      return updated;
     } catch (e) {
-      console.warn('Error updating profile in Backend API', e);
+      console.error('Error updating profile in Backend API', e);
+      throw e;
     }
   };
 

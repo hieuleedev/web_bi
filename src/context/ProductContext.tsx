@@ -13,7 +13,7 @@ interface ProductContextType {
   updateProduct: (id: string, data: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   toggleLike: (productId: string) => void;
-  addReview: (productId: string, review: Omit<Review, 'id' | 'createdAt'>) => void;
+  addReview: (productId: string, review: Omit<Review, 'id' | 'createdAt'>) => Promise<void>;
   adminUpdateStatus: (productId: string, status: ProductStatus) => void;
   addRentalBookingToProduct: (productId: string, booking: RentalBookingDate) => Promise<void>;
   removeRentalBookingFromProduct: (productId: string, bookingId: string) => Promise<void>;
@@ -281,34 +281,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     let updatedRating = 5.0;
     let updatedCount = 1;
 
-    setProducts((prev) =>
-      prev.map((p) => {
-        if (p.id !== productId) return p;
-        const currentReviews = p.reviews || [];
-        const nextReviews = [newReview, ...currentReviews];
-        const nextCount = nextReviews.length;
-        const nextRating = +(
-          nextReviews.reduce((sum, r) => sum + r.rating, 0) / nextCount
-        ).toFixed(1);
-
-        updatedRating = nextRating;
-        updatedCount = nextCount;
-
-        // Save reviews per product in localStorage
-        try {
-          localStorage.setItem(`bibi_reviews_${productId}`, JSON.stringify(nextReviews));
-        } catch (e) {}
-
-        return {
-          ...p,
-          reviews: nextReviews,
-          reviewsCount: nextCount,
-          rating: nextRating,
-        };
-      })
-    );
-
-    // Sync review record into Backend API
+    // Sync review record into Backend API and Supabase Database first
     try {
       await api.reviews.create({
         productId,
@@ -319,9 +292,29 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         comment: newReview.comment,
         type: newReview.type
       });
-    } catch (err) {
-      console.warn('Could not insert review to Backend API', err);
+    } catch (err: any) {
+      console.error('Không thể lưu đánh giá lên máy chủ:', err);
+      throw err;
     }
+
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id !== productId) return p;
+        const currentReviews = p.reviews || [];
+        const nextReviews = [newReview, ...currentReviews];
+        const nextCount = nextReviews.length;
+        const nextRating = +(
+          nextReviews.reduce((sum, r) => sum + r.rating, 0) / nextCount
+        ).toFixed(1);
+
+        return {
+          ...p,
+          reviews: nextReviews,
+          reviewsCount: nextCount,
+          rating: nextRating,
+        };
+      })
+    );
   };
 
   const adminUpdateStatus = async (productId: string, status: ProductStatus) => {
