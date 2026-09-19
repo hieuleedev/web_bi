@@ -38,32 +38,86 @@ export function calculateRentalDays(start: string, end: string): number {
   return diffDays > 0 ? diffDays : 1;
 }
 
+export interface RentalPricingDetails {
+  total: number;
+  basePrice: number;
+  extraDays: number;
+  extraDayPrice: number;
+  extraDayFee: number;
+  packageType: '1day' | '2days' | '3days' | 'custom';
+}
+
+/**
+ * Calculate detailed rental pricing breakdown (1 ngày, 2 ngày, 3 ngày + phí thêm ngày)
+ */
+export function calculateRentalPricingDetails(
+  product: Product,
+  days: number,
+  options?: { isTetHoliday?: boolean; customExtraDayPrice?: number; preferredPackage?: '1day' | '2days' | '3days' | 'auto' }
+): RentalPricingDetails {
+  const dayRate = product.rentPrice1Day || 0;
+  const price2Days = product.rentPrice2Days || (product.rentPrice3Days ? Math.round(product.rentPrice3Days * 0.75) : Math.round(dayRate * 1.6));
+  const price3Days = product.rentPrice3Days || Math.round(dayRate * 2.2);
+  const extraPerDay = options?.customExtraDayPrice ?? (product.extraDayPrice || Math.round(dayRate * 0.35) || 50000);
+  const isTet = Boolean(options?.isTetHoliday);
+
+  if (days <= 1) {
+    return {
+      total: dayRate,
+      basePrice: dayRate,
+      extraDays: 0,
+      extraDayPrice: extraPerDay,
+      extraDayFee: 0,
+      packageType: '1day',
+    };
+  }
+
+  if (days === 2) {
+    return {
+      total: price2Days,
+      basePrice: price2Days,
+      extraDays: 0,
+      extraDayPrice: extraPerDay,
+      extraDayFee: 0,
+      packageType: '2days',
+    };
+  }
+
+  if (days === 3) {
+    return {
+      total: price3Days,
+      basePrice: price3Days,
+      extraDays: 0,
+      extraDayPrice: extraPerDay,
+      extraDayFee: 0,
+      packageType: '3days',
+    };
+  }
+
+  // Thuê trên 3 ngày -> tính gói 3 ngày + phụ thu thêm ngày (nếu không phải đơn ngày Tết)
+  const extraDays = days - 3;
+  const extraDayFee = isTet ? 0 : extraDays * extraPerDay;
+  const total = price3Days + extraDayFee;
+
+  return {
+    total,
+    basePrice: price3Days,
+    extraDays,
+    extraDayPrice: extraPerDay,
+    extraDayFee,
+    packageType: 'custom',
+  };
+}
+
 /**
  * Calculate rental price based on days and product tier pricing
  */
-export function calculateRentalPrice(product: Product, days: number): number {
-  const dayRate = product.rentPrice1Day || 0;
-  if (days <= 1) {
-    return dayRate;
-  }
-  if (days === 3 && product.rentPrice3Days) {
-    return product.rentPrice3Days;
-  }
-  if (days === 7 && product.rentPrice7Days) {
-    return product.rentPrice7Days;
-  }
-  // Package calculation with progressive discount
-  if (days >= 7 && product.rentPrice7Days) {
-    const fullWeeks = Math.floor(days / 7);
-    const remainingDays = days % 7;
-    return (fullWeeks * product.rentPrice7Days) + (remainingDays * dayRate * 0.85);
-  }
-  if (days >= 3 && product.rentPrice3Days) {
-    const base3Days = product.rentPrice3Days;
-    const remainingDays = days - 3;
-    return base3Days + (remainingDays * dayRate * 0.9);
-  }
-  return Math.round(days * dayRate);
+export function calculateRentalPrice(
+  product: Product,
+  days: number,
+  options?: { isTetHoliday?: boolean; customExtraDayPrice?: number }
+): number {
+  return calculateRentalPricingDetails(product, days, options).total;
 }
 
 /**

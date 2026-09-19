@@ -27,8 +27,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   const [category, setCategory] = useState("party-dress");
   const [type, setType] = useState<"rent" | "buy" | "both">("rent");
   const [rentPrice1Day, setRentPrice1Day] = useState<number>(0);
+  const [rentPrice2Days, setRentPrice2Days] = useState<number>(0);
   const [rentPrice3Days, setRentPrice3Days] = useState<number>(0);
   const [rentPrice7Days, setRentPrice7Days] = useState<number>(0);
+  const [extraDayPrice, setExtraDayPrice] = useState<number>(50000);
   const [deposit, setDeposit] = useState<number>(0);
   const [buyPrice, setBuyPrice] = useState<number>(0);
   const [originalPrice, setOriginalPrice] = useState<number>(0);
@@ -46,8 +48,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       setCategory(product.category || "party-dress");
       setType(product.type || "both");
       setRentPrice1Day(product.rentPrice1Day || 0);
+      setRentPrice2Days(product.rentPrice2Days || 0);
       setRentPrice3Days(product.rentPrice3Days || 0);
       setRentPrice7Days(product.rentPrice7Days || 0);
+      setExtraDayPrice(product.extraDayPrice || 50000);
       setDeposit(product.deposit || 0);
       setBuyPrice(product.buyPrice || 0);
       setOriginalPrice(product.originalPrice || 0);
@@ -84,8 +88,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       category,
       type,
       rentPrice1Day: Number(rentPrice1Day) || undefined,
+      rentPrice2Days: Number(rentPrice2Days) || undefined,
       rentPrice3Days: Number(rentPrice3Days) || undefined,
       rentPrice7Days: Number(rentPrice7Days) || undefined,
+      extraDayPrice: Number(extraDayPrice) || undefined,
       deposit: Number(deposit) || undefined,
       buyPrice: Number(buyPrice) || undefined,
       originalPrice: Number(originalPrice) || undefined,
@@ -214,13 +220,24 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               <DollarSign className="w-4 h-4 text-brand-600" />
               <span>Giá Thuê & Tiền Cọc</span>
             </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               <div>
                 <label className="block font-semibold text-gray-700 mb-1">Giá thuê 1 ngày (₫)</label>
                 <input
                   type="number"
                   value={rentPrice1Day}
                   onChange={(e) => setRentPrice1Day(Number(e.target.value))}
+                  className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:border-brand-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Giá thuê 2 ngày (₫)</label>
+                <input
+                  type="number"
+                  value={rentPrice2Days || ''}
+                  placeholder={String(Math.round((rentPrice3Days || rentPrice1Day * 2) * 0.75))}
+                  onChange={(e) => setRentPrice2Days(Number(e.target.value))}
                   className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:border-brand-500"
                 />
               </div>
@@ -236,12 +253,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               </div>
 
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">Giá thuê 7 ngày (₫)</label>
+                <label className="block font-semibold text-gray-700 mb-1">Phí thêm ngày (₫)</label>
                 <input
                   type="number"
-                  value={rentPrice7Days}
-                  onChange={(e) => setRentPrice7Days(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:border-brand-500"
+                  value={extraDayPrice}
+                  onChange={(e) => setExtraDayPrice(Number(e.target.value))}
+                  className="w-full px-2.5 py-1.5 bg-white border border-rose-200 rounded-xl text-xs font-bold text-rose-700 focus:outline-none focus:border-brand-500"
                 />
               </div>
 

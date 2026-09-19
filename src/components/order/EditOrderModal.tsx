@@ -29,7 +29,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<OrderStatus>('pending');
   const [paymentStatus, setPaymentStatus] = useState<'unpaid' | 'paid'>('unpaid');
-  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'cod' | 'momo' | 'vnpay'>('bank_transfer');
+  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'cod' | 'momo' | 'vnpay' | 'split'>('bank_transfer');
   const [deliveryMethod, setDeliveryMethod] = useState<'pickup' | 'shipping'>('pickup');
   
   // Amounts

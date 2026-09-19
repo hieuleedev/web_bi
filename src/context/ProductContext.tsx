@@ -67,10 +67,19 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   });
 
   const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
+    // Purge legacy mock wishlist keys if needed
+    try {
+      localStorage.removeItem('bibi_wishlist');
+    } catch (e) {}
+
     const saved = localStorage.getItem(WISHLIST_KEY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Strictly filter out any old mock product IDs (prod-1..8, white-*, demo-*)
+          return parsed.filter((id: string) => typeof id === 'string' && !isLegacyMockId(id));
+        }
       } catch (e) {}
     }
     return [];
@@ -102,6 +111,17 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   useEffect(() => {
     localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+  }, [products]);
+
+  // Clean wishlistIds so only IDs of currently active, real products remain (defaults to 0 if no real products were liked)
+  useEffect(() => {
+    if (products.length > 0 && wishlistIds.length > 0) {
+      const realProductIds = new Set(products.map((p) => p.id));
+      const validWishlist = wishlistIds.filter((id) => realProductIds.has(id));
+      if (validWishlist.length !== wishlistIds.length) {
+        setWishlistIds(validWishlist);
+      }
+    }
   }, [products]);
 
   useEffect(() => {
@@ -141,8 +161,10 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         formData.append('status', String(newProduct.status || ''));
         formData.append('buyPrice', String(newProduct.buyPrice || 0));
         formData.append('rentPrice1Day', String(newProduct.rentPrice1Day || 0));
+        formData.append('rentPrice2Days', String(newProduct.rentPrice2Days || 0));
         formData.append('rentPrice3Days', String(newProduct.rentPrice3Days || 0));
         formData.append('rentPrice7Days', String(newProduct.rentPrice7Days || 0));
+        formData.append('extraDayPrice', String(newProduct.extraDayPrice || 0));
         formData.append('deposit', String(newProduct.deposit || 0));
         formData.append('sizes', JSON.stringify(newProduct.sizes || ['Free size']));
         formData.append('colors', JSON.stringify(newProduct.colors || ['Đa sắc']));
@@ -180,8 +202,10 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
           status: newProduct.status,
           buyPrice: newProduct.buyPrice || 0,
           rentPrice1Day: newProduct.rentPrice1Day || 0,
+          rentPrice2Days: newProduct.rentPrice2Days || 0,
           rentPrice3Days: newProduct.rentPrice3Days || 0,
           rentPrice7Days: newProduct.rentPrice7Days || 0,
+          extraDayPrice: newProduct.extraDayPrice || 0,
           deposit: newProduct.deposit || 0,
           sizes: newProduct.sizes,
           colors: newProduct.colors,

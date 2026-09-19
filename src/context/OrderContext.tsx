@@ -21,6 +21,7 @@ interface CreateOrderParams {
 interface OrderContextType {
   orders: Order[];
   createOrder: (params: CreateOrderParams) => Promise<Order | null>;
+  addDirectOrder: (order: Order) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
   updateOrder: (orderId: string, data: Partial<Order>) => Promise<void>;
   deleteOrder: (orderId: string) => Promise<void>;
@@ -207,6 +208,32 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return newOrder;
   };
 
+  const addDirectOrder = async (order: Order): Promise<Order> => {
+    try {
+      await api.orders.create({
+        id: order.id,
+        orderCode: order.code,
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        customerEmail: order.customerEmail || '',
+        shippingAddress: order.shippingAddress,
+        deliveryMethod: order.deliveryMethod,
+        paymentMethod: order.paymentMethod,
+        items: order.items,
+        note: order.notes || '',
+        totalRentFee: order.subtotal,
+        totalBuyPrice: 0,
+        totalDeposit: order.depositTotal,
+        shippingFee: order.shippingFee,
+        status: order.status || 'rented',
+      });
+    } catch (e: any) {
+      console.warn('Lỗi lưu đơn hàng trực tiếp lên backend:', e);
+    }
+    setOrders((prev) => [order, ...prev.filter((o) => o.id !== order.id)]);
+    return order;
+  };
+
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
     try {
       await api.orders.updateStatus(orderId, { status });
@@ -274,6 +301,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       value={{
         orders,
         createOrder,
+        addDirectOrder,
         updateOrderStatus,
         updateOrder,
         deleteOrder,

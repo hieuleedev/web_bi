@@ -56,8 +56,10 @@ export interface Product {
   
   // Rental specific
   rentPrice1Day?: number;
+  rentPrice2Days?: number;
   rentPrice3Days?: number;
   rentPrice7Days?: number;
+  extraDayPrice?: number; // Phụ thu phí thêm ngày
   deposit?: number;
   
   // Attributes
@@ -135,6 +137,13 @@ export interface OrderItem {
   rentalStartDate?: string;
   rentalEndDate?: string;
   rentalDays?: number;
+  selectedPackage?: '1day' | '2days' | '3days' | 'custom';
+  baseRentPrice?: number;
+  extraDays?: number;
+  extraDayPrice?: number;
+  extraDayFee?: number;
+  isTetHoliday?: boolean;
+  accessories?: string[];
   sellerId: string;
   sellerName: string;
 }
@@ -148,8 +157,13 @@ export interface Order {
   customerEmail: string;
   shippingAddress: string;
   deliveryMethod: 'shipping' | 'pickup';
-  paymentMethod: 'cod' | 'bank_transfer' | 'momo' | 'vnpay';
+  orderType?: 'instant' | 'preorder' | 'shipping';
+  depositMethod?: 'cash' | 'transfer' | 'id_card' | 'none';
+  depositNote?: string;
+  paymentMethod: 'cod' | 'bank_transfer' | 'momo' | 'vnpay' | 'split';
   paymentStatus: 'unpaid' | 'paid';
+  cashAmount?: number;
+  transferAmount?: number;
   items: OrderItem[];
   subtotal: number;
   depositTotal: number;
@@ -158,6 +172,7 @@ export interface Order {
   totalAmount: number;
   status: OrderStatus;
   notes?: string;
+  isTetHoliday?: boolean;
   vietqrUrl?: string;
   vietqrBank?: string;
   vietqrAccountNo?: string;

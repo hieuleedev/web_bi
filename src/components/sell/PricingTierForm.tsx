@@ -11,10 +11,14 @@ interface PricingTierFormProps {
   onOriginalPriceChange: (val: number) => void;
   rentPrice1Day: number;
   onRentPrice1DayChange: (val: number) => void;
+  rentPrice2Days?: number;
+  onRentPrice2DaysChange?: (val: number) => void;
   rentPrice3Days: number;
   onRentPrice3DaysChange: (val: number) => void;
   rentPrice7Days: number;
   onRentPrice7DaysChange: (val: number) => void;
+  extraDayPrice?: number;
+  onExtraDayPriceChange?: (val: number) => void;
   deposit: number;
   onDepositChange: (val: number) => void;
 }
@@ -28,10 +32,14 @@ export const PricingTierForm: React.FC<PricingTierFormProps> = ({
   onOriginalPriceChange,
   rentPrice1Day,
   onRentPrice1DayChange,
+  rentPrice2Days = 0,
+  onRentPrice2DaysChange,
   rentPrice3Days,
   onRentPrice3DaysChange,
   rentPrice7Days,
   onRentPrice7DaysChange,
+  extraDayPrice = 50000,
+  onExtraDayPriceChange,
   deposit,
   onDepositChange,
 }) => {
@@ -118,9 +126,9 @@ export const PricingTierForm: React.FC<PricingTierFormProps> = ({
         <div className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-100 space-y-3">
           <h4 className="font-bold text-xs text-emerald-900 flex items-center gap-1.5">
             <Calendar className="w-4 h-4 text-emerald-600" />
-            <span>Cấu hình gói giá cho thuê & Tiền đặt cọc</span>
+            <span>Cấu hình gói giá cho thuê (1 ngày, 2 ngày, 3 ngày) & Phụ thu thêm ngày</span>
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
               <label className="block text-[11px] text-gray-600 mb-1">Giá thuê 1 ngày (VNĐ)</label>
               <input
@@ -131,21 +139,31 @@ export const PricingTierForm: React.FC<PricingTierFormProps> = ({
               />
             </div>
             <div>
+              <label className="block text-[11px] text-gray-600 mb-1">Giá thuê 2 ngày (VNĐ)</label>
+              <input
+                type="number"
+                value={rentPrice2Days || ''}
+                placeholder={String(Math.round((rentPrice3Days || rentPrice1Day * 2) * 0.75))}
+                onChange={(e) => onRentPrice2DaysChange && onRentPrice2DaysChange(Number(e.target.value))}
+                className="w-full bg-white border border-emerald-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900"
+              />
+            </div>
+            <div>
               <label className="block text-[11px] text-gray-600 mb-1">Giá thuê gói 3 ngày</label>
               <input
                 type="number"
                 value={rentPrice3Days}
                 onChange={(e) => onRentPrice3DaysChange(Number(e.target.value))}
-                className="w-full bg-white border border-emerald-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900"
+                className="w-full bg-white border border-emerald-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-emerald-800"
               />
             </div>
             <div>
-              <label className="block text-[11px] text-gray-600 mb-1">Giá thuê gói 7 ngày</label>
+              <label className="block text-[11px] text-gray-600 mb-1">Phí thêm ngày (VNĐ/ngày)</label>
               <input
                 type="number"
-                value={rentPrice7Days}
-                onChange={(e) => onRentPrice7DaysChange(Number(e.target.value))}
-                className="w-full bg-white border border-emerald-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900"
+                value={extraDayPrice}
+                onChange={(e) => onExtraDayPriceChange && onExtraDayPriceChange(Number(e.target.value))}
+                className="w-full bg-white border border-rose-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-rose-700"
               />
             </div>
             <div>

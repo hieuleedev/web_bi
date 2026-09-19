@@ -1,406 +1,570 @@
 import React, { useState } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
+import {
+  Sparkles,
+  Loader2,
+  ArrowLeft,
+  UploadCloud,
+  Image as ImageIcon,
+  X,
+  Check,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  Tag,
+  Calendar,
+  ShieldCheck,
+  DollarSign
+} from 'lucide-react';
 import { CATEGORIES } from '../data/initialCategories';
 import { ProductType, GenderCategory } from '../types';
 import { useProducts } from '../context/ProductContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { MultiImageUploader } from '../components/sell/MultiImageUploader';
-import { PricingTierForm } from '../components/sell/PricingTierForm';
 
 interface SellPageProps {
   onSuccess: (newProductId: string) => void;
   onCancel: () => void;
 }
 
+const COMMON_SIZES = ['S', 'M', 'L', 'XL', 'Freesize'];
+
+const SAMPLE_IMAGES = [
+  'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80',
+];
+
 export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   const { addProduct } = useProducts();
   const { currentUser } = useAuth();
   const { showToast } = useToast();
 
-  // Basic Information
-  const [sku, setSku] = useState(() => `BB-${Math.floor(100 + Math.random() * 900)}`);
+  // 1. Core State
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState(CATEGORIES[0].id);
-  const [gender, setGender] = useState<GenderCategory>('women');
+  const [sku, setSku] = useState(() => `BB-${Math.floor(100 + Math.random() * 900)}`);
+  const [category, setCategory] = useState(CATEGORIES[0]?.id || 'party-dress');
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(['S', 'M', 'L']);
 
-  const handleGenerateSku = () => {
-    const prefix = category ? category.substring(0, 2).toUpperCase() : 'BB';
-    setSku(`BB-${prefix}${Math.floor(100 + Math.random() * 900)}`);
-  };
-  const [brand, setBrand] = useState('Thiết Kế Tự May');
-  const [condition, setCondition] = useState('99% Like New');
-  const [material, setMaterial] = useState('Lụa cao cấp, voan tơ');
-  const [sizesInput, setSizesInput] = useState('S, M, L');
-  const [colorsInput, setColorsInput] = useState('Trắng, Đen, Hồng pastel');
+  // 2. Pricing & Deposit
+  const [rentPrice1Day, setRentPrice1Day] = useState<number>(180000);
+  const [rentPrice2Days, setRentPrice2Days] = useState<number>(280000);
+  const [rentPrice3Days, setRentPrice3Days] = useState<number>(350000);
+  const [extraDayPrice, setExtraDayPrice] = useState<number>(50000);
+  const [deposit, setDeposit] = useState<number>(200000);
 
-  // Type & Pricing
-  const [productType, setProductType] = useState<ProductType>('rent');
-  const [buyPrice, setBuyPrice] = useState<number>(1500000);
-  const [originalPrice, setOriginalPrice] = useState<number>(1850000);
-  const [rentPrice1Day, setRentPrice1Day] = useState<number>(200000);
-  const [rentPrice3Days, setRentPrice3Days] = useState<number>(450000);
-  const [rentPrice7Days, setRentPrice7Days] = useState<number>(800000);
-  const [deposit, setDeposit] = useState<number>(0);
+  // 3. Optional Buy Mode
+  const [allowBuy, setAllowBuy] = useState(false);
+  const [buyPrice, setBuyPrice] = useState<number>(1200000);
 
-  // Description & Location
-  const [description, setDescription] = useState('');
-  const [careInstructions, setCareInstructions] = useState('Giặt tay hoặc giặt khô nhẹ nhàng, ủi hơi nước.');
-  const [sizeGuide, setSizeGuide] = useState('Phù hợp cho bạn từ 45kg đến 54kg, eo 64-70cm.');
-  const [location, setLocation] = useState(currentUser?.location || 'Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng, Da Nang, Vietnam, 560000');
-  const [hasShipping] = useState(true);
-  const [shippingFee, setShippingFee] = useState<number>(30000);
-  const [shippingArea] = useState('Toàn quốc');
-
-  // Image Upload state
-  const [images, setImages] = useState<string[]>([]);
+  // 4. Images
+  const [images, setImages] = useState<string[]>([SAMPLE_IMAGES[0]]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
+
+  // 5. Advanced Options (Collapsed by default for simplicity)
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [brand, setBrand] = useState('Bi Bi Collection');
+  const [condition, setCondition] = useState('99% Like New');
+  const [material, setMaterial] = useState('Lụa cao cấp, voan tơ');
+  const [colors, setColors] = useState('Đa sắc');
+  const [description, setDescription] = useState('');
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (isDraft = false) => {
+  const handleGenerateSku = () => {
+    setSku(`BB-${Math.floor(100 + Math.random() * 900)}`);
+    showToast('Đã đổi mã váy ngẫu nhiên!', 'info');
+  };
+
+  const toggleSize = (size: string) => {
+    setSelectedSizes((prev) =>
+      prev.includes(size)
+        ? prev.length > 1
+          ? prev.filter((s) => s !== size)
+          : prev
+        : [...prev, size]
+    );
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const filesArray = Array.from(e.target.files).filter((f) => f.type.startsWith('image/'));
+    if (filesArray.length === 0) {
+      showToast('Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, WEBP)!', 'warning');
+      return;
+    }
+
+    const previewUrls = filesArray.map((f) => URL.createObjectURL(f));
+    setImages((prev) => [...prev, ...previewUrls]);
+    setImageFiles((prev) => [...prev, ...filesArray]);
+    showToast(`Đã thêm ${filesArray.length} ảnh!`, 'info');
+    e.target.value = '';
+  };
+
+  const handleRemoveImage = (index: number) => {
+    if (images.length <= 1) {
+      showToast('Cần ít nhất 1 ảnh cho váy!', 'warning');
+      return;
+    }
+    setImages((prev) => prev.filter((_, idx) => idx !== index));
+    setImageFiles((prev) => prev.filter((_, idx) => idx !== index));
+    if (featuredIndex >= index && featuredIndex > 0) {
+      setFeaturedIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (!title.trim()) {
-      showToast('Vui lòng nhập tên sản phẩm!', 'error');
+      showToast('Vui lòng nhập tên váy!', 'error');
       return;
     }
 
     if (images.length === 0) {
-      showToast('Vui lòng tải lên ít nhất 1 hình ảnh sản phẩm!', 'error');
+      showToast('Vui lòng thêm ít nhất 1 hình ảnh!', 'error');
       return;
     }
 
-    const sizesArray = sizesInput.split(',').map((s) => s.trim()).filter(Boolean);
-    const colorsArray = colorsInput.split(',').map((c) => c.trim()).filter(Boolean);
-
     setIsSubmitting(true);
     try {
+      const productType: ProductType = allowBuy ? 'both' : 'rent';
+
       const newProd = await addProduct(
         {
           sku: sku.trim() || `BB-${Date.now().toString().slice(-4)}`,
           title: title.trim(),
-          description: description.trim() || 'Trang phục thời trang cao cấp phù hợp cho các sự kiện, dạ hội hoặc dạo phố.',
+          description: description.trim() || `${title.trim()} - Trang phục cho thuê cao cấp tại Bi Bi Boutique.`,
           category,
-          gender,
+          gender: 'women',
           brand: brand.trim() || 'Bi Bi Collection',
           type: productType,
-          status: isDraft ? 'pending' : 'approved',
-          buyPrice: (productType === 'buy' || productType === 'both') ? Number(buyPrice) : undefined,
-          originalPrice: (productType === 'buy' || productType === 'both') ? Number(originalPrice) : undefined,
-          rentPrice1Day: (productType === 'rent' || productType === 'both') ? Number(rentPrice1Day) : undefined,
-          rentPrice3Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice3Days) : undefined,
-          rentPrice7Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice7Days) : undefined,
-          deposit: (productType === 'rent' || productType === 'both') ? Number(deposit) : undefined,
-          sizes: sizesArray.length > 0 ? sizesArray : ['Free size'],
-          colors: colorsArray.length > 0 ? colorsArray : ['Đa sắc'],
-          material,
-          condition,
+          status: 'approved',
+          buyPrice: allowBuy ? Number(buyPrice) : undefined,
+          rentPrice1Day: Number(rentPrice1Day) || 180000,
+          rentPrice2Days: Number(rentPrice2Days) || 280000,
+          rentPrice3Days: Number(rentPrice3Days) || 350000,
+          rentPrice7Days: Number(rentPrice3Days * 2) || 700000,
+          extraDayPrice: Number(extraDayPrice) || 50000,
+          deposit: Number(deposit) || 0,
+          sizes: selectedSizes.length > 0 ? selectedSizes : ['Freesize'],
+          colors: [colors.trim() || 'Đa sắc'],
+          material: material.trim() || 'Lụa, voan tơ',
+          condition: condition.trim() || '99% Like New',
           images,
           featuredImage: images[featuredIndex] || images[0],
           sellerId: currentUser?.id || 'user-seller-1',
           sellerName: currentUser?.name || 'Bi Bi Boutique (Linh Bi)',
           sellerAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
           sellerRating: currentUser?.rating || 5.0,
-          location,
-          hasShipping,
-          shippingFee: Number(shippingFee),
-          shippingArea,
-          careInstructions,
-          sizeGuide,
+          location: 'Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng',
+          hasShipping: true,
+          shippingFee: 30000,
+          shippingArea: 'Toàn quốc',
         },
         imageFiles
       );
 
-      showToast(
-        isDraft ? 'Đã lưu bản nháp sản phẩm thành công lên Database!' : 'Đã đăng sản phẩm thành công lên sàn Bi Bi (Đã lưu Database)!',
-        'success'
-      );
+      showToast(`Đã thêm váy "${title.trim()}" vào kho thành công!`, 'success');
       onSuccess(newProd.id);
     } catch (err: any) {
-      console.error('Lỗi khi đăng sản phẩm:', err);
-      showToast(`Đăng sản phẩm thất bại: ${err.message || 'Không thể lưu vào Database'}`, 'error');
+      console.error('Lỗi khi thêm sản phẩm:', err);
+      showToast(`Lỗi: ${err.message || 'Không thể lưu sản phẩm'}`, 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-[#faf9f8] min-h-screen py-8 pb-24">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-[#faf9f8] min-h-screen py-6 sm:py-10 pb-24">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
         
-        {/* Page Header */}
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-xs font-bold uppercase tracking-widest text-brand-600 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">
-            Marketplace Thời Trang
+        {/* Navigation & Header */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 bg-white px-3 py-1.5 rounded-xl border border-gray-200 transition-colors shadow-2xs"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Quay lại kho váy</span>
+          </button>
+
+          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            ✓ Thêm Nhanh Gọn
           </span>
-          <h1 className="font-serif text-3xl font-bold text-gray-900 mt-2">
-            Đăng Bán & Cho Thuê Quần Áo
-          </h1>
-          <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-            Biến tủ quần áo không dùng đến của bạn thành thu nhập thụ động bền vững hoặc tiếp cận hàng ngàn khách hàng thuê đồ dự tiệc mỗi ngày.
-          </p>
         </div>
 
-        {/* Multi-section Form */}
-        <div className="space-y-8">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-xl space-y-6">
           
-          {/* 1. MEDIA UPLOAD COMPONENT */}
-          <MultiImageUploader
-            images={images}
-            imageFiles={imageFiles}
-            featuredIndex={featuredIndex}
-            onImagesChange={setImages}
-            onImageFilesChange={setImageFiles}
-            onFeaturedIndexChange={setFeaturedIndex}
-          />
-
-          {/* 2. BASIC INFORMATION SECTION */}
-          <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-base text-gray-900 pb-3 border-b border-gray-100">
-              2. Thông Tin Chi Tiết Trang Phục
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* SKU code input */}
-              <div className="md:col-span-1">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-700">
-                    Mã sản phẩm (SKU)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleGenerateSku}
-                    className="text-[10px] text-brand-600 hover:text-brand-700 font-bold underline"
-                  >
-                    Tự sinh mã
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value.toUpperCase())}
-                  placeholder="VD: BB-VC01"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 uppercase tracking-wider"
-                />
-              </div>
-
-              {/* Product Title input */}
-              <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Tên sản phẩm <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ví dụ: Đầm Dạ Hội Lụa Đỏ Burgundy Trễ Vai Đính Đá Pha Lê"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Danh mục trang phục
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Giới tính / Đối tượng
-                </label>
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value as GenderCategory)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
-                >
-                  <option value="women">Nữ (Thời trang nữ)</option>
-                  <option value="men">Nam (Thời trang nam)</option>
-                  <option value="unisex">Unisex (Cả nam và nữ)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Thương hiệu / Xuất xứ
-                </label>
-                <input
-                  type="text"
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                  placeholder="Ví dụ: Bi Bi Atelier, Zara, Mango, May đo..."
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Tình trạng độ mới
-                </label>
-                <select
-                  value={condition}
-                  onChange={(e) => setCondition(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
-                >
-                  <option value="Mới 100%">Mới 100% (Nguyên tem mác)</option>
-                  <option value="99% Like New">99% Like New (Mặc 1 lần chụp ảnh)</option>
-                  <option value="95% Tốt">95% Tốt (Được bảo quản cẩn thận)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Các size có sẵn (cách nhau dấu phẩy)
-                </label>
-                <input
-                  type="text"
-                  value={sizesInput}
-                  onChange={(e) => setSizesInput(e.target.value)}
-                  placeholder="S, M, L, Free size"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Các màu sắc (cách nhau dấu phẩy)
-                </label>
-                <input
-                  type="text"
-                  value={colorsInput}
-                  onChange={(e) => setColorsInput(e.target.value)}
-                  placeholder="Đỏ rượu, Trắng kem, Đen tuyền"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Chất liệu vải
-                </label>
-                <input
-                  type="text"
-                  value={material}
-                  onChange={(e) => setMaterial(e.target.value)}
-                  placeholder="Ví dụ: 100% Lụa satin, Ren Pháp dệt kim tuyến, Lót habutai..."
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
-                />
-              </div>
+          {/* Title Header */}
+          <div className="pb-4 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+                Thêm Váy Mới Vào Kho
+              </h1>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Chỉ cần nhập tên váy, chọn ảnh và giá thuê là váy sẽ sẵn sàng cho thuê ngay
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-200 shrink-0">
+              <Sparkles className="w-5 h-5" />
             </div>
           </div>
 
-          {/* 3. PRICING TIER COMPONENT */}
-          <PricingTierForm
-            productType={productType}
-            onProductTypeChange={setProductType}
-            buyPrice={buyPrice}
-            onBuyPriceChange={setBuyPrice}
-            originalPrice={originalPrice}
-            onOriginalPriceChange={setOriginalPrice}
-            rentPrice1Day={rentPrice1Day}
-            onRentPrice1DayChange={setRentPrice1Day}
-            rentPrice3Days={rentPrice3Days}
-            onRentPrice3DaysChange={setRentPrice3Days}
-            rentPrice7Days={rentPrice7Days}
-            onRentPrice7DaysChange={setRentPrice7Days}
-            deposit={deposit}
-            onDepositChange={setDeposit}
-          />
-
-          {/* 4. DESCRIPTION & SHIPPING */}
-          <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-base text-gray-900 pb-3 border-b border-gray-100">
-              4. Mô Tả Chi Tiết & Giao Nhận
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Mô tả sản phẩm, dáng váy, cách phối đồ
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              
+              {/* CỘT TRÁI: HÌNH ẢNH (5 COLS) */}
+              <div className="md:col-span-5 space-y-3">
+                <label className="block text-xs font-bold text-gray-800">
+                  Hình ảnh váy <span className="text-rose-500">*</span>
                 </label>
-                <textarea
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Mô tả phong cách, điểm nhấn, dịp sử dụng phù hợp (tiệc cưới, sự kiện, chụp ảnh kỷ yếu...)"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
-                />
+
+                {/* Main preview */}
+                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center group">
+                  {images.length > 0 ? (
+                    <>
+                      <img
+                        src={images[featuredIndex] || images[0]}
+                        alt="Ảnh đại diện"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <label className="px-3 py-1.5 bg-white text-gray-900 rounded-xl text-xs font-bold shadow-md cursor-pointer hover:bg-gray-100">
+                          Đổi ảnh
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleFileSelect}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </>
+                  ) : (
+                    <label className="cursor-pointer flex flex-col items-center p-4 text-center">
+                      <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
+                      <span className="text-xs font-bold text-gray-700">Tải ảnh lên từ máy</span>
+                      <span className="text-[11px] text-gray-400 mt-0.5">JPG, PNG hoặc chụp từ điện thoại</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Thumbnail strip & Add button */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <label className="w-14 h-16 rounded-xl border border-dashed border-brand-300 bg-brand-50 hover:bg-brand-100 flex flex-col items-center justify-center cursor-pointer shrink-0 transition-colors">
+                    <UploadCloud className="w-4 h-4 text-brand-600" />
+                    <span className="text-[10px] font-bold text-brand-700 mt-0.5">+ Thêm</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {images.map((img, i) => (
+                    <div
+                      key={i}
+                      onClick={() => setFeaturedIndex(i)}
+                      className={`relative w-14 h-16 rounded-xl overflow-hidden cursor-pointer border-2 shrink-0 transition-all ${
+                        featuredIndex === i ? 'border-brand-600 shadow-sm' : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      {images.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveImage(i);
+                          }}
+                          className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-rose-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Quick sample image chooser */}
+                <div className="pt-1">
+                  <span className="text-[11px] text-gray-400 block mb-1">Gợi ý chọn ảnh mẫu nhanh:</span>
+                  <div className="flex gap-1.5">
+                    {SAMPLE_IMAGES.map((s, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setImages([s]);
+                          setFeaturedIndex(0);
+                        }}
+                        className="w-8 h-10 rounded-lg overflow-hidden border border-gray-200 hover:border-brand-500 opacity-80 hover:opacity-100"
+                        title={`Chọn ảnh mẫu ${idx + 1}`}
+                      >
+                        <img src={s} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* CỘT PHẢI: THÔNG TIN CỐT LÕI (7 COLS) */}
+              <div className="md:col-span-7 space-y-4">
+                
+                {/* 1. Tên váy */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Địa chỉ showroom / Kho hàng
+                  <label className="block text-xs font-bold text-gray-800 mb-1">
+                    Tên mẫu váy <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none focus:border-brand-500"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="VD: Váy ren hoa nổi nâu dài Chou Chou"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Phí ship mặc định (VNĐ)
-                  </label>
-                  <input
-                    type="number"
-                    value={shippingFee}
-                    onChange={(e) => setShippingFee(Number(e.target.value))}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:border-brand-500"
-                  />
+                {/* 2. Mã SKU & Danh mục */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-gray-800">Mã váy (SKU)</label>
+                      <button
+                        type="button"
+                        onClick={handleGenerateSku}
+                        className="text-[10px] text-brand-600 font-bold hover:underline flex items-center gap-0.5"
+                      >
+                        <RefreshCw className="w-2.5 h-2.5" />
+                        <span>Đổi mã</span>
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={sku}
+                      onChange={(e) => setSku(e.target.value.toUpperCase())}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-brand-700 uppercase"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-800 mb-1">Danh mục</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-900 focus:outline-none focus:border-brand-500"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
+                {/* 3. Size váy (Chọn nhanh dạng nút bấm) */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                    Kích thước (Size có sẵn)
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {COMMON_SIZES.map((s) => {
+                      const isSelected = selectedSizes.includes(s);
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => toggleSize(s)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                            isSelected
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                              : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {isSelected ? `✓ Size ${s}` : `Size ${s}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Giá thuê & Phí thêm ngày & Tiền cọc */}
+                <div className="p-3.5 bg-emerald-50/40 rounded-2xl border border-emerald-200 space-y-2.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+                    <Calendar className="w-4 h-4 text-emerald-600" />
+                    <span>Bảng giá cho thuê & Cọc giữ đồ</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <label className="text-[11px] text-gray-600 block mb-1">Giá thuê 1 ngày</label>
+                      <input
+                        type="number"
+                        step={10000}
+                        value={rentPrice1Day}
+                        onChange={(e) => setRentPrice1Day(Number(e.target.value))}
+                        className="w-full px-2.5 py-1.5 bg-white border border-emerald-300 rounded-xl font-bold text-emerald-700"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] text-gray-600 block mb-1">Giá thuê 2 ngày</label>
+                      <input
+                        type="number"
+                        step={10000}
+                        value={rentPrice2Days}
+                        onChange={(e) => setRentPrice2Days(Number(e.target.value))}
+                        className="w-full px-2.5 py-1.5 bg-white border border-emerald-200 rounded-xl font-bold text-gray-900"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] text-gray-600 block mb-1">Giá thuê 3 ngày (Chuẩn)</label>
+                      <input
+                        type="number"
+                        step={10000}
+                        value={rentPrice3Days}
+                        onChange={(e) => setRentPrice3Days(Number(e.target.value))}
+                        className="w-full px-2.5 py-1.5 bg-white border border-emerald-400 rounded-xl font-bold text-emerald-900"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] text-rose-700 font-semibold block mb-1">Phí thêm ngày (/ngày)</label>
+                      <input
+                        type="number"
+                        step={5000}
+                        value={extraDayPrice}
+                        onChange={(e) => setExtraDayPrice(Number(e.target.value))}
+                        className="w-full px-2.5 py-1.5 bg-white border border-rose-300 rounded-xl font-bold text-rose-700"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] text-amber-700 font-semibold block mb-1">Tiền cọc giữ đồ</label>
+                      <input
+                        type="number"
+                        step={50000}
+                        value={deposit}
+                        onChange={(e) => setDeposit(Number(e.target.value))}
+                        className="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-xl font-bold text-amber-700"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Tùy chọn nâng cao (Thu gọn) */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="text-xs text-gray-500 hover:text-gray-800 font-semibold flex items-center gap-1"
+                  >
+                    <span>{showAdvanced ? 'Thu gọn tùy chọn khác' : '+ Thêm giá bán / mô tả chi tiết (không bắt buộc)'}</span>
+                    {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+
+                  {showAdvanced && (
+                    <div className="mt-3 p-3.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-3 animate-in fade-in duration-150">
+                      
+                      {/* Bán đứt */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="allowBuyCheck"
+                          checked={allowBuy}
+                          onChange={(e) => setAllowBuy(e.target.checked)}
+                          className="w-4 h-4 text-purple-600 rounded border-gray-300"
+                        />
+                        <label htmlFor="allowBuyCheck" className="text-xs font-bold text-gray-800 cursor-pointer">
+                          Có bán mua đứt sản phẩm này
+                        </label>
+                      </div>
+
+                      {allowBuy && (
+                        <div>
+                          <label className="text-[11px] text-gray-600 block mb-1">Giá bán thực tế (VNĐ)</label>
+                          <input
+                            type="number"
+                            step={50000}
+                            value={buyPrice}
+                            onChange={(e) => setBuyPrice(Number(e.target.value))}
+                            className="w-full px-3 py-1.5 bg-white border border-purple-200 rounded-xl text-xs font-bold text-purple-900"
+                          />
+                        </div>
+                      )}
+
+                      {/* Mô tả */}
+                      <div>
+                        <label className="text-[11px] text-gray-600 block mb-1">Mô tả váy (phong cách, chất liệu)</label>
+                        <textarea
+                          rows={2}
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          placeholder="Mô tả phong cách, dịp sử dụng phù hợp..."
+                          className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs text-gray-900"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={onCancel}
-              className="px-6 py-3.5 rounded-2xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Hủy Bỏ
-            </button>
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleSubmit(true)}
-              className="px-6 py-3.5 rounded-2xl border border-brand-300 bg-brand-50 text-brand-700 text-xs font-semibold hover:bg-brand-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin text-brand-600" /> : null}
-              <span>{isSubmitting ? 'Đang lưu vào Database...' : 'Lưu Bản Nháp'}</span>
-            </button>
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleSubmit(false)}
-              className="px-8 py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xl shadow-brand-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Đang đẩy lên Database...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Đăng Sản Phẩm Ngay</span>
-                </>
-              )}
-            </button>
-          </div>
+            {/* Submit Action Buttons */}
+            <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={isSubmitting}
+                className="px-5 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors"
+              >
+                Hủy bỏ
+              </button>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-8 py-3 rounded-xl bg-[#c2185b] hover:bg-[#ad1457] text-white text-xs font-bold shadow-md shadow-pink-900/20 flex items-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Đang lưu vào kho...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>Đăng Váy Mới Ngay</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+          </form>
+
         </div>
       </div>
     </div>

@@ -119,7 +119,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
             </div>
 
             {order.items.map((item, idx) => (
-              <div key={idx} className="space-y-0.5 text-[11px]">
+              <div key={idx} className="space-y-1 text-[11px] pb-1.5 border-b border-gray-100 last:border-b-0">
                 <div className="flex justify-between items-start gap-2">
                   <span className="font-bold text-gray-950 flex-1">
                     {idx + 1}. {item.productTitle}
@@ -129,16 +129,27 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
                   </span>
                 </div>
 
-                <div className="flex justify-between text-[10px] text-gray-500">
-                  <span>
-                    {item.mode === 'rent' ? '[Thuê]' : '[Mua]'} Size: {item.size} | SL: {item.quantity}
+                <div className="flex justify-between text-[10px] text-gray-600 font-semibold">
+                  <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-900">
+                    {item.mode === 'rent' ? 'THUÊ' : 'MUA'} • Size: {item.size} • SL: {item.quantity}
                   </span>
-                  <span>Đ.Giá: {formatVND(item.price)}</span>
+                  <span>Tổng: {formatVND(item.price)}</span>
                 </div>
 
                 {item.mode === 'rent' && item.rentalStartDate && item.rentalEndDate && (
-                  <div className="text-[10px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded font-medium">
-                    📅 {formatDateVN(item.rentalStartDate)} → {formatDateVN(item.rentalEndDate)} ({item.rentalDays || 1} ngày)
+                  <div className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-1 rounded font-medium space-y-0.5">
+                    <div>📅 {formatDateVN(item.rentalStartDate)} → {formatDateVN(item.rentalEndDate)} ({item.rentalDays || 1} ngày)</div>
+                    {item.extraDays && item.extraDays > 0 ? (
+                      <div className="text-rose-700 font-semibold">
+                        + Phụ thu {item.extraDays} ngày thêm: {formatVND(item.extraDayFee || 0)}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+
+                {item.accessories && item.accessories.length > 0 && (
+                  <div className="text-[10px] text-purple-800 bg-purple-50 px-2 py-0.5 rounded">
+                    + Phụ kiện: {item.accessories.join(', ')}
                   </div>
                 )}
               </div>
@@ -155,7 +166,11 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
             <div className="flex justify-between text-gray-600">
               <span>Tiền cọc giữ đồ:</span>
               <span className={order.depositTotal > 0 ? 'font-bold text-amber-700' : 'text-gray-500'}>
-                {order.depositTotal > 0 ? formatVND(order.depositTotal) : '0 đ (Miễn cọc)'}
+                {order.depositMethod === 'id_card'
+                  ? 'Giữ CCCD / Bằng lái xe gốc'
+                  : order.depositTotal > 0
+                  ? formatVND(order.depositTotal)
+                  : '0 đ (Miễn cọc)'}
               </span>
             </div>
 
@@ -163,6 +178,16 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
               <div className="flex justify-between text-gray-600">
                 <span>Phí giao hàng:</span>
                 <span>+{formatVND(order.shippingFee)}</span>
+              </div>
+            )}
+
+            {Boolean(order.cashAmount || order.transferAmount) && (
+              <div className="pt-1 text-[10px] text-gray-500 flex justify-between">
+                <span>Thanh toán:</span>
+                <span>
+                  {order.cashAmount ? `Tiền mặt: ${formatVND(order.cashAmount)} ` : ''}
+                  {order.transferAmount ? `| Chuyển khoản: ${formatVND(order.transferAmount)}` : ''}
+                </span>
               </div>
             )}
 
