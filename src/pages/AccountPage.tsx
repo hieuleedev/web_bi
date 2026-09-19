@@ -185,8 +185,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
         : products)
     : products.filter((p) => p.sellerId === currentUser.id);
 
-  // Filter buyer orders
-  const myOrders = getUserOrders(currentUser.id);
+  // Filter buyer orders (matches currentUser.id or phone/email if guest/registered)
+  const myOrders = orders.filter((o) => {
+    if (o.userId === currentUser.id) return true;
+    if (currentUser.phone && o.customerPhone && o.customerPhone.replace(/\s+/g, '') === currentUser.phone.replace(/\s+/g, '')) return true;
+    if (currentUser.email && o.customerEmail && o.customerEmail.toLowerCase() === currentUser.email.toLowerCase()) return true;
+    return false;
+  });
 
   // Filter seller incoming orders
   const sellerOrders: Order[] = isOwner
@@ -947,9 +952,29 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                               ? 'bg-emerald-100 text-emerald-800'
                               : order.status === 'rented'
                               ? 'bg-blue-100 text-blue-800'
+                              : order.status === 'returned'
+                              ? 'bg-purple-100 text-purple-800'
+                              : order.status === 'shipping'
+                              ? 'bg-cyan-100 text-cyan-800'
+                              : order.status === 'cancelled'
+                              ? 'bg-rose-100 text-rose-800'
                               : 'bg-amber-100 text-amber-800'
                           }`}>
-                            {order.status === 'rented' ? 'Đang trong thời gian thuê' : order.status === 'returned' ? 'Đã hoàn trả đồ (Chờ kiểm cọc)' : order.status}
+                            {order.status === 'pending'
+                              ? 'Chờ xác nhận'
+                              : order.status === 'preparing'
+                              ? 'Đang chuẩn bị hàng'
+                              : order.status === 'shipping'
+                              ? 'Đang giao hàng'
+                              : order.status === 'rented'
+                              ? 'Đang trong thời gian thuê'
+                              : order.status === 'returned'
+                              ? 'Đã hoàn trả đồ (Chờ kiểm cọc)'
+                              : order.status === 'completed'
+                              ? 'Đã hoàn thành'
+                              : order.status === 'cancelled'
+                              ? 'Đã hủy đơn'
+                              : order.status}
                           </span>
                         </div>
 

@@ -159,6 +159,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const result = await api.orders.create({
         id: orderId,
         orderCode,
+        userId: params.userId,
         customerName: params.customerName,
         customerPhone: params.customerPhone,
         customerEmail: params.customerEmail,
@@ -213,6 +214,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       await api.orders.create({
         id: order.id,
         orderCode: order.code,
+        userId: order.userId || 'counter-customer',
         customerName: order.customerName,
         customerPhone: order.customerPhone,
         customerEmail: order.customerEmail || '',
