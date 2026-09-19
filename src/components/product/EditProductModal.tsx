@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { X, Sparkles, DollarSign, Image, Layers, Tag, Check, RefreshCw } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { X, Sparkles, DollarSign, Image as ImageIcon, Layers, Tag, Check, RefreshCw, Upload, Loader2, Trash2 } from "lucide-react";
 import { Product } from "../../types";
 import { useProducts } from "../../context/ProductContext";
 import { useToast } from "../../context/ToastContext";
 import { CATEGORIES } from "../../data/initialCategories";
 import { formatVND } from "../../utils/helpers";
+import api from "../../lib/api";
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -39,7 +40,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   const [material, setMaterial] = useState("");
   const [condition, setCondition] = useState("Mới 100%");
   const [featuredImage, setFeaturedImage] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [description, setDescription] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (product) {
@@ -60,9 +64,52 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       setMaterial(product.material || "");
       setCondition(product.condition || "Mới 100%");
       setFeaturedImage(product.featuredImage || "");
+      setImages(product.images && product.images.length > 0 ? product.images : (product.featuredImage ? [product.featuredImage] : []));
       setDescription(product.description || "");
     }
   }, [product]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      setIsUploading(true);
+      showToast("Đang tải ảnh lên máy chủ Vietnix S3...", "info");
+
+      const filesArray = Array.from(files);
+      if (filesArray.length === 1) {
+        const res = await api.upload.single(filesArray[0]);
+        if (res && res.url) {
+          const newUrl = res.url;
+          setImages(prev => [...prev, newUrl]);
+          if (!featuredImage) setFeaturedImage(newUrl);
+          showToast("Tải ảnh lên thành công!", "success");
+        }
+      } else {
+        const res = await api.upload.multiple(filesArray);
+        if (res && res.urls && res.urls.length > 0) {
+          setImages(prev => [...prev, ...res.urls]);
+          if (!featuredImage) setFeaturedImage(res.urls[0]);
+          showToast(`Đã tải lên thành công ${res.urls.length} ảnh!`, "success");
+        }
+      }
+    } catch (err: any) {
+      console.error("Lỗi tải ảnh lên:", err);
+      showToast(err.message || "Tải ảnh thất bại. Vui lòng thử lại!", "error");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    const updated = images.filter((_, idx) => idx !== indexToRemove);
+    setImages(updated);
+    if (featuredImage === images[indexToRemove]) {
+      setFeaturedImage(updated[0] || "");
+    }
+  };
 
   if (!isOpen || !product) return null;
 
@@ -82,6 +129,9 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     const sizes = sizesStr.split(",").map((s) => s.trim()).filter(Boolean);
     const colors = colorsStr.split(",").map((c) => c.trim()).filter(Boolean);
 
+    const finalFeaturedImage = featuredImage.trim() || (images.length > 0 ? images[0] : "");
+    const finalImages = images.length > 0 ? images : (finalFeaturedImage ? [finalFeaturedImage] : []);
+
     const updatedData: Partial<Product> = {
       title: title.trim(),
       sku: sku.trim() || "BB-001",
@@ -99,7 +149,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       colors: colors.length > 0 ? colors : ["Mặc định"],
       material: material.trim(),
       condition: condition.trim(),
-      featuredImage: featuredImage.trim(),
+      featuredImage: finalFeaturedImage,
+      images: finalImages,
       description: description.trim(),
     };
 
@@ -334,27 +385,120 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
           </div>
 
-          {/* Image URL & Preview */}
-          <div className="space-y-1.5">
-            <label className="block font-semibold text-gray-700">Link hình ảnh váy (URL)</label>
-            <div className="flex gap-3 items-center">
+          {/* Quản lý & Tải hình ảnh váy */}
+          <div className="space-y-3 p-4 bg-gray-50/80 rounded-2xl border border-gray-200/80">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block font-bold text-gray-900 text-xs">
+                  Hình ảnh váy ({images.length} ảnh)
+                </label>
+                <p className="text-[11px] text-gray-500">
+                  Tải ảnh trực tiếp từ máy tính/điện thoại hoặc dán link ảnh. Bấm ảnh để chọn làm ảnh bìa chính.
+                </p>
+              </div>
+
+              {/* Nút Tải Ảnh Mới */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="px-3.5 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all shrink-0 cursor-pointer disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Đang tải lên...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Tải Ảnh Mới</span>
+                  </>
+                )}
+              </button>
+
               <input
-                type="text"
-                value={featuredImage}
-                onChange={(e) => setFeaturedImage(e.target.value)}
-                className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-brand-500"
-                placeholder="Nhập đường dẫn ảnh (URL) hoặc tải ảnh lên"
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
               />
-              {featuredImage && (
-                <img
-                  src={featuredImage}
-                  alt="Preview"
-                  className="w-10 h-12 object-cover rounded-lg border border-gray-200 shrink-0"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
+            </div>
+
+            {/* Danh sách thumbnails ảnh hiện tại */}
+            {images.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5 pt-1">
+                {images.map((imgUrl, idx) => {
+                  const isMain = featuredImage === imgUrl || (!featuredImage && idx === 0);
+                  return (
+                    <div
+                      key={idx}
+                      className={`relative group rounded-xl overflow-hidden border-2 aspect-[3/4] bg-white cursor-pointer transition-all ${
+                        isMain ? "border-brand-600 ring-2 ring-brand-500/20 shadow-sm" : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      onClick={() => setFeaturedImage(imgUrl)}
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={`Ảnh ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      
+                      {/* Badge Ảnh Bìa Chính */}
+                      {isMain && (
+                        <span className="absolute top-1.5 left-1.5 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-xs">
+                          Ảnh bìa
+                        </span>
+                      )}
+
+                      {/* Nút Xóa Ảnh */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage(idx);
+                        }}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 hover:bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Xóa ảnh này"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-300 hover:border-brand-500 bg-white rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all text-center"
+              >
+                <Upload className="w-7 h-7 text-brand-500 mb-1.5" />
+                <p className="text-xs font-bold text-gray-800">Chưa có ảnh nào được tải lên</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">Nhấn vào đây để tải ảnh từ máy của bạn</p>
+              </div>
+            )}
+
+            {/* Hoặc nhập link ảnh trực tiếp */}
+            <div className="pt-2 border-t border-gray-200/60">
+              <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                Hoặc nhập/sửa nhanh link ảnh (URL):
+              </label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  value={featuredImage}
+                  onChange={(e) => {
+                    setFeaturedImage(e.target.value);
+                    if (e.target.value && !images.includes(e.target.value)) {
+                      setImages(prev => [e.target.value, ...prev]);
+                    }
                   }}
+                  className="flex-1 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-brand-500"
+                  placeholder="https://..."
                 />
-              )}
+              </div>
             </div>
           </div>
 
