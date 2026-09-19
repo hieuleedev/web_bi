@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { CATEGORIES } from '../data/initialCategories';
 import { ProductType, GenderCategory } from '../types';
 import { useProducts } from '../context/ProductContext';
@@ -55,6 +55,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   // Image Upload state
   const [images, setImages] = useState<string[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (isDraft = false) => {
     if (!title.trim()) {
@@ -70,44 +71,52 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
     const sizesArray = sizesInput.split(',').map((s) => s.trim()).filter(Boolean);
     const colorsArray = colorsInput.split(',').map((c) => c.trim()).filter(Boolean);
 
-    const newProd = await addProduct({
-      sku: sku.trim() || `BB-${Date.now().toString().slice(-4)}`,
-      title: title.trim(),
-      description: description.trim() || 'Trang phục thời trang cao cấp phù hợp cho các sự kiện, dạ hội hoặc dạo phố.',
-      category,
-      gender,
-      brand: brand.trim() || 'Bi Bi Collection',
-      type: productType,
-      status: isDraft ? 'pending' : 'approved',
-      buyPrice: (productType === 'buy' || productType === 'both') ? Number(buyPrice) : undefined,
-      originalPrice: (productType === 'buy' || productType === 'both') ? Number(originalPrice) : undefined,
-      rentPrice1Day: (productType === 'rent' || productType === 'both') ? Number(rentPrice1Day) : undefined,
-      rentPrice3Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice3Days) : undefined,
-      rentPrice7Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice7Days) : undefined,
-      deposit: (productType === 'rent' || productType === 'both') ? Number(deposit) : undefined,
-      sizes: sizesArray.length > 0 ? sizesArray : ['Free size'],
-      colors: colorsArray.length > 0 ? colorsArray : ['Đa sắc'],
-      material,
-      condition,
-      images,
-      featuredImage: images[featuredIndex] || images[0],
-      sellerId: currentUser?.id || 'user-seller-1',
-      sellerName: currentUser?.name || 'Bi Bi Boutique (Linh Bi)',
-      sellerAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-      sellerRating: currentUser?.rating || 5.0,
-      location,
-      hasShipping,
-      shippingFee: Number(shippingFee),
-      shippingArea,
-      careInstructions,
-      sizeGuide,
-    });
+    setIsSubmitting(true);
+    try {
+      const newProd = await addProduct({
+        sku: sku.trim() || `BB-${Date.now().toString().slice(-4)}`,
+        title: title.trim(),
+        description: description.trim() || 'Trang phục thời trang cao cấp phù hợp cho các sự kiện, dạ hội hoặc dạo phố.',
+        category,
+        gender,
+        brand: brand.trim() || 'Bi Bi Collection',
+        type: productType,
+        status: isDraft ? 'pending' : 'approved',
+        buyPrice: (productType === 'buy' || productType === 'both') ? Number(buyPrice) : undefined,
+        originalPrice: (productType === 'buy' || productType === 'both') ? Number(originalPrice) : undefined,
+        rentPrice1Day: (productType === 'rent' || productType === 'both') ? Number(rentPrice1Day) : undefined,
+        rentPrice3Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice3Days) : undefined,
+        rentPrice7Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice7Days) : undefined,
+        deposit: (productType === 'rent' || productType === 'both') ? Number(deposit) : undefined,
+        sizes: sizesArray.length > 0 ? sizesArray : ['Free size'],
+        colors: colorsArray.length > 0 ? colorsArray : ['Đa sắc'],
+        material,
+        condition,
+        images,
+        featuredImage: images[featuredIndex] || images[0],
+        sellerId: currentUser?.id || 'user-seller-1',
+        sellerName: currentUser?.name || 'Bi Bi Boutique (Linh Bi)',
+        sellerAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+        sellerRating: currentUser?.rating || 5.0,
+        location,
+        hasShipping,
+        shippingFee: Number(shippingFee),
+        shippingArea,
+        careInstructions,
+        sizeGuide,
+      });
 
-    showToast(
-      isDraft ? 'Đã lưu bản nháp sản phẩm thành công!' : 'Đã đăng sản phẩm thành công lên sàn Bi Bi!',
-      'success'
-    );
-    onSuccess(newProd.id);
+      showToast(
+        isDraft ? 'Đã lưu bản nháp sản phẩm thành công lên Database!' : 'Đã đăng sản phẩm thành công lên sàn Bi Bi (Đã lưu Database)!',
+        'success'
+      );
+      onSuccess(newProd.id);
+    } catch (err: any) {
+      console.error('Lỗi khi đăng sản phẩm:', err);
+      showToast(`Đăng sản phẩm thất bại: ${err.message || 'Không thể lưu vào Database'}`, 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -352,25 +361,38 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
           <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2">
             <button
               type="button"
+              disabled={isSubmitting}
               onClick={onCancel}
-              className="px-6 py-3.5 rounded-2xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+              className="px-6 py-3.5 rounded-2xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Hủy Bỏ
             </button>
             <button
               type="button"
+              disabled={isSubmitting}
               onClick={() => handleSubmit(true)}
-              className="px-6 py-3.5 rounded-2xl border border-brand-300 bg-brand-50 text-brand-700 text-xs font-semibold hover:bg-brand-100 transition-colors"
+              className="px-6 py-3.5 rounded-2xl border border-brand-300 bg-brand-50 text-brand-700 text-xs font-semibold hover:bg-brand-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Lưu Bản Nháp
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin text-brand-600" /> : null}
+              <span>{isSubmitting ? 'Đang lưu vào Database...' : 'Lưu Bản Nháp'}</span>
             </button>
             <button
               type="button"
+              disabled={isSubmitting}
               onClick={() => handleSubmit(false)}
-              className="px-8 py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xl shadow-brand-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+              className="px-8 py-3.5 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xl shadow-brand-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Đăng Sản Phẩm Ngay</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Đang đẩy lên Database...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Đăng Sản Phẩm Ngay</span>
+                </>
+              )}
             </button>
           </div>
         </div>

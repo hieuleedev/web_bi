@@ -119,16 +119,11 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       reviews: []
     };
 
-    // Optimistic UI update and immediate localStorage persistence
-    setProducts((prev) => {
-      const next = [newProduct, ...prev.filter((p) => p.id !== newProduct.id)];
-      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
-      return next;
-    });
-
-    // Save to Backend API Server
+    // 1. BẮT BUỘC ĐẨY LÊN DATABASE BACKEND API TRƯỚC
+    // Nếu API lỗi -> văng Exception, KHÔNG LƯU BẤT KỲ GÌ VÀO LOCAL
+    let createdResult: any;
     try {
-      await api.products.create({
+      createdResult = await api.products.create({
         id: newProduct.id,
         sku: newProduct.sku,
         title: newProduct.title,
@@ -155,36 +150,56 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         sellerRating: newProduct.sellerRating,
         location: newProduct.location
       });
-    } catch (err) {
-      console.warn('Error syncing product to Backend API', err);
+    } catch (err: any) {
+      console.error('❌ Lỗi khi đăng sản phẩm lên Database API:', err);
+      // Ném lỗi trực tiếp để UI hiển thị thông báo, TUYỆT ĐỐI KHÔNG LƯU LOCALSTORAGE KHI LỖI
+      throw new Error(err.message || 'Lỗi kết nối máy chủ Database khi lưu sản phẩm');
     }
 
-    return newProduct;
+    // 2. Chỉ khi Database trả về thành công mới cập nhật giao diện và bộ nhớ cache
+    const finalProduct: Product = createdResult && createdResult.id ? { ...newProduct, ...createdResult } : newProduct;
+
+    setProducts((prev) => {
+      const next = [finalProduct, ...prev.filter((p) => p.id !== finalProduct.id)];
+      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
+
+    return finalProduct;
   };
 
   const updateProduct = async (id: string, data: Partial<Product>) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...data } : p))
-    );
-
+    // Gọi API cập nhật Database trước
     try {
       await api.products.update(id, data);
-    } catch (e) {
-      console.warn('Error updating product in Backend API', e);
+    } catch (e: any) {
+      console.error('❌ Lỗi cập nhật sản phẩm trên Database:', e);
+      throw new Error(e.message || 'Lỗi cập nhật sản phẩm trên máy chủ');
     }
+
+    // Database thành công mới cập nhật UI
+    setProducts((prev) => {
+      const next = prev.map((p) => (p.id === id ? { ...p, ...data } : p));
+      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
   };
 
   const deleteProduct = async (id: string) => {
+    // Gọi API xóa trên Database trước
+    try {
+      await api.products.delete(id);
+    } catch (e: any) {
+      console.error('❌ Lỗi xóa sản phẩm trên Database:', e);
+      throw new Error(e.message || 'Lỗi xóa sản phẩm trên máy chủ');
+    }
+
+    // Database thành công mới xóa khỏi UI
     setProducts((prev) => {
       const next = prev.filter((p) => p.id !== id);
       localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
-    try {
-      await api.products.delete(id);
-    } catch (e) {
-      console.warn('Error deleting product from Backend API', e);
-    }
   };
 
   const toggleLike = (productId: string) => {

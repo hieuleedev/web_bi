@@ -3,7 +3,6 @@ import { UploadCloud, ImageIcon, X, Loader2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 
-import { fileToBase64 } from '../../utils/helpers';
 
 interface MultiImageUploaderProps {
   images: string[];
@@ -36,21 +35,12 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
       if (res.urls && res.urls.length > 0) {
         onImagesChange([...images, ...res.urls]);
         showToast(`Đã tải lên thành công ${res.urls.length} ảnh lên Vietnix S3!`, 'success');
+      } else {
+        throw new Error('Máy chủ không trả về URL ảnh');
       }
     } catch (err: any) {
-      console.warn('Lỗi upload ảnh lên server S3, chuyển sang lưu ảnh trực tiếp (Base64 fallback):', err);
-      try {
-        const base64Images: string[] = [];
-        for (const file of filesArray) {
-          const base64 = await fileToBase64(file);
-          base64Images.push(base64);
-        }
-        onImagesChange([...images, ...base64Images]);
-        showToast(`Đã tải lên ${base64Images.length} ảnh (Chế độ lưu dự phòng - bạn có thể đăng bán ngay)`, 'info');
-      } catch (fallbackErr) {
-        console.error('Lỗi fallback base64:', fallbackErr);
-        showToast(`Lỗi tải ảnh: ${err.message || 'Vui lòng thử lại'}`, 'error');
-      }
+      console.error('Lỗi upload ảnh lên S3:', err);
+      showToast(`Lỗi tải ảnh lên Vietnix S3: ${err.message || 'Không thể kết nối máy chủ'}. Vui lòng thử lại!`, 'error');
     } finally {
       setIsUploading(false);
       e.target.value = ''; // Reset input để có thể chọn lại cùng file
