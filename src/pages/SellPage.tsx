@@ -28,13 +28,6 @@ interface SellPageProps {
 
 const COMMON_SIZES = ['S', 'M', 'L', 'XL', 'Freesize'];
 
-const SAMPLE_IMAGES = [
-  'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80',
-];
-
 export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   const { addProduct } = useProducts();
   const { currentUser } = useAuth();
@@ -58,7 +51,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   const [buyPrice, setBuyPrice] = useState<number>(1200000);
 
   // 4. Images
-  const [images, setImages] = useState<string[]>([SAMPLE_IMAGES[0]]);
+  const [images, setImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
 
@@ -298,27 +291,6 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
                       )}
                     </div>
                   ))}
-                </div>
-
-                {/* Quick sample image chooser */}
-                <div className="pt-1">
-                  <span className="text-[11px] text-gray-400 block mb-1">Gợi ý chọn ảnh mẫu nhanh:</span>
-                  <div className="flex gap-1.5">
-                    {SAMPLE_IMAGES.map((s, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setImages([s]);
-                          setFeaturedIndex(0);
-                        }}
-                        className="w-8 h-10 rounded-lg overflow-hidden border border-gray-200 hover:border-brand-500 opacity-80 hover:opacity-100"
-                        title={`Chọn ảnh mẫu ${idx + 1}`}
-                      >
-                        <img src={s} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
                 </div>
               </div>
 

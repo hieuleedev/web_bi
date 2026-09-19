@@ -66,7 +66,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 }) => {
   const { currentUser, updateProfile, changePassword, logout } = useAuth();
   const { products, deleteProduct, updateProduct, wishlistIds } = useProducts();
-  const { getUserOrders, getSellerOrders, updateOrderStatus, updateOrder, deleteOrder } = useOrders();
+  const { orders, getUserOrders, getSellerOrders, updateOrderStatus, updateOrder, deleteOrder } = useOrders();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -176,14 +176,24 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     );
   }
 
+  const isOwner = currentUser.role === 'seller' || currentUser.role === 'admin';
+
   // Filter user's products
-  const myProducts = products.filter((p) => p.sellerId === currentUser.id);
+  const myProducts = isOwner
+    ? (products.filter((p) => p.sellerId === currentUser.id).length > 0
+        ? products.filter((p) => p.sellerId === currentUser.id)
+        : products)
+    : products.filter((p) => p.sellerId === currentUser.id);
 
   // Filter buyer orders
   const myOrders = getUserOrders(currentUser.id);
 
   // Filter seller incoming orders
-  const sellerOrders = getSellerOrders(currentUser.id);
+  const sellerOrders: Order[] = isOwner
+    ? (orders.filter((o: Order) => (o.items || []).some((item) => item.sellerId === currentUser.id)).length > 0
+        ? orders.filter((o: Order) => (o.items || []).some((item) => item.sellerId === currentUser.id))
+        : orders)
+    : getSellerOrders(currentUser.id);
 
   // Check if an order is overdue and not yet returned
   const isOrderOverdue = (order: Order) => {
@@ -220,8 +230,6 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       setIsSavingProfile(false);
     }
   };
-
-  const isOwner = currentUser.role === 'seller' || currentUser.role === 'admin';
 
   const menuTabs = [
     { id: 'overview', label: 'Tổng quan tài khoản', icon: UserIcon },

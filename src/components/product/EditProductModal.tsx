@@ -343,7 +343,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                 value={featuredImage}
                 onChange={(e) => setFeaturedImage(e.target.value)}
                 className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-brand-500"
-                placeholder="https://images.unsplash.com/..."
+                placeholder="Nhập đường dẫn ảnh (URL) hoặc tải ảnh lên"
               />
               {featuredImage && (
                 <img
