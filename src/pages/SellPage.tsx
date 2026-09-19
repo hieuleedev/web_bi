@@ -54,6 +54,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
 
   // Image Upload state
   const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,38 +74,41 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
 
     setIsSubmitting(true);
     try {
-      const newProd = await addProduct({
-        sku: sku.trim() || `BB-${Date.now().toString().slice(-4)}`,
-        title: title.trim(),
-        description: description.trim() || 'Trang phục thời trang cao cấp phù hợp cho các sự kiện, dạ hội hoặc dạo phố.',
-        category,
-        gender,
-        brand: brand.trim() || 'Bi Bi Collection',
-        type: productType,
-        status: isDraft ? 'pending' : 'approved',
-        buyPrice: (productType === 'buy' || productType === 'both') ? Number(buyPrice) : undefined,
-        originalPrice: (productType === 'buy' || productType === 'both') ? Number(originalPrice) : undefined,
-        rentPrice1Day: (productType === 'rent' || productType === 'both') ? Number(rentPrice1Day) : undefined,
-        rentPrice3Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice3Days) : undefined,
-        rentPrice7Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice7Days) : undefined,
-        deposit: (productType === 'rent' || productType === 'both') ? Number(deposit) : undefined,
-        sizes: sizesArray.length > 0 ? sizesArray : ['Free size'],
-        colors: colorsArray.length > 0 ? colorsArray : ['Đa sắc'],
-        material,
-        condition,
-        images,
-        featuredImage: images[featuredIndex] || images[0],
-        sellerId: currentUser?.id || 'user-seller-1',
-        sellerName: currentUser?.name || 'Bi Bi Boutique (Linh Bi)',
-        sellerAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-        sellerRating: currentUser?.rating || 5.0,
-        location,
-        hasShipping,
-        shippingFee: Number(shippingFee),
-        shippingArea,
-        careInstructions,
-        sizeGuide,
-      });
+      const newProd = await addProduct(
+        {
+          sku: sku.trim() || `BB-${Date.now().toString().slice(-4)}`,
+          title: title.trim(),
+          description: description.trim() || 'Trang phục thời trang cao cấp phù hợp cho các sự kiện, dạ hội hoặc dạo phố.',
+          category,
+          gender,
+          brand: brand.trim() || 'Bi Bi Collection',
+          type: productType,
+          status: isDraft ? 'pending' : 'approved',
+          buyPrice: (productType === 'buy' || productType === 'both') ? Number(buyPrice) : undefined,
+          originalPrice: (productType === 'buy' || productType === 'both') ? Number(originalPrice) : undefined,
+          rentPrice1Day: (productType === 'rent' || productType === 'both') ? Number(rentPrice1Day) : undefined,
+          rentPrice3Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice3Days) : undefined,
+          rentPrice7Days: (productType === 'rent' || productType === 'both') ? Number(rentPrice7Days) : undefined,
+          deposit: (productType === 'rent' || productType === 'both') ? Number(deposit) : undefined,
+          sizes: sizesArray.length > 0 ? sizesArray : ['Free size'],
+          colors: colorsArray.length > 0 ? colorsArray : ['Đa sắc'],
+          material,
+          condition,
+          images,
+          featuredImage: images[featuredIndex] || images[0],
+          sellerId: currentUser?.id || 'user-seller-1',
+          sellerName: currentUser?.name || 'Bi Bi Boutique (Linh Bi)',
+          sellerAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+          sellerRating: currentUser?.rating || 5.0,
+          location,
+          hasShipping,
+          shippingFee: Number(shippingFee),
+          shippingArea,
+          careInstructions,
+          sizeGuide,
+        },
+        imageFiles
+      );
 
       showToast(
         isDraft ? 'Đã lưu bản nháp sản phẩm thành công lên Database!' : 'Đã đăng sản phẩm thành công lên sàn Bi Bi (Đã lưu Database)!',
@@ -142,8 +146,10 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
           {/* 1. MEDIA UPLOAD COMPONENT */}
           <MultiImageUploader
             images={images}
+            imageFiles={imageFiles}
             featuredIndex={featuredIndex}
             onImagesChange={setImages}
+            onImageFilesChange={setImageFiles}
             onFeaturedIndexChange={setFeaturedIndex}
           />
 

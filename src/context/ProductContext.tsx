@@ -6,7 +6,10 @@ import { api } from '../lib/api';
 interface ProductContextType {
   products: Product[];
   wishlistIds: string[];
-  addProduct: (product: Omit<Product, 'id' | 'views' | 'likes' | 'rating' | 'reviewsCount' | 'createdAt' | 'bookedDates'>) => Promise<Product>;
+  addProduct: (
+    product: Omit<Product, 'id' | 'views' | 'likes' | 'rating' | 'reviewsCount' | 'createdAt' | 'bookedDates'>,
+    imageFiles?: File[]
+  ) => Promise<Product>;
   updateProduct: (id: string, data: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   toggleLike: (productId: string) => void;
@@ -105,7 +108,10 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlistIds));
   }, [wishlistIds]);
 
-  const addProduct = async (productData: Omit<Product, 'id' | 'views' | 'likes' | 'rating' | 'reviewsCount' | 'createdAt' | 'bookedDates'>): Promise<Product> => {
+  const addProduct = async (
+    productData: Omit<Product, 'id' | 'views' | 'likes' | 'rating' | 'reviewsCount' | 'createdAt' | 'bookedDates'>,
+    imageFiles: File[] = []
+  ): Promise<Product> => {
     const newId = `prod-${Date.now()}`;
     const newProduct: Product = {
       ...productData,
@@ -119,37 +125,77 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       reviews: []
     };
 
-    // 1. BẮT BUỘC ĐẨY LÊN DATABASE BACKEND API TRƯỚC
-    // Nếu API lỗi -> văng Exception, KHÔNG LƯU BẤT KỲ GÌ VÀO LOCAL
     let createdResult: any;
     try {
-      createdResult = await api.products.create({
-        id: newProduct.id,
-        sku: newProduct.sku,
-        title: newProduct.title,
-        description: newProduct.description,
-        category: newProduct.category,
-        gender: newProduct.gender,
-        brand: newProduct.brand,
-        type: newProduct.type,
-        status: newProduct.status,
-        buyPrice: newProduct.buyPrice || 0,
-        rentPrice1Day: newProduct.rentPrice1Day || 0,
-        rentPrice3Days: newProduct.rentPrice3Days || 0,
-        rentPrice7Days: newProduct.rentPrice7Days || 0,
-        deposit: newProduct.deposit || 0,
-        sizes: newProduct.sizes,
-        colors: newProduct.colors,
-        material: newProduct.material,
-        condition: newProduct.condition,
-        featuredImage: newProduct.featuredImage,
-        images: newProduct.images,
-        sellerId: newProduct.sellerId,
-        sellerName: newProduct.sellerName,
-        sellerAvatar: newProduct.sellerAvatar,
-        sellerRating: newProduct.sellerRating,
-        location: newProduct.location
-      });
+      if (imageFiles && imageFiles.length > 0) {
+        // Gửi cùng lúc qua Multipart FormData: thông tin sản phẩm + toàn bộ file ảnh
+        const formData = new FormData();
+        formData.append('id', String(newProduct.id || ''));
+        formData.append('sku', String(newProduct.sku || ''));
+        formData.append('title', String(newProduct.title || ''));
+        formData.append('description', String(newProduct.description || ''));
+        formData.append('category', String(newProduct.category || ''));
+        formData.append('gender', String(newProduct.gender || ''));
+        formData.append('brand', String(newProduct.brand || ''));
+        formData.append('type', String(newProduct.type || ''));
+        formData.append('status', String(newProduct.status || ''));
+        formData.append('buyPrice', String(newProduct.buyPrice || 0));
+        formData.append('rentPrice1Day', String(newProduct.rentPrice1Day || 0));
+        formData.append('rentPrice3Days', String(newProduct.rentPrice3Days || 0));
+        formData.append('rentPrice7Days', String(newProduct.rentPrice7Days || 0));
+        formData.append('deposit', String(newProduct.deposit || 0));
+        formData.append('sizes', JSON.stringify(newProduct.sizes || ['Free size']));
+        formData.append('colors', JSON.stringify(newProduct.colors || ['Đa sắc']));
+        formData.append('material', String(newProduct.material || ''));
+        formData.append('condition', String(newProduct.condition || ''));
+        formData.append('sellerId', String(newProduct.sellerId || ''));
+        formData.append('sellerName', String(newProduct.sellerName || ''));
+        formData.append('sellerAvatar', String(newProduct.sellerAvatar || ''));
+        formData.append('sellerRating', String(newProduct.sellerRating || 5.0));
+        formData.append('location', String(newProduct.location || ''));
+
+        // Lọc các URL ảnh mẫu nếu có
+        const sampleUrls = (newProduct.images || []).filter(url => !url.startsWith('blob:'));
+        if (sampleUrls.length > 0) {
+          formData.append('images', JSON.stringify(sampleUrls));
+        }
+
+        // Đính kèm các file ảnh nhị phân gửi cùng
+        imageFiles.forEach(file => {
+          formData.append('images', file);
+        });
+
+        createdResult = await api.products.create(formData);
+      } else {
+        // Gửi dạng JSON nếu không có file nhị phân đính kèm
+        createdResult = await api.products.create({
+          id: newProduct.id,
+          sku: newProduct.sku,
+          title: newProduct.title,
+          description: newProduct.description,
+          category: newProduct.category,
+          gender: newProduct.gender,
+          brand: newProduct.brand,
+          type: newProduct.type,
+          status: newProduct.status,
+          buyPrice: newProduct.buyPrice || 0,
+          rentPrice1Day: newProduct.rentPrice1Day || 0,
+          rentPrice3Days: newProduct.rentPrice3Days || 0,
+          rentPrice7Days: newProduct.rentPrice7Days || 0,
+          deposit: newProduct.deposit || 0,
+          sizes: newProduct.sizes,
+          colors: newProduct.colors,
+          material: newProduct.material,
+          condition: newProduct.condition,
+          featuredImage: newProduct.featuredImage,
+          images: newProduct.images,
+          sellerId: newProduct.sellerId,
+          sellerName: newProduct.sellerName,
+          sellerAvatar: newProduct.sellerAvatar,
+          sellerRating: newProduct.sellerRating,
+          location: newProduct.location
+        });
+      }
     } catch (err: any) {
       console.error('❌ Lỗi khi đăng sản phẩm lên Database API:', err);
       // Ném lỗi trực tiếp để UI hiển thị thông báo, TUYỆT ĐỐI KHÔNG LƯU LOCALSTORAGE KHI LỖI

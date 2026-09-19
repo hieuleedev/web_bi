@@ -1,26 +1,28 @@
-import React, { useState } from 'react';
-import { UploadCloud, ImageIcon, X, Loader2 } from 'lucide-react';
-import { api } from '../../lib/api';
+import React from 'react';
+import { UploadCloud, ImageIcon, X } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
 
 interface MultiImageUploaderProps {
   images: string[];
+  imageFiles?: File[];
   featuredIndex: number;
   onImagesChange: (newImages: string[]) => void;
+  onImageFilesChange?: (newFiles: File[]) => void;
   onFeaturedIndexChange: (index: number) => void;
 }
 
 export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
   images,
+  imageFiles = [],
   featuredIndex,
   onImagesChange,
+  onImageFilesChange,
   onFeaturedIndexChange,
 }) => {
   const { showToast } = useToast();
-  const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
     const filesArray = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
@@ -29,27 +31,22 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
       return;
     }
 
-    setIsUploading(true);
-    try {
-      const res = await api.upload.multiple(filesArray);
-      if (res.urls && res.urls.length > 0) {
-        onImagesChange([...images, ...res.urls]);
-        showToast(`Đã tải lên thành công ${res.urls.length} ảnh lên Vietnix S3!`, 'success');
-      } else {
-        throw new Error('Máy chủ không trả về URL ảnh');
-      }
-    } catch (err: any) {
-      console.error('Lỗi upload ảnh lên S3:', err);
-      showToast(`Lỗi tải ảnh lên Vietnix S3: ${err.message || 'Không thể kết nối máy chủ'}. Vui lòng thử lại!`, 'error');
-    } finally {
-      setIsUploading(false);
-      e.target.value = ''; // Reset input để có thể chọn lại cùng file
+    // 1. Tạo URL xem trước ngay lập tức, không gửi request mạng riêng lẻ
+    const previewUrls = filesArray.map(f => URL.createObjectURL(f));
+    onImagesChange([...images, ...previewUrls]);
+
+    // 2. Lưu file gốc để gửi cùng API khi bấm Đăng sản phẩm
+    if (onImageFilesChange) {
+      onImageFilesChange([...imageFiles, ...filesArray]);
     }
+
+    showToast(`Đã chọn ${filesArray.length} ảnh. Ảnh sẽ được tự động gửi kèm và lưu lên Vietnix S3 khi bạn bấm Đăng sản phẩm!`, 'info');
+    e.target.value = ''; // Reset input để có thể chọn lại cùng file
   };
 
   const handleAddSampleImage = (url: string) => {
     onImagesChange([...images, url]);
-    showToast('Đã thêm ảnh vào bộ sưu tập', 'info');
+    showToast('Đã thêm ảnh mẫu vào bộ sưu tập', 'info');
   };
 
   const handleRemoveImage = (index: number) => {
@@ -59,6 +56,9 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
     }
     const updated = images.filter((_, idx) => idx !== index);
     onImagesChange(updated);
+    if (onImageFilesChange && imageFiles.length > index) {
+      onImageFilesChange(imageFiles.filter((_, idx) => idx !== index));
+    }
     if (featuredIndex >= updated.length) {
       onFeaturedIndexChange(0);
     }
@@ -79,37 +79,18 @@ export const MultiImageUploader: React.FC<MultiImageUploaderProps> = ({
       </div>
 
       {/* Drag & drop upload box */}
-      <label className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all ${
-        isUploading 
-          ? 'border-brand-500 bg-brand-50/50 cursor-not-allowed' 
-          : 'border-gray-300 hover:border-brand-500 bg-gray-50/70 hover:bg-brand-50/30 cursor-pointer'
-      }`}>
-        {isUploading ? (
-          <>
-            <Loader2 className="w-10 h-10 text-brand-600 animate-spin mb-2" />
-            <p className="text-xs font-bold text-brand-700">
-              Đang tải ảnh trực tiếp lên Vietnix S3 Cloud Storage...
-            </p>
-            <p className="text-[11px] text-brand-500 mt-1">
-              Vui lòng đợi giây lát trong khi tối ưu và lưu trữ ảnh
-            </p>
-          </>
-        ) : (
-          <>
-            <UploadCloud className="w-10 h-10 text-brand-500 mb-2" />
-            <p className="text-xs font-semibold text-gray-800">
-              Nhấn để chọn ảnh từ máy tính của bạn hoặc kéo thả vào đây
-            </p>
-            <p className="text-[11px] text-gray-500 mt-1">
-              Ảnh tải lên sẽ được lưu trữ an toàn trên đám mây Vietnix S3
-            </p>
-          </>
-        )}
+      <label className="border-2 border-dashed border-gray-300 hover:border-brand-500 bg-gray-50/70 hover:bg-brand-50/30 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all">
+        <UploadCloud className="w-10 h-10 text-brand-500 mb-2" />
+        <p className="text-xs font-semibold text-gray-800">
+          Nhấn để chọn ảnh từ máy tính của bạn hoặc kéo thả vào đây
+        </p>
+        <p className="text-[11px] text-gray-500 mt-1">
+          Hỗ trợ nhiều ảnh. Ảnh sẽ được tự động gửi kèm và tải lên Vietnix S3 khi bạn bấm &quot;Đăng Sản Phẩm Ngay&quot;
+        </p>
         <input
           type="file"
           multiple
           accept="image/*"
-          disabled={isUploading}
           onChange={handleFileSelect}
           className="hidden"
         />

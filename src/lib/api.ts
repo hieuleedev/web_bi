@@ -63,6 +63,18 @@ export const api = {
     },
 
     create: async (productData: any) => {
+      if (productData instanceof FormData) {
+        const res = await fetch(`${API_BASE}/products`, {
+          method: 'POST',
+          body: productData
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data?.message || `Lỗi khi đăng sản phẩm (${res.status})`);
+        }
+        return data.data;
+      }
+
       const res = await request<{ success: boolean; message: string; data: any }>('/products', {
         method: 'POST',
         body: JSON.stringify(productData)
