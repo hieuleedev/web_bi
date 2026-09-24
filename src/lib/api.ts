@@ -3,7 +3,7 @@
  * Kết nối toàn bộ ứng dụng tới Backend Node.js Express REST API & S3 Storage.
  */
 
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://222.255.215.20:5050';
 export const API_BASE = `${BACKEND_URL}/api`;
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
