@@ -3,8 +3,15 @@
  * Kết nối toàn bộ ứng dụng tới Backend Node.js Express REST API & S3 Storage.
  */
 
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://222.255.215.20:5050';
-export const API_BASE = `${BACKEND_URL}/api`;
+const rawBackendUrl = import.meta.env.VITE_BACKEND_URL || 'http://222.255.215.20:5050';
+
+// Nếu trang web đang chạy HTTPS (như trên Vercel) mà Backend là HTTP (chưa có SSL riêng),
+// tự động dùng relative path '' để Vercel Reverse Proxy chuyển tiếp ngầm, tránh bị trình duyệt chặn Mixed Content!
+export const BACKEND_URL = (typeof window !== 'undefined' && window.location.protocol === 'https:' && rawBackendUrl.startsWith('http://'))
+  ? ''
+  : rawBackendUrl;
+
+export const API_BASE = BACKEND_URL ? `${BACKEND_URL}/api` : '/api';
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
