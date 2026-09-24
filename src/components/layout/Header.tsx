@@ -181,8 +181,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="font-serif text-2xl font-bold tracking-tight text-gray-900 group-hover:text-brand-600 transition-colors">
                   Bi Bi
                 </span>
-                <span className="block text-[10px] uppercase tracking-widest text-brand-600 font-semibold -mt-1">
-                  Boutique & Rent
+                <span className="block text-[10px] uppercase tracking-wider text-brand-600 font-semibold -mt-0.5">
+                  Cho thuê đồ Núi Thành
                 </span>
               </div>
             </button>

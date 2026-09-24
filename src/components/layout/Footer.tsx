@@ -62,8 +62,8 @@ export const Footer: React.FC = () => {
                 <span className="font-serif text-2xl font-bold tracking-tight text-white">
                   Bi Bi
                 </span>
-                <span className="block text-[10px] uppercase tracking-widest text-brand-400 font-semibold -mt-1">
-                  Boutique & Rental
+                <span className="block text-[10px] uppercase tracking-wider text-brand-400 font-semibold -mt-0.5">
+                  Cho thuê đồ Núi Thành
                 </span>
               </div>
             </div>
