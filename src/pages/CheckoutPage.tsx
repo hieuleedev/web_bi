@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { formatVND } from '../utils/helpers';
 import { useCart } from '../context/CartContext';
@@ -34,9 +34,13 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank_transfer' | 'momo' | 'vnpay'>('bank_transfer');
 
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
+  const isSubmittingRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSubmittingRef.current || isSubmitting) return;
 
     // Validation
     if (!customerName.trim()) {
@@ -55,31 +59,39 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       return;
     }
 
-    const newOrder = await createOrder({
-      userId: currentUser?.id || 'guest',
-      customerName: customerName.trim(),
-      customerPhone: phoneClean,
-      customerEmail: customerEmail.trim(),
-      shippingAddress: deliveryMethod === 'shipping' ? shippingAddress.trim() : 'Nhận trực tiếp tại showroom Bi Bi (Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng)',
-      deliveryMethod,
-      paymentMethod,
-      notes: notes.trim(),
-    });
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
 
-    if (newOrder) {
-      setCompletedOrder(newOrder);
+    try {
+      const newOrder = await createOrder({
+        userId: currentUser?.id || 'guest',
+        customerName: customerName.trim(),
+        customerPhone: phoneClean,
+        customerEmail: customerEmail.trim(),
+        shippingAddress: deliveryMethod === 'shipping' ? shippingAddress.trim() : 'Nhận trực tiếp tại showroom Bi Bi (Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng)',
+        deliveryMethod,
+        paymentMethod,
+        notes: notes.trim(),
+      });
 
-      // Trigger Confetti effect
-      try {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#b78978', '#d97706', '#10b981', '#6366f1']
-        });
-      } catch (err) {
-        // ignore
+      if (newOrder) {
+        setCompletedOrder(newOrder);
+
+        // Trigger Confetti effect
+        try {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#b78978', '#d97706', '#10b981', '#6366f1']
+          });
+        } catch (err) {
+          // ignore
+        }
       }
+    } finally {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -217,10 +229,24 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-4 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-xl shadow-brand-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+                disabled={isSubmitting}
+                className={`w-full py-4 rounded-2xl text-white text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                  isSubmitting
+                    ? 'bg-gray-400 cursor-not-allowed shadow-none'
+                    : 'bg-brand-600 hover:bg-brand-700 shadow-xl shadow-brand-500/25 active:scale-[0.99]'
+                }`}
               >
-                <Sparkles className="w-4 h-4" />
-                <span>Xác Nhận Đặt Hàng Ngay</span>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Đang xử lý đơn hàng...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>Xác Nhận Đặt Hàng Ngay</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

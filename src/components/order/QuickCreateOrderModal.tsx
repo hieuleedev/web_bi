@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   X,
   Search,
@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   Tag,
   Clock,
-  Shirt
+  Shirt,
+  Loader2,
 } from 'lucide-react';
 import { Product, Order, OrderItem } from '../../types';
 import { useProducts } from '../../context/ProductContext';
@@ -50,6 +51,10 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const { showToast } = useToast();
 
   const activeBank = getActiveBankConfig();
+
+  // Khóa chống bấm đúp tạo trùng đơn hàng
+  const isSubmittingRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 1. Customer State
   const [customerQuery, setCustomerQuery] = useState('');
@@ -261,6 +266,8 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isSubmittingRef.current || isSubmitting) return;
+
     const finalName = customerName.trim() || customerQuery.trim();
     if (!finalName) {
       showToast('Vui lòng nhập tên khách hàng!', 'error');
@@ -281,6 +288,9 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
       );
       return;
     }
+
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
 
     const orderCode = generateOrderCode();
     const orderId = `ord-${Date.now()}`;
@@ -367,6 +377,9 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
     } catch (err: any) {
       console.error('Lỗi khi tạo đơn hàng mới:', err);
       showToast(err.message || 'Không thể tạo đơn hàng! Vui lòng thử lại.', 'error');
+    } finally {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -935,15 +948,24 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
           <div className="pt-3 space-y-2">
             <button
               type="submit"
-              disabled={hasConflict}
+              disabled={hasConflict || isSubmitting}
               className={`w-full py-3 px-4 rounded-xl text-sm font-bold text-white transition-all shadow-md flex items-center justify-center gap-2 ${
-                hasConflict
+                hasConflict || isSubmitting
                   ? 'bg-gray-400 cursor-not-allowed shadow-none'
                   : 'bg-[#c2185b] hover:bg-[#ad1457] active:scale-[0.99] shadow-pink-900/20'
               }`}
             >
-              <FileText className="w-4 h-4" />
-              <span>{hasConflict ? '⚠️ Trùng Lịch Thuê (Không Thể Tạo Đơn)' : 'Thêm đơn hàng'}</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Đang xử lý tạo đơn hàng...</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4" />
+                  <span>{hasConflict ? '⚠️ Trùng Lịch Thuê (Không Thể Tạo Đơn)' : 'Thêm đơn hàng'}</span>
+                </>
+              )}
             </button>
 
             <button
