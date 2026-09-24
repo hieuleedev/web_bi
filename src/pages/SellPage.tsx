@@ -36,7 +36,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   // 1. Core State
   const [title, setTitle] = useState('');
   const [sku, setSku] = useState(() => `BB-${Math.floor(100 + Math.random() * 900)}`);
-  const [category, setCategory] = useState(CATEGORIES[0]?.id || 'party-dress');
+  const [category, setCategory] = useState(CATEGORIES[0]?.id || 'dam-dai');
   const [selectedSizes, setSelectedSizes] = useState<string[]>(['S', 'M', 'L']);
 
   // 2. Pricing & Deposit

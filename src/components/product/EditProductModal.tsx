@@ -25,7 +25,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
   const [title, setTitle] = useState("");
   const [sku, setSku] = useState("");
-  const [category, setCategory] = useState("party-dress");
+  const [category, setCategory] = useState(CATEGORIES[0]?.id || "dam-dai");
   const [type, setType] = useState<"rent" | "buy" | "both">("rent");
   const [rentPrice1Day, setRentPrice1Day] = useState<number>(0);
   const [rentPrice2Days, setRentPrice2Days] = useState<number>(0);
@@ -49,7 +49,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     if (product) {
       setTitle(product.title || "");
       setSku(product.sku || (product.id ? product.id.replace("prod-", "BB-") : "BB-001"));
-      setCategory(product.category || "party-dress");
+      setCategory(product.category || CATEGORIES[0]?.id || "dam-dai");
       setType(product.type || "both");
       setRentPrice1Day(product.rentPrice1Day || 0);
       setRentPrice2Days(product.rentPrice2Days || 0);

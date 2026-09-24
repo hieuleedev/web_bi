@@ -16,7 +16,8 @@ import {
   Crown,
   Smile,
   Gem,
-  Layers
+  Layers,
+  Footprints
 } from 'lucide-react';
 import { ProductCard } from '../components/product/ProductCard';
 import { CATEGORIES } from '../data/initialCategories';
@@ -35,11 +36,13 @@ const renderCategoryIcon = (iconName: string) => {
   switch (iconName) {
     case 'Sparkles': return <Sparkles className="w-6 h-6" />;
     case 'Heart': return <Heart className="w-6 h-6" />;
+    case 'Layers': return <Layers className="w-6 h-6" />;
+    case 'ShoppingBag': return <ShoppingBag className="w-6 h-6" />;
+    case 'Footprints': return <Footprints className="w-6 h-6" />;
+    case 'Gem': return <Gem className="w-6 h-6" />;
     case 'Briefcase': return <Briefcase className="w-6 h-6" />;
     case 'Crown': return <Crown className="w-6 h-6" />;
     case 'Smile': return <Smile className="w-6 h-6" />;
-    case 'Layers': return <Layers className="w-6 h-6" />;
-    case 'Gem': return <Gem className="w-6 h-6" />;
     default: return <Sparkles className="w-6 h-6" />;
   }
 };
