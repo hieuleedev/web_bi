@@ -82,10 +82,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
           
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-7 h-7 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-brand-200" />
-            </div>
-            <span className="text-[10px] sm:text-xs uppercase tracking-widest font-bold text-brand-200">Bi Bi Fashion Boutique</span>
+            <img
+              src="/logo.jpg"
+              alt="Logo Bi Bi"
+              className="w-7 h-7 rounded-full object-cover border border-white/30 shrink-0"
+            />
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest font-bold text-brand-200">Bi Bi - Cho Thuê Đồ Núi Thành</span>
           </div>
 
           <h3 className="font-serif text-xl sm:text-2xl font-bold">

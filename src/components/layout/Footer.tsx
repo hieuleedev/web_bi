@@ -55,9 +55,11 @@ export const Footer: React.FC = () => {
           {/* Brand Intro */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white shadow-md">
-                <Sparkles className="w-5 h-5" />
-              </div>
+              <img
+                src="/logo.jpg"
+                alt="Bi Bi - Cho thuê đồ Núi Thành"
+                className="w-11 h-11 rounded-full object-cover shadow-md border border-white/20 shrink-0 bg-white"
+              />
               <div>
                 <span className="font-serif text-2xl font-bold tracking-tight text-white">
                   Bi Bi

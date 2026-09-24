@@ -70,10 +70,13 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
         <div className="pos-bill bg-white p-3 sm:p-4 text-gray-900 font-mono text-xs leading-tight print:p-2">
           {/* Header */}
           <div className="text-center space-y-1 pb-3 border-b border-dashed border-gray-400">
+            <div className="flex justify-center mb-1">
+              <img src="/logo.jpg" alt="Logo Bi Bi" className="w-12 h-12 rounded-full object-cover border border-gray-300" />
+            </div>
             <h2 className="font-serif font-black text-base uppercase tracking-tight text-gray-950">
-              BI BI BOUTIQUE
+              BI BI - CHO THUÊ ĐỒ ĐI TIỆC
             </h2>
-            <p className="text-[11px] text-gray-600">Cho Thuê & Bán Đầm Dạ Hội, Váy Cưới</p>
+            <p className="text-[11px] text-gray-600 font-semibold">Núi Thành</p>
             <p className="text-[11px] text-gray-600">Đ/C: Khối 1 - Xã Núi Thành - TP. Đà Nẵng</p>
             <p className="text-[11px] font-bold text-gray-900">Hotline / Zalo: 0795.623.097</p>
           </div>
