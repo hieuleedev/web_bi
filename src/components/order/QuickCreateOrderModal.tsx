@@ -99,8 +99,15 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const [customExtraDayPrice, setCustomExtraDayPrice] = useState<number>(50000);
   const [customBasePrice, setCustomBasePrice] = useState<number | null>(null);
 
-  // 5. Accessories Selection
+  // 5. Accessories Selection & Custom Prices
   const [selectedAccessories, setSelectedAccessories] = useState<string[]>([]);
+  const [accessoryPrices, setAccessoryPrices] = useState<Record<string, number>>(() => {
+    const init: Record<string, number> = {};
+    AVAILABLE_ACCESSORIES.forEach((a) => {
+      init[a.id] = a.price;
+    });
+    return init;
+  });
 
   // 6. Notes & Payment
   const [notes, setNotes] = useState('');
@@ -176,13 +183,15 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
     return details;
   }, [selectedProduct, rentalDays, isTetHoliday, customExtraDayPrice, customBasePrice]);
 
-  // Total accessories cost
+  // Total accessories cost with custom editable prices
   const accessoriesTotal = useMemo(() => {
     return selectedAccessories.reduce((sum, accName) => {
       const item = AVAILABLE_ACCESSORIES.find((a) => a.name === accName);
-      return sum + (item?.price || 0);
+      if (!item) return sum;
+      const price = accessoryPrices[item.id] !== undefined ? accessoryPrices[item.id] : item.price;
+      return sum + price;
     }, 0);
-  }, [selectedAccessories]);
+  }, [selectedAccessories, accessoryPrices]);
 
   // Totals
   const rentFeeTotal = pricingDetails.total;
@@ -314,7 +323,11 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
       extraDayPrice: pricingDetails.extraDayPrice,
       extraDayFee: pricingDetails.extraDayFee,
       isTetHoliday,
-      accessories: selectedAccessories,
+      accessories: selectedAccessories.map((accName) => {
+        const item = AVAILABLE_ACCESSORIES.find((a) => a.name === accName);
+        const p = item ? (accessoryPrices[item.id] !== undefined ? accessoryPrices[item.id] : item.price) : 0;
+        return p > 0 ? `${accName} (+${formatVND(p)})` : `${accName} (0 đ)`;
+      }),
       sellerId: selectedProduct.sellerId,
       sellerName: selectedProduct.sellerName,
     };
@@ -846,40 +859,78 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
             </div>
           )}
 
-          {/* 8. CHỌN PHỤ KIỆN (Tuỳ chọn - matching screenshot 2) */}
+          {/* 8. CHỌN PHỤ KIỆN (Tuỳ chọn & cho phép sửa giá trực tiếp) */}
           <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-            <span className="text-xs font-bold text-gray-800 block">
-              Chọn phụ kiện đi kèm (tuỳ chọn)
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-800 block">
+                Chọn phụ kiện đi kèm (tuỳ chọn)
+              </span>
+              <span className="text-[11px] text-gray-500 font-medium">
+                💡 Có thể nhập sửa giá trực tiếp
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {AVAILABLE_ACCESSORIES.map((acc) => {
                 const isChecked = selectedAccessories.includes(acc.name);
+                const currentPrice = accessoryPrices[acc.id] !== undefined ? accessoryPrices[acc.id] : acc.price;
                 return (
-                  <label
+                  <div
                     key={acc.id}
                     onClick={() => toggleAccessory(acc.name)}
-                    className={`flex items-center justify-between p-2 rounded-xl border text-xs cursor-pointer select-none transition-all ${
+                    className={`flex items-center justify-between p-2 rounded-xl border text-xs cursor-pointer select-none transition-all gap-2 ${
                       isChecked
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-900 font-semibold'
+                        ? 'bg-emerald-50/80 border-emerald-400 text-emerald-950 font-medium shadow-xs'
                         : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => {}}
-                        className="w-3.5 h-3.5 text-emerald-600 rounded border-gray-300"
+                        className="w-4 h-4 text-emerald-600 rounded border-gray-300 shrink-0 cursor-pointer"
                       />
-                      <span>{acc.name}</span>
+                      <span className="text-xs leading-tight line-clamp-1">{acc.name}</span>
                     </div>
-                    <span className="text-[11px] font-bold text-emerald-700">
-                      {acc.price === 0 ? '0 đ' : `+${formatVND(acc.price)}`}
-                    </span>
-                  </label>
+
+                    {/* Ô nhập giá tiền trực tiếp */}
+                    <div
+                      className="flex items-center gap-1 shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="number"
+                        min={0}
+                        step={5000}
+                        value={currentPrice}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0);
+                          setAccessoryPrices((prev) => ({ ...prev, [acc.id]: val }));
+                          if (!selectedAccessories.includes(acc.name)) {
+                            setSelectedAccessories((prev) => [...prev, acc.name]);
+                          }
+                        }}
+                        className={`w-20 px-2 py-1 text-right text-xs font-bold rounded-lg border transition-all ${
+                          isChecked
+                            ? 'bg-white text-emerald-700 border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500'
+                            : 'bg-gray-50 text-gray-600 border-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-400'
+                        }`}
+                        title="Bấm để sửa giá tiền cho phụ kiện này"
+                      />
+                      <span className={`text-[11px] font-bold ${isChecked ? 'text-emerald-700' : 'text-gray-500'}`}>
+                        đ
+                      </span>
+                    </div>
+                  </div>
                 );
               })}
             </div>
+            {accessoriesTotal > 0 && (
+              <div className="pt-1.5 flex justify-end items-center gap-1.5 text-xs text-emerald-700 font-bold border-t border-gray-200/60">
+                <span>Tổng tiền phụ kiện:</span>
+                <span>+{formatVND(accessoriesTotal)}</span>
+              </div>
+            )}
           </div>
 
           {/* 9. GHI CHÚ ĐƠN HÀNG (Exact from screenshot 3) */}
