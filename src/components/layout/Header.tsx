@@ -345,13 +345,15 @@ export const Header: React.FC<HeaderProps> = ({
                           <UserIcon className="w-4 h-4 text-gray-400" />
                           <span>Thông tin tài khoản</span>
                         </button>
-                        <button
-                          onClick={() => goTo('/orders', 'orders')}
-                          className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                        >
-                          <Package className="w-4 h-4 text-gray-400" />
-                          <span>Đơn hàng & Lịch thuê của tôi</span>
-                        </button>
+                        {FEATURES.ONLINE_BOOKING && (
+                          <button
+                            onClick={() => goTo('/orders', 'orders')}
+                            className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Package className="w-4 h-4 text-gray-400" />
+                            <span>Đơn hàng & Lịch thuê của tôi</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => goTo('/chat', 'chat')}
                           className="w-full px-4 py-2 text-left text-xs text-brand-600 hover:bg-brand-50 flex items-center gap-2 font-medium"
@@ -512,13 +514,15 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full font-bold">Shop</span>
               </button>
             )}
-            <button
-              onClick={() => { goTo('/orders', 'orders'); setMobileMenuOpen(false); }}
-              className="p-2.5 text-left text-gray-700 font-medium hover:bg-gray-50 rounded-xl flex items-center gap-2.5 transition-colors"
-            >
-              <Package className="w-4 h-4 text-gray-400 shrink-0" />
-              <span>Đơn hàng & Lịch thuê của tôi</span>
-            </button>
+            {FEATURES.ONLINE_BOOKING && (
+              <button
+                onClick={() => { goTo('/orders', 'orders'); setMobileMenuOpen(false); }}
+                className="p-2.5 text-left text-gray-700 font-medium hover:bg-gray-50 rounded-xl flex items-center gap-2.5 transition-colors"
+              >
+                <Package className="w-4 h-4 text-gray-400 shrink-0" />
+                <span>Đơn hàng & Lịch thuê của tôi</span>
+              </button>
+            )}
             <button
               onClick={() => { goTo('/chat', 'chat'); setMobileMenuOpen(false); }}
               className="p-2.5 text-left text-brand-700 font-medium hover:bg-brand-50/60 rounded-xl flex items-center justify-between transition-colors"

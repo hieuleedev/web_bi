@@ -199,24 +199,32 @@ export function AppContent() {
             }
           />
 
-          {/* Cart & Checkout */}
+          {/* Cart & Checkout (Chỉ truy cập khi bật tính năng đặt online) */}
           <Route
             path="/cart"
             element={
-              <CartPage
-                onContinueShopping={() => navigate('/shop')}
-                onProceedCheckout={() => navigate('/checkout')}
-                onViewProduct={handleViewProduct}
-              />
+              FEATURES.ONLINE_BOOKING ? (
+                <CartPage
+                  onContinueShopping={() => navigate('/shop')}
+                  onProceedCheckout={() => navigate('/checkout')}
+                  onViewProduct={handleViewProduct}
+                />
+              ) : (
+                <Navigate to="/rent" replace />
+              )
             }
           />
           <Route
             path="/checkout"
             element={
-              <CheckoutPage
-                onBackToCart={() => navigate('/cart')}
-                onGoToOrderList={() => navigate('/orders')}
-              />
+              FEATURES.ONLINE_BOOKING ? (
+                <CheckoutPage
+                  onBackToCart={() => navigate('/cart')}
+                  onGoToOrderList={() => navigate('/orders')}
+                />
+              ) : (
+                <Navigate to="/rent" replace />
+              )
             }
           />
 
