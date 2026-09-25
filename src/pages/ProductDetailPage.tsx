@@ -263,16 +263,25 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             
             {/* Gallery Section - Left (5 cols) */}
             <div className="lg:col-span-5 space-y-4">
-              {/* Main Image with Zoom Effect */}
-              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 group border border-gray-100">
+              {/* Main Image with Zoom Effect - Optimized for all image ratios without cropping */}
+              <div className="relative aspect-[3/4] sm:aspect-[4/5] lg:aspect-auto lg:h-[620px] rounded-2xl overflow-hidden bg-gray-50/80 group border border-gray-200/80 flex items-center justify-center shadow-2xs">
+                {/* Ambient blur backdrop to seamlessly blend any aspect ratio */}
+                <img
+                  src={activeImage}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-25 scale-110 pointer-events-none select-none"
+                />
+
+                {/* Main image: object-contain ensures tall/long dresses are completely visible without cutting */}
                 <img
                   src={activeImage}
                   alt={product.title}
-                  className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                  className="relative z-10 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 select-none"
                 />
 
                 {/* Badge */}
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-4 left-4 z-20 pointer-events-none">
                   {product.type === 'both' ? (
                     <span className="bg-gradient-to-r from-amber-500 to-brand-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                       Bán & Cho Thuê
