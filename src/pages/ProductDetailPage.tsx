@@ -22,6 +22,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { FEATURES } from '../config/features';
+import { ZaloIcon, ZaloBadge } from '../components/common/ZaloIcon';
 import { Product, Review, User } from '../types';
 import { formatVND, formatDateVN, calculateRentalDays, calculateRentalPrice, checkRentalOverlap } from '../utils/helpers';
 import { useProducts } from '../context/ProductContext';
@@ -221,7 +222,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   };
 
   return (
-    <div className="bg-[#faf9f8] min-h-screen pb-20">
+    <div className="bg-[#faf9f8] min-h-screen pb-32 sm:pb-20">
       {/* Breadcrumb & Navigation */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
@@ -565,54 +566,75 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               {/* Rental Date Selection & Verification or Direct Contact Card */}
               {!FEATURES.ONLINE_BOOKING ? (
                 /* Khu vực tư vấn & liên hệ đặt thuê / thử đồ trực tiếp (Khi tạm ẩn đặt online) */
-                <div className="p-5 rounded-3xl bg-gradient-to-br from-brand-50/70 via-white to-brand-50/40 border-2 border-brand-200/80 shadow-xs space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-brand-500/20">
-                      <PhoneCall className="w-5 h-5" />
+                <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-blue-50/70 via-white to-brand-50/50 border-2 border-blue-200/80 shadow-md shadow-blue-500/5 space-y-4 relative overflow-hidden">
+                  {/* Background decorative glow */}
+                  <div className="absolute -top-12 -right-12 w-36 h-36 bg-blue-400/10 rounded-full blur-2xl pointer-events-none" />
+
+                  <div className="flex items-start gap-3.5 relative">
+                    {/* Official Zalo 3D-styled Badge */}
+                    <div className="relative shrink-0">
+                      <ZaloBadge size="lg" className="ring-4 ring-blue-100 shadow-lg shadow-blue-500/25" />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" title="Đang online sẵn sàng hỗ trợ" />
                     </div>
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-sm">
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800 bg-blue-100/90 px-2 py-0.5 rounded-full">
+                          Tư Vấn & Giữ Váy Trực Tiếp
+                        </span>
+                        <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Online 24/7
+                        </span>
+                      </div>
+                      <h4 className="font-serif font-bold text-gray-900 text-base leading-snug">
                         Liên Hệ Đặt Lịch Thuê & Thử Váy
                       </h4>
-                      <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
-                        Shop tạm thời nhận tư vấn size, kiểm tra lịch trống và giữ đồ trực tiếp qua Zalo / Hotline hoặc ghé thử tại cửa hàng để hỗ trợ bạn chu đáo nhất.
+                      <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                        Shop hỗ trợ tư vấn form size, kiểm tra lịch trống và giữ đồ nhanh nhất qua Zalo hoặc mời bạn ghé thử đồ trực tiếp tại cửa hàng.
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                  {/* Action Buttons: Zalo Official Button + Hotline */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-1">
                     <a
-                      href={`https://zalo.me/0795623097`}
+                      href="https://zalo.me/0795623097"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-3 px-5 rounded-2xl bg-[#0068FF] hover:bg-[#0052cc] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-[0.99]"
+                      className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#0068FF] via-[#0077FF] to-[#0091FF] hover:from-[#005ce6] hover:to-[#0080e6] text-white text-xs font-bold flex items-center justify-center gap-2.5 shadow-xl shadow-blue-500/30 hover:shadow-blue-500/40 transition-all hover:scale-[1.01] active:scale-[0.99] group cursor-pointer"
                     >
-                      <MessageCircle className="w-4 h-4" />
-                      <span>Nhắn Zalo Giữ Váy Này</span>
+                      <div className="w-5 h-5 bg-white text-[#0068FF] rounded-lg p-0.5 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
+                        <ZaloIcon className="w-full h-full fill-[#0068FF]" />
+                      </div>
+                      <span className="tracking-wide text-[13px]">Nhắn Zalo Giữ Váy Này</span>
                     </a>
 
                     <a
                       href="tel:0795623097"
-                      className="flex-1 py-3 px-5 rounded-2xl bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-all"
+                      className="flex-1 py-3.5 px-5 rounded-2xl bg-white hover:bg-gray-50 border-2 border-emerald-200 hover:border-emerald-300 text-gray-900 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99]"
                     >
-                      <PhoneCall className="w-4 h-4 text-emerald-600" />
-                      <span>Gọi Hotline: 0795.623.097</span>
+                      <div className="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                        <PhoneCall className="w-3.5 h-3.5" />
+                      </div>
+                      <span>Hotline: 0795.623.097</span>
                     </a>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-brand-100 text-[11px] text-gray-500">
-                    <span className="flex items-center gap-1">
+                  {/* Location & Web Chat Footer */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-100 text-[11px] text-gray-500">
+                    <span className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-brand-600 shrink-0" />
-                      <span>Thử đồ tại: <strong>Khối 1 - Xã Núi Thành - TP. Đà Nẵng</strong></span>
+                      <span>Thử đồ tại shop: <strong className="text-gray-800">Khối 1 - Xã Núi Thành - TP. Đà Nẵng</strong></span>
                     </span>
                     {onOpenChat && (
                       <button
                         type="button"
                         onClick={onOpenChat}
-                        className="text-brand-700 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-brand-700 font-semibold hover:underline flex items-center gap-1 cursor-pointer ml-auto"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
-                        <span>Nhắn tin trên Web</span>
+                        <span>Chat trên Web</span>
                       </button>
                     )}
                   </div>
@@ -620,30 +642,44 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               ) : (
                 <>
                   {activeMode === 'rent' && (
-                    <div className="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                          <Calendar className="w-4 h-4 text-emerald-600" />
-                          Lịch Chọn Ngày Thuê & Kiểm Tra Trùng
-                        </h4>
-                        <div className="flex items-center gap-2">
+                    <div className="p-4 sm:p-5 rounded-3xl bg-gray-50/90 border border-gray-200/90 space-y-3.5 shadow-2xs">
+                      {/* Responsive Header: Tách 2 hàng trên Mobile, 1 hàng trên Desktop */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-gray-200/70">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>Lịch Thuê & Kiểm Tra Trùng</span>
+                          </h4>
+                          {/* Badge ngày thuê trên Mobile (nằm góc phải tiêu đề) */}
+                          <span className="sm:hidden text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                            {rentalDays} ngày thuê
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-2">
                           <button
                             type="button"
                             onClick={() => setIsScheduleModalOpen(true)}
-                            className="text-[11px] font-semibold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg border border-brand-200 transition-colors flex items-center gap-1"
+                            className="flex-1 sm:flex-initial text-[11px] font-semibold text-brand-700 hover:text-brand-900 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-xl border border-brand-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
                           >
-                            <CalendarRange className="w-3.5 h-3.5" />
+                            <CalendarRange className="w-3.5 h-3.5 text-brand-600 shrink-0" />
                             <span>Xem chi tiết lịch thuê ({product.bookedDates.length})</span>
                           </button>
-                          <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+
+                          {/* Badge ngày thuê trên Desktop */}
+                          <span className="hidden sm:inline-flex text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-xl shrink-0">
                             {rentalDays} ngày thuê
                           </span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] text-gray-500 mb-1">Ngày bắt đầu</label>
+                      {/* Date Inputs: 1 cột trên điện thoại nhỏ, 2 cột trên màn lớn hơn */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                        <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-gray-200 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/10 shadow-2xs transition-all">
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-1 flex items-center justify-between">
+                            <span>Ngày bắt đầu nhận váy</span>
+                            <span className="text-[10px] text-brand-600 font-normal">Từ 08:00</span>
+                          </label>
                           <input
                             type="date"
                             value={startDate}
@@ -656,51 +692,58 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                                 setEndDate(nextDay.toISOString().split('T')[0]);
                               }
                             }}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-brand-500"
+                            className="w-full bg-transparent text-xs sm:text-sm font-bold font-mono text-gray-900 focus:outline-none cursor-pointer"
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-[11px] text-gray-500 mb-1">Ngày trả đồ</label>
+                        <div className="bg-white p-2.5 sm:p-3 rounded-2xl border border-gray-200 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/10 shadow-2xs transition-all">
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-1 flex items-center justify-between">
+                            <span>Ngày trả đồ cho shop</span>
+                            <span className="text-[10px] text-brand-600 font-normal">Trước 21:00</span>
+                          </label>
                           <input
                             type="date"
                             value={endDate}
                             min={startDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-brand-500"
+                            className="w-full bg-transparent text-xs sm:text-sm font-bold font-mono text-gray-900 focus:outline-none cursor-pointer"
                           />
                         </div>
                       </div>
 
-                      {/* Overlap message */}
+                      {/* Overlap message & Calculated Price Banner */}
                       {overlapCheck.hasConflict ? (
-                        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+                        <div className="p-3 sm:p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800 flex items-start gap-2.5 shadow-2xs">
                           <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                           <div>
-                            <p className="font-semibold">Đã có người đặt trước trong khoảng ngày này!</p>
-                            <p className="text-[11px] text-rose-700 mt-0.5">
+                            <p className="font-bold text-xs sm:text-sm">Đã có người đặt trước trong khoảng ngày này!</p>
+                            <p className="text-[11px] text-rose-700 mt-0.5 leading-relaxed">
                               Trùng lịch ({formatDateVN(overlapCheck.conflictingBooking?.startDate)} - {formatDateVN(overlapCheck.conflictingBooking?.endDate)}). Vui lòng chọn lịch khác.
                             </p>
                           </div>
                         </div>
                       ) : (
-                        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>Lịch khả dụng! Tổng tiền thuê dự kiến: <strong>{formatVND(rentalFee)}</strong> + Cọc: <strong>{formatVND(deposit)}</strong></span>
+                        <div className="p-3 sm:p-3.5 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-start sm:items-center gap-2.5 shadow-2xs">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5 sm:mt-0" />
+                          <div className="flex-1 leading-relaxed">
+                            <span className="font-bold text-emerald-800">Lịch khả dụng! </span>
+                            <span className="block sm:inline">Tổng tiền thuê: <strong className="text-emerald-950 font-bold">{formatVND(rentalFee)}</strong></span>
+                            <span className="text-gray-500"> + Cọc: <strong className="text-amber-700 font-bold">{formatVND(deposit)}</strong></span>
+                          </div>
                         </div>
                       )}
 
-                      {/* List of already booked dates right here */}
+                      {/* List of already booked dates */}
                       {product.bookedDates && product.bookedDates.length > 0 && (
                         <div className="pt-2 border-t border-gray-200/80">
                           <span className="text-[11px] font-semibold text-gray-500 block mb-1.5">
-                            🔴 Các khoảng ngày váy này ĐÃ CÓ NGƯỜI THUÊ (không chọn được):
+                            🔴 Các khoảng ngày váy này ĐÃ CÓ NGƯỜI THUÊ:
                           </span>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2">
                             {product.bookedDates.map((b) => (
                               <span
                                 key={b.id}
-                                className="inline-flex items-center gap-1 text-[11px] font-mono font-bold bg-rose-100/80 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-lg"
+                                className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold bg-rose-100/80 text-rose-700 border border-rose-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg"
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                                 {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)}
@@ -712,33 +755,48 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                    <button
-                      onClick={() => handleAddToCart(false)}
-                      disabled={activeMode === 'rent' && overlapCheck.hasConflict}
-                      className={`flex-1 py-3.5 px-6 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
-                        activeMode === 'rent' && overlapCheck.hasConflict
-                          ? 'border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed'
-                          : 'border-brand-600 text-brand-700 bg-brand-50/50 hover:bg-brand-50'
-                      }`}
-                    >
-                      <ShoppingBag className="w-4 h-4" />
-                      <span>Thêm Vào Giỏ Hàng</span>
-                    </button>
+                  {/* Action Buttons: Thêm giỏ + Thuê ngay + Nút Zalo chính thức */}
+                  <div className="space-y-2.5 pt-1">
+                    <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
+                      <button
+                        onClick={() => handleAddToCart(false)}
+                        disabled={activeMode === 'rent' && overlapCheck.hasConflict}
+                        className={`flex-1 py-3.5 px-5 rounded-2xl text-xs sm:text-sm font-bold border transition-all flex items-center justify-center gap-2 ${
+                          activeMode === 'rent' && overlapCheck.hasConflict
+                            ? 'border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed'
+                            : 'border-brand-600 text-brand-700 bg-brand-50/50 hover:bg-brand-50 active:scale-[0.99]'
+                        }`}
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>Thêm Vào Giỏ Hàng</span>
+                      </button>
 
-                    <button
-                      onClick={() => handleAddToCart(true)}
-                      disabled={activeMode === 'rent' && overlapCheck.hasConflict}
-                      className={`flex-1 py-3.5 px-6 rounded-2xl text-xs font-bold text-white shadow-xl transition-all flex items-center justify-center gap-2 ${
-                        activeMode === 'rent' && overlapCheck.hasConflict
-                          ? 'bg-gray-300 cursor-not-allowed shadow-none'
-                          : 'bg-brand-600 hover:bg-brand-700 shadow-brand-500/25 active:scale-[0.99]'
-                      }`}
+                      <button
+                        onClick={() => handleAddToCart(true)}
+                        disabled={activeMode === 'rent' && overlapCheck.hasConflict}
+                        className={`flex-1 py-3.5 px-6 rounded-2xl text-xs sm:text-sm font-bold text-white shadow-xl transition-all flex items-center justify-center gap-2 ${
+                          activeMode === 'rent' && overlapCheck.hasConflict
+                            ? 'bg-gray-300 cursor-not-allowed shadow-none'
+                            : 'bg-brand-600 hover:bg-brand-700 shadow-brand-500/25 active:scale-[0.99]'
+                        }`}
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span>{activeMode === 'rent' ? 'Thuê Ngay Bây Giờ' : 'Mua Ngay'}</span>
+                      </button>
+                    </div>
+
+                    {/* Nút Nhắn Zalo giữ váy trực tiếp đi kèm */}
+                    <a
+                      href="https://zalo.me/0795623097"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#0068FF] via-[#0077FF] to-[#0091FF] hover:from-[#005ce6] hover:to-[#0080e6] text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 transition-all active:scale-[0.99] group"
                     >
-                      <Sparkles className="w-4 h-4" />
-                      <span>{activeMode === 'rent' ? 'Thuê Ngay Bây Giờ' : 'Mua Ngay'}</span>
-                    </button>
+                      <div className="w-4 h-4 bg-white text-[#0068FF] rounded-sm p-0.2 flex items-center justify-center shrink-0">
+                        <ZaloIcon className="w-full h-full fill-[#0068FF]" />
+                      </div>
+                      <span>Hoặc Nhắn Zalo Giữ Váy Trực Tiếp (0795.623.097)</span>
+                    </a>
                   </div>
                 </>
               )}

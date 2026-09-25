@@ -26,6 +26,7 @@ import { useChat } from '../../context/ChatContext';
 import { UserRole } from '../../types';
 import { AuthModal } from '../auth/AuthModal';
 import { FEATURES } from '../../config/features';
+import { ZaloIcon } from '../common/ZaloIcon';
 
 interface HeaderProps {
   currentView?: string;
@@ -119,9 +120,12 @@ export const Header: React.FC<HeaderProps> = ({
               href="https://zalo.me/0795623097"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 px-2.5 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold transition-colors text-[10px] sm:text-[11px] whitespace-nowrap shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-[#0068FF] to-[#0088FF] hover:from-[#005ce6] hover:to-[#0077e6] text-white rounded-full font-semibold transition-all text-[11px] whitespace-nowrap shadow-xs hover:shadow-md hover:scale-105 active:scale-95 group"
             >
-              <span>Chat Zalo</span>
+              <div className="w-3.5 h-3.5 bg-white text-[#0068FF] rounded-xs p-0.2 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 transition-transform">
+                <ZaloIcon className="w-full h-full fill-[#0068FF]" />
+              </div>
+              <span>Zalo: 0795.623.097</span>
             </a>
 
             {/* Shop management shortcut if user is seller or admin */}

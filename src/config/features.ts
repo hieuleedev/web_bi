@@ -5,8 +5,8 @@
 export const FEATURES = {
   /**
    * Đặt online (Online Booking & Cart Checkout):
-   * - false: Ẩn phần chọn ngày thuê online, ẩn nút đặt thuê/thêm giỏ hàng; thay bằng nút liên hệ Zalo & Hotline để thử đồ và giữ váy trực tiếp.
-   * - true: Bật lại tính năng đặt thuê online qua giỏ hàng và thanh toán trên web.
+   * - true: Bật đầy đủ lịch chọn ngày thuê, kiểm tra trùng, giỏ hàng và đặt thuê/mua trên website.
+   * - false: Ẩn phần đặt online, chuyển sang chế độ tư vấn và liên hệ trực tiếp.
    */
-  ONLINE_BOOKING: false,
+  ONLINE_BOOKING: true,
 };
