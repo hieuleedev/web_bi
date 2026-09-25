@@ -463,21 +463,37 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 pt-2 border-t border-brand-100/80 text-xs">
-                      <div className="bg-white p-2.5 rounded-xl border border-gray-100">
-                        <span className="text-gray-500 block text-[11px]">Gói 3 ngày:</span>
-                        <span className="font-bold text-gray-900">
-                          {formatVND(product.rentPrice3Days || (product.rentPrice1Day || 0) * 2.5)}
+                      <div className="bg-white p-2.5 rounded-xl border border-gray-100 shadow-2xs">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-gray-500 block text-[11px] font-medium">Gói 2 ngày:</span>
+                          <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">Tiết kiệm</span>
+                        </div>
+                        <span className="font-bold text-gray-900 text-sm">
+                          {formatVND(
+                            product.rentPrice2Days ||
+                              (product.rentPrice3Days
+                                ? Math.round((product.rentPrice3Days * 0.85) / 1000) * 1000
+                                : Math.round(((product.rentPrice1Day || 0) * 1.5) / 1000) * 1000)
+                          )}
                         </span>
                       </div>
-                      <div className="bg-white p-2.5 rounded-xl border border-gray-100">
-                        <span className="text-gray-500 block text-[11px]">Gói 7 ngày (1 tuần):</span>
-                        <span className="font-bold text-gray-900">
-                          {formatVND(product.rentPrice7Days || (product.rentPrice1Day || 0) * 5)}
+                      <div className="bg-white p-2.5 rounded-xl border border-brand-200 bg-brand-50/20 shadow-2xs">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-gray-700 block text-[11px] font-semibold">Gói 3 ngày (Chuẩn):</span>
+                          <span className="text-[10px] text-brand-700 font-semibold bg-brand-100/80 px-1.5 py-0.5 rounded">Phổ biến</span>
+                        </div>
+                        <span className="font-bold text-brand-800 text-sm">
+                          {formatVND(product.rentPrice3Days || Math.round((product.rentPrice1Day || 0) * 2.2))}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs pt-1 text-gray-700">
+                    <div className="flex items-center justify-between text-[11px] text-gray-500 pt-0.5">
+                      <span>Phụ thu thêm ngày (từ ngày thứ 4):</span>
+                      <span className="font-semibold text-rose-600">+{formatVND(product.extraDayPrice || 50000)}/ngày</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1.5 border-t border-brand-100/60 text-gray-700">
                       <span>Tiền cọc yêu cầu (Hoàn trả khi trả đồ):</span>
                       <span className="font-bold text-amber-600">{formatVND(product.deposit)}</span>
                     </div>

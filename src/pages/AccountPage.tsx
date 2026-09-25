@@ -803,10 +803,13 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                 {/* Pricing tags (No floating 0) */}
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
                                   {Boolean(p.rentPrice1Day) && p.rentPrice1Day! > 0 && (
-                                    <span>Giá thuê 1 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice1Day!)}</strong></span>
+                                    <span>Giá 1 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice1Day!)}</strong></span>
+                                  )}
+                                  {Boolean(p.rentPrice2Days) && p.rentPrice2Days! > 0 && (
+                                    <span>Giá 2 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice2Days!)}</strong></span>
                                   )}
                                   {Boolean(p.rentPrice3Days) && p.rentPrice3Days! > 0 && (
-                                    <span>Giá thuê 3 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice3Days!)}</strong></span>
+                                    <span>Giá 3 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice3Days!)}</strong></span>
                                   )}
                                   {Boolean(p.buyPrice) && p.buyPrice! > 0 && (
                                     <span>Giá bán: <strong className="text-gray-900 font-semibold">{formatVND(p.buyPrice!)}</strong></span>

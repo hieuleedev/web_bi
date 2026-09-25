@@ -103,7 +103,7 @@ export const RentPage: React.FC<RentPageProps> = ({
               Thuê Trang Phục Theo Lịch Hẹn
             </h1>
             <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
-              Mỗi sản phẩm có bảng giá chi tiết theo ngày, 3 ngày, 7 ngày và minh bạch tiền cọc. Chọn khoảng ngày bạn cần để lọc các mẫu trang phục còn trống lịch ngay tức thì!
+              Mỗi sản phẩm có bảng giá chi tiết gói 1 ngày, 2 ngày, 3 ngày (chuẩn) và minh bạch tiền cọc. Chọn khoảng ngày bạn cần để lọc các mẫu trang phục còn trống lịch ngay tức thì!
             </p>
           </div>
 

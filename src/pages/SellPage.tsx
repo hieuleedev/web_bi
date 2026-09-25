@@ -138,7 +138,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
           rentPrice1Day: Number(rentPrice1Day) || 180000,
           rentPrice2Days: Number(rentPrice2Days) || 280000,
           rentPrice3Days: Number(rentPrice3Days) || 350000,
-          rentPrice7Days: Number(rentPrice3Days * 2) || 700000,
+          rentPrice7Days: Number(rentPrice2Days) || 280000,
           extraDayPrice: Number(extraDayPrice) || 50000,
           deposit: Number(deposit) || 0,
           sizes: selectedSizes.length > 0 ? selectedSizes : ['Freesize'],
