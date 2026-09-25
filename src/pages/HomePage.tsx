@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Sparkles,
   ArrowRight,
@@ -55,16 +55,63 @@ export const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const { products } = useProducts();
 
-  const approvedProducts = products.filter((p) => p.status === 'approved');
+  const approvedProducts = useMemo(() => {
+    return products.filter((p) => p.status === 'approved');
+  }, [products]);
 
-  // Featured items (both buy and rent)
-  const featuredProducts = approvedProducts.slice(0, 4);
+  // Sắp xếp sản phẩm mới nhất lên đầu theo createdAt (hoặc timestamp trong id)
+  const sortedProducts = useMemo(() => {
+    return [...approvedProducts].sort((a, b) => {
+      const timeA = new Date(a.createdAt || 0).getTime();
+      const timeB = new Date(b.createdAt || 0).getTime();
+      if (timeB !== timeA) return timeB - timeA;
+      // Fallback timestamp từ id (ví dụ prod-1790312000107)
+      const numA = Number(a.id.replace('prod-', '')) || 0;
+      const numB = Number(b.id.replace('prod-', '')) || 0;
+      return numB - numA;
+    });
+  }, [approvedProducts]);
 
-  // Rental highlights (specifically tailored for gala, wedding, events)
-  const rentalProducts = approvedProducts.filter((p) => p.type === 'rent' || p.type === 'both').slice(0, 4);
+  const INITIAL_COUNT = 4;
+  const STEP_COUNT = 4;
+  const [visibleCount, setVisibleCount] = useState<number>(INITIAL_COUNT);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // New arrivals
-  const newProducts = [...approvedProducts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 4);
+  const visibleProducts = useMemo(() => {
+    return sortedProducts.slice(0, visibleCount);
+  }, [sortedProducts, visibleCount]);
+
+  const hasMore = visibleCount < sortedProducts.length;
+
+  const handleLoadMore = () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + STEP_COUNT, sortedProducts.length));
+      setIsLoadingMore(false);
+    }, 250);
+  };
+
+  // IntersectionObserver: tự động lazy load khi người dùng cuộn tới cuối danh sách
+  useEffect(() => {
+    if (!hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: '150px' }
+    );
+
+    const el = loadMoreRef.current;
+    if (el) observer.observe(el);
+
+    return () => {
+      if (el) observer.unobserve(el);
+    };
+  }, [hasMore, isLoadingMore, sortedProducts.length]);
 
   return (
     <div className="space-y-10 sm:space-y-16 lg:space-y-24 pb-20">
@@ -264,37 +311,86 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* 3. FEATURED PRODUCTS SECTION */}
+      {/* 3. BỘ SƯU TẬP CHO THUÊ & MUA SẮM (GỘP THÀNH 1, MỚI NHẤT LÊN ĐẦU, LAZY LOAD / XEM THÊM) */}
       <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 sm:gap-3 mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-6 sm:mb-8">
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-brand-600">
-              Sự Lựa Chọn Yêu Thích
-            </span>
-            <h2 className="font-serif text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mt-1">
-              Sản Phẩm Nổi Bật
+            <div className="inline-flex items-center gap-1.5 bg-brand-50 border border-brand-200/80 px-3 py-1 rounded-full text-[11px] font-bold text-brand-700 uppercase tracking-wider mb-2 shadow-2xs">
+              <Sparkles className="w-3.5 h-3.5 text-brand-600" />
+              <span>Bộ Sưu Tập Mới Nhất • Thuê Theo Lịch</span>
+            </div>
+            <h2 className="font-serif text-xl sm:text-3xl lg:text-4xl font-bold text-gray-950">
+              Thuê Trang Phục Sự Kiện & Tiệc Tùng
             </h2>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-2xl leading-relaxed">
+              Các mẫu đầm thiết kế, váy dạ tiệc cao cấp mới lên kệ. Đặt thuê lịch hẹn linh hoạt 1, 2, 3 ngày với chi phí tiết kiệm, giặt hấp tiệt trùng sẵn sàng.
+            </p>
           </div>
-          <button
-            onClick={() => onNavigate('shop')}
-            className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
-          >
-            <span>Xem thêm sản phẩm</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onNavigate('rent')}
+              className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-brand-500/20 active:scale-95 shrink-0"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Xem Toàn Bộ Đồ Thuê</span>
+            </button>
+            <button
+              onClick={() => onNavigate('shop')}
+              className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition-all flex items-center gap-1 shrink-0"
+            >
+              <span>Xem tất cả</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
-        {featuredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
-            {featuredProducts.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                onViewDetail={onViewProduct}
-                onOpenRentalCalendar={onOpenRentalCalendar}
-              />
-            ))}
-          </div>
+        {sortedProducts.length > 0 ? (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
+              {visibleProducts.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onViewDetail={onViewProduct}
+                  onOpenRentalCalendar={onOpenRentalCalendar}
+                />
+              ))}
+            </div>
+
+            {/* Khu vực Lazy Loading / Nút Xem Thêm */}
+            <div ref={loadMoreRef} className="mt-8 sm:mt-12 text-center">
+              {hasMore ? (
+                <div className="flex flex-col items-center gap-3">
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl bg-white border-2 border-brand-500/40 hover:border-brand-600 text-brand-700 hover:text-brand-800 font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {isLoadingMore ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span>Đang tải thêm mẫu váy...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Xem thêm sản phẩm (còn {sortedProducts.length - visibleCount} mẫu)</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                  <span className="text-[11px] text-gray-400">
+                    Đang hiển thị {visibleProducts.length}/{sortedProducts.length} mẫu trang phục
+                  </span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 border border-gray-200 text-[11px] text-gray-500 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span>Đã hiển thị toàn bộ {sortedProducts.length} mẫu trang phục mới nhất</span>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-8 sm:p-12 text-center">
             <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-3 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 shadow-xs">
@@ -322,80 +418,6 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         )}
       </section>
-
-      {/* 4. RENTAL HIGHLIGHTS SECTION (GALA, WEDDING, EVENTS) */}
-      {rentalProducts.length > 0 && (
-        <section className="bg-gradient-to-r from-dark-900 via-dark-950 to-dark-900 text-white py-8 sm:py-16 lg:py-20 rounded-2xl sm:rounded-3xl mx-2 sm:mx-6 lg:mx-8 px-3.5 sm:px-6 lg:px-12 shadow-xl">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 sm:gap-4 mb-6 sm:mb-10">
-              <div>
-                <span className="bg-brand-500/20 text-brand-400 text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full uppercase tracking-wider border border-brand-500/30">
-                  Bộ Sưu Tập Cho Thuê Đặc Sắc
-                </span>
-                <h2 className="font-serif text-xl sm:text-3xl lg:text-4xl font-bold mt-2 sm:mt-3">
-                  Thuê Trang Phục Sự Kiện & Tiệc Tùng
-                </h2>
-                <p className="text-xs text-gray-400 mt-1.5 max-w-xl">
-                  Không cần bỏ ra hàng triệu đồng cho trang phục chỉ mặc 1 lần. Đặt thuê lịch hẹn linh hoạt, giao nhận tận nơi và giặt hấp sẵn sàng.
-                </p>
-              </div>
-
-              <button
-                onClick={() => onNavigate('rent')}
-                className="px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 sm:gap-2 active:scale-95 shadow-md shadow-brand-500/20"
-              >
-                <Calendar className="w-4 h-4" />
-                <span>Xem Toàn Bộ Đồ Thuê</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
-              {rentalProducts.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  onViewDetail={onViewProduct}
-                  onOpenRentalCalendar={onOpenRentalCalendar}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 5. NEW ARRIVALS */}
-      {newProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 sm:gap-3 mb-6 sm:mb-8">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-brand-600">
-                Vừa Lên Kệ
-              </span>
-              <h2 className="font-serif text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mt-1">
-                Sản Phẩm Mới Đăng Gần Đây
-              </h2>
-            </div>
-            <button
-              onClick={() => onNavigate('shop')}
-              className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
-            >
-              <span>Xem tất cả</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
-            {newProducts.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                onViewDetail={onViewProduct}
-                onOpenRentalCalendar={onOpenRentalCalendar}
-              />
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* 6. SELL / RENT OUT CTA SECTION */}
       <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
