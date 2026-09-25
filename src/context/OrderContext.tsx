@@ -38,24 +38,18 @@ const INITIAL_ORDERS: Order[] = [];
 
 export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem(ORDERS_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error loading orders from localStorage', e);
-      }
-    }
+    // Purge bulky legacy order keys from browser storage
+    try {
+      localStorage.removeItem(ORDERS_KEY);
+      localStorage.removeItem('bibi_orders');
+      localStorage.removeItem('bibi_orders_v1');
+    } catch (e) {}
     return INITIAL_ORDERS;
   });
 
   const { cartItems, subtotal, depositTotal, shippingTotal, grandTotal, clearCart } = useCart();
   const { addRentalBookingToProduct } = useProducts();
   const { showToast } = useToast();
-
-  useEffect(() => {
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-  }, [orders]);
 
   // Sync orders from Backend on mount and Realtime
   useEffect(() => {
@@ -86,7 +80,6 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             updatedAt: row.updatedAt || row.updated_at || row.created_at,
           }));
           setOrders(mappedOrders);
-          localStorage.setItem(ORDERS_KEY, JSON.stringify(mappedOrders));
         }
       } catch (e) {
         console.warn('Could not fetch orders from Backend API', e);
