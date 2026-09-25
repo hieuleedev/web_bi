@@ -82,9 +82,9 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [productSearch, setProductSearch] = useState('');
   const [productCategory, setProductCategory] = useState('all');
   const [productRentalFilter, setProductRentalFilter] = useState<'all' | 'renting_now' | 'available' | 'hidden' | 'overdue'>('all');
-  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'rent' | 'buy' | 'both'>('rent');
+  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'rent' | 'buy' | 'both'>('all');
   const [productPage, setProductPage] = useState(1);
-  const productsPerPage = 6;
+  const [productsPerPage, setProductsPerPage] = useState(6);
 
   // Modals for Quick Order & Bank Config & Bill Printing & Editing
   const [isQuickOrderOpen, setIsQuickOrderOpen] = useState(false);
@@ -916,19 +916,46 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     </div>
                   )}
 
-                  {/* Pagination */}
-                  {totalProductPages > 1 && (
-                    <div className="pt-4 border-t border-gray-100">
+                  {/* Pagination & Page size selector */}
+                  <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <span>Hiển thị mỗi trang:</span>
+                      <select
+                        value={productsPerPage}
+                        onChange={(e) => {
+                          setProductsPerPage(Number(e.target.value));
+                          setProductPage(1);
+                        }}
+                        className="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer"
+                      >
+                        <option value={6}>6 mẫu</option>
+                        <option value={12}>12 mẫu</option>
+                        <option value={24}>24 mẫu</option>
+                        <option value={48}>48 mẫu</option>
+                      </select>
+                      <span className="text-gray-400">
+                        (Tổng: {filteredMyProducts.length} mẫu váy)
+                      </span>
+                    </div>
+
+                    {totalProductPages > 1 ? (
                       <Pagination
                         currentPage={productPage}
                         totalPages={totalProductPages}
+                        totalItems={filteredMyProducts.length}
+                        pageSize={productsPerPage}
+                        itemsName="mẫu váy"
                         onPageChange={(p) => {
                           setProductPage(p);
                           window.scrollTo({ top: 300, behavior: 'smooth' });
                         }}
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="text-xs text-gray-400 italic">
+                        Đang hiển thị toàn bộ {filteredMyProducts.length} mẫu trên 1 trang
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })()}
