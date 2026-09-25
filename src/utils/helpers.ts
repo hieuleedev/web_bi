@@ -57,10 +57,10 @@ export function calculateRentalPricingDetails(
 ): RentalPricingDetails {
   const dayRate = product.rentPrice1Day || 0;
   // DB mapping: ngày 1 (rent_price_1day), ngày 2 (rent_price_3days), ngày 3 (rent_price_7days)
-  const price2Days = product.rentPrice2Days || (product.rentPrice7Days ? product.rentPrice3Days : undefined) || (product.rentPrice3Days ? Math.round(product.rentPrice3Days * 0.8) : Math.round(dayRate * 1.5)) || 0;
-  const price3Days = (product.rentPrice2Days && product.rentPrice3Days)
-    ? product.rentPrice3Days
-    : (product.rentPrice7Days || product.rentPrice3Days || Math.round(dayRate * 2.2));
+  const price3Days = product.rentPrice3Days || product.rentPrice7Days || Math.round(dayRate * 2.2);
+  const price2Days = (product.rentPrice2Days && product.rentPrice2Days > 0 && product.rentPrice2Days < price3Days)
+    ? product.rentPrice2Days
+    : Math.round((((dayRate || 0) + (price3Days || 0)) / 2) / 1000) * 1000 || Math.round(dayRate * 1.5);
   const extraPerDay = options?.customExtraDayPrice ?? (product.extraDayPrice || 20000);
   const isTet = Boolean(options?.isTetHoliday);
 
