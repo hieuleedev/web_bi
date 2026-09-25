@@ -81,7 +81,12 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       const data = await api.products.getAll({ status: 'all' });
       if (data && data.length > 0) {
-        const realRows = data.filter((row: any) => row.id && !isLegacyMockId(row.id));
+        const realRows = data
+          .filter((row: any) => row.id && !isLegacyMockId(row.id))
+          .map((row: any) => ({
+            ...row,
+            extraDayPrice: Number(row.extraDayPrice || 20000),
+          }));
         setProducts(realRows);
       }
     } catch (e) {
@@ -144,7 +149,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         formData.append('rentPrice2Days', String(newProduct.rentPrice2Days || 0));
         formData.append('rentPrice3Days', String(newProduct.rentPrice3Days || 0));
         formData.append('rentPrice7Days', String(newProduct.rentPrice7Days || 0));
-        formData.append('extraDayPrice', String(newProduct.extraDayPrice || 0));
+        formData.append('extraDayPrice', String(newProduct.extraDayPrice || 20000));
         formData.append('deposit', String(newProduct.deposit || 0));
         formData.append('sizes', JSON.stringify(newProduct.sizes || ['Free size']));
         formData.append('colors', JSON.stringify(newProduct.colors || ['Đa sắc']));
@@ -185,7 +190,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
           rentPrice2Days: newProduct.rentPrice2Days || 0,
           rentPrice3Days: newProduct.rentPrice3Days || 0,
           rentPrice7Days: newProduct.rentPrice7Days || 0,
-          extraDayPrice: newProduct.extraDayPrice || 0,
+          extraDayPrice: newProduct.extraDayPrice || 20000,
           deposit: newProduct.deposit || 0,
           sizes: newProduct.sizes,
           colors: newProduct.colors,

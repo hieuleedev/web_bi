@@ -22,6 +22,7 @@ import {
 import { ProductCard } from '../components/product/ProductCard';
 import { CATEGORIES } from '../data/initialCategories';
 import { useProducts } from '../context/ProductContext';
+import { useAuth } from '../context/AuthContext';
 import { Product } from '../types';
 import { formatVND } from '../utils/helpers';
 
@@ -54,6 +55,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onSelectCategory,
 }) => {
   const { products } = useProducts();
+  const { currentUser } = useAuth();
 
   const approvedProducts = useMemo(() => {
     return products.filter((p) => p.status === 'approved');
@@ -419,36 +421,38 @@ export const HomePage: React.FC<HomePageProps> = ({
         )}
       </section>
 
-      {/* 6. SELL / RENT OUT CTA SECTION */}
-      <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-r from-brand-600 to-brand-800 p-6 sm:p-12 lg:p-16 text-white shadow-xl">
-          <div className="relative z-10 max-w-2xl space-y-3 sm:space-y-4">
-            <span className="bg-white/20 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              Dành Cho Người Có Đồ Muốn Chia Sẻ
-            </span>
-            <h2 className="font-serif text-2xl sm:text-4xl font-bold leading-tight">
-              Bạn Có Quần Áo Không Sử Dụng Đến?
-            </h2>
-            <p className="text-xs sm:text-sm text-brand-100 leading-relaxed font-normal">
-              Đăng sản phẩm lên sàn Bi Bi ngay hôm nay để bán lại hoặc cho thuê theo ngày. Dễ dàng tiếp cận hàng ngàn khách hàng có nhu cầu với hệ thống quản lý lịch thuê chống trùng tự động.
-            </p>
+      {/* 6. SELL / RENT OUT CTA SECTION (Chỉ hiển thị cho người dùng có tài khoản đã đăng nhập) */}
+      {Boolean(currentUser) && (
+        <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-r from-brand-600 to-brand-800 p-6 sm:p-12 lg:p-16 text-white shadow-xl">
+            <div className="relative z-10 max-w-2xl space-y-3 sm:space-y-4">
+              <span className="bg-white/20 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                Dành Cho Người Có Đồ Muốn Chia Sẻ
+              </span>
+              <h2 className="font-serif text-2xl sm:text-4xl font-bold leading-tight">
+                Bạn Có Quần Áo Không Sử Dụng Đến?
+              </h2>
+              <p className="text-xs sm:text-sm text-brand-100 leading-relaxed font-normal">
+                Đăng sản phẩm lên sàn Bi Bi ngay hôm nay để bán lại hoặc cho thuê theo ngày. Dễ dàng tiếp cận hàng ngàn khách hàng có nhu cầu với hệ thống quản lý lịch thuê chống trùng tự động.
+              </p>
 
-            <div className="pt-2 sm:pt-3">
-              <button
-                onClick={() => onNavigate('sell')}
-                className="px-6 py-3 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl bg-white text-gray-900 hover:bg-gray-100 text-xs font-bold shadow-xl transition-all flex items-center gap-2 group active:scale-95"
-              >
-                <PlusCircle className="w-4 h-4 text-brand-600 group-hover:rotate-90 transition-transform" />
-                <span>Đăng Sản Phẩm Ngay</span>
-              </button>
+              <div className="pt-2 sm:pt-3">
+                <button
+                  onClick={() => onNavigate('sell')}
+                  className="px-6 py-3 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl bg-white text-gray-900 hover:bg-gray-100 text-xs font-bold shadow-xl transition-all flex items-center gap-2 group active:scale-95"
+                >
+                  <PlusCircle className="w-4 h-4 text-brand-600 group-hover:rotate-90 transition-transform" />
+                  <span>Đăng Sản Phẩm Ngay</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="absolute right-0 bottom-0 top-0 w-1/3 opacity-20 pointer-events-none hidden lg:block">
+              <Sparkles className="w-full h-full text-white" />
             </div>
           </div>
-
-          <div className="absolute right-0 bottom-0 top-0 w-1/3 opacity-20 pointer-events-none hidden lg:block">
-            <Sparkles className="w-full h-full text-white" />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
     </div>
   );

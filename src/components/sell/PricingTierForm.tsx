@@ -38,7 +38,7 @@ export const PricingTierForm: React.FC<PricingTierFormProps> = ({
   onRentPrice3DaysChange,
   rentPrice7Days,
   onRentPrice7DaysChange,
-  extraDayPrice = 50000,
+  extraDayPrice = 20000,
   onExtraDayPriceChange,
   deposit,
   onDepositChange,

@@ -61,7 +61,7 @@ export function calculateRentalPricingDetails(
   const price3Days = (product.rentPrice2Days && product.rentPrice3Days)
     ? product.rentPrice3Days
     : (product.rentPrice7Days || product.rentPrice3Days || Math.round(dayRate * 2.2));
-  const extraPerDay = options?.customExtraDayPrice ?? (product.extraDayPrice || Math.round(dayRate * 0.35) || 50000);
+  const extraPerDay = options?.customExtraDayPrice ?? (product.extraDayPrice || 20000);
   const isTet = Boolean(options?.isTetHoliday);
 
   if (days <= 1) {

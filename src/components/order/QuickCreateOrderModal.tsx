@@ -96,7 +96,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const [selectedPackage, setSelectedPackage] = useState<'1day' | '2days' | '3days' | 'custom'>('3days');
 
   // Custom Extra Day Price
-  const [customExtraDayPrice, setCustomExtraDayPrice] = useState<number>(50000);
+  const [customExtraDayPrice, setCustomExtraDayPrice] = useState<number>(20000);
   const [customBasePrice, setCustomBasePrice] = useState<number | null>(null);
 
   // 5. Accessories Selection & Custom Prices
@@ -120,7 +120,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
       if (selectedProduct.sizes && selectedProduct.sizes.length > 0) {
         setSelectedSize(selectedProduct.sizes[0]);
       }
-      const defaultExtra = selectedProduct.extraDayPrice || Math.round((selectedProduct.rentPrice1Day || 150000) * 0.35) || 50000;
+      const defaultExtra = selectedProduct.extraDayPrice || 20000;
       setCustomExtraDayPrice(defaultExtra);
       setCustomDeposit(depositMethod === 'id_card' || depositMethod === 'none' ? 0 : (selectedProduct.deposit || 0));
       setCustomBasePrice(null);

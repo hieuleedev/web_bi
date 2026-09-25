@@ -494,7 +494,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
                     <div className="flex items-center justify-between text-[11px] text-gray-500 pt-0.5">
                       <span>Phụ thu thêm ngày (từ ngày thứ 4):</span>
-                      <span className="font-semibold text-rose-600">+{formatVND(product.extraDayPrice || 50000)}/ngày</span>
+                      <span className="font-semibold text-rose-600">+{formatVND(product.extraDayPrice || 20000)}/ngày</span>
                     </div>
 
                     <div className="flex items-center justify-between text-xs pt-1.5 border-t border-brand-100/60 text-gray-700">
