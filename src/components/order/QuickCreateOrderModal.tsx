@@ -675,9 +675,10 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                           {p.sku || p.id.replace('prod-', 'BB-')}
                         </span>
                         <h4 className="font-semibold text-gray-900 truncate">{p.title}</h4>
-                        <div className="text-[11px] text-gray-500 flex items-center gap-2">
-                          <span>1 ngày: <strong className="text-emerald-700">{formatVND(p.rentPrice1Day || 0)}</strong></span>
-                          <span>• 3 ngày: <strong>{formatVND(p.rentPrice3Days || 0)}</strong></span>
+                        <div className="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <span>1N: <strong className="text-emerald-700">{formatVND(p.rentPrice1Day || 0)}</strong></span>
+                          <span>• 2N: <strong>{formatVND(p.rentPrice2Days || (p.rentPrice7Days ? p.rentPrice3Days : undefined) || 0)}</strong></span>
+                          <span>• 3N: <strong>{formatVND((p.rentPrice2Days && p.rentPrice3Days) ? p.rentPrice3Days : (p.rentPrice7Days || p.rentPrice3Days || 0))}</strong></span>
                         </div>
                       </div>
                     </button>
@@ -779,6 +780,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                       <span className="text-xs font-bold text-emerald-700">
                         {formatVND(
                           selectedProduct.rentPrice2Days ||
+                            (selectedProduct.rentPrice7Days ? selectedProduct.rentPrice3Days : undefined) ||
                             (selectedProduct.rentPrice3Days
                               ? Math.round(selectedProduct.rentPrice3Days * 0.75)
                               : Math.round((selectedProduct.rentPrice1Day || 0) * 1.6))
@@ -798,7 +800,11 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                     >
                       <span className="block text-[10px] text-gray-500">Gói 3 ngày (Chuẩn)</span>
                       <span className="text-xs font-bold text-emerald-700">
-                        {formatVND(selectedProduct.rentPrice3Days || 0)}
+                        {formatVND(
+                          (selectedProduct.rentPrice2Days && selectedProduct.rentPrice3Days)
+                            ? selectedProduct.rentPrice3Days
+                            : (selectedProduct.rentPrice7Days || selectedProduct.rentPrice3Days || 0)
+                        )}
                       </span>
                     </button>
                   </div>

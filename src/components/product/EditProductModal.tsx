@@ -140,7 +140,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       rentPrice1Day: Number(rentPrice1Day) || undefined,
       rentPrice2Days: Number(rentPrice2Days) || undefined,
       rentPrice3Days: Number(rentPrice3Days) || undefined,
-      rentPrice7Days: Number(rentPrice7Days) || undefined,
+      rentPrice7Days: Number(rentPrice3Days) || undefined,
       extraDayPrice: Number(extraDayPrice) || undefined,
       deposit: Number(deposit) || undefined,
       buyPrice: Number(buyPrice) || undefined,

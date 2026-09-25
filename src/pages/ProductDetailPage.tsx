@@ -471,9 +471,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                         <span className="font-bold text-gray-900 text-sm">
                           {formatVND(
                             product.rentPrice2Days ||
-                              (product.rentPrice3Days
-                                ? Math.round((product.rentPrice3Days * 0.85) / 1000) * 1000
-                                : Math.round(((product.rentPrice1Day || 0) * 1.5) / 1000) * 1000)
+                              (product.rentPrice7Days ? product.rentPrice3Days : undefined) ||
+                              (product.rentPrice3Days ? Math.round(product.rentPrice3Days * 0.8) : Math.round((product.rentPrice1Day || 0) * 1.5)) ||
+                              0
                           )}
                         </span>
                       </div>
@@ -483,7 +483,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                           <span className="text-[10px] text-brand-700 font-semibold bg-brand-100/80 px-1.5 py-0.5 rounded">Phổ biến</span>
                         </div>
                         <span className="font-bold text-brand-800 text-sm">
-                          {formatVND(product.rentPrice3Days || Math.round((product.rentPrice1Day || 0) * 2.2))}
+                          {formatVND(
+                            (product.rentPrice2Days && product.rentPrice3Days)
+                              ? product.rentPrice3Days
+                              : (product.rentPrice7Days || product.rentPrice3Days || Math.round((product.rentPrice1Day || 0) * 2.2))
+                          )}
                         </span>
                       </div>
                     </div>

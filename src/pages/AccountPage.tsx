@@ -805,11 +805,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                   {Boolean(p.rentPrice1Day) && p.rentPrice1Day! > 0 && (
                                     <span>Giá 1 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice1Day!)}</strong></span>
                                   )}
-                                  {Boolean(p.rentPrice2Days) && p.rentPrice2Days! > 0 && (
-                                    <span>Giá 2 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice2Days!)}</strong></span>
+                                  {(Boolean(p.rentPrice2Days) || Boolean(p.rentPrice7Days ? p.rentPrice3Days : undefined)) && (
+                                    <span>Giá 2 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice2Days || (p.rentPrice7Days ? p.rentPrice3Days : undefined) || 0)}</strong></span>
                                   )}
-                                  {Boolean(p.rentPrice3Days) && p.rentPrice3Days! > 0 && (
-                                    <span>Giá 3 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice3Days!)}</strong></span>
+                                  {(Boolean(p.rentPrice2Days && p.rentPrice3Days) || Boolean(p.rentPrice7Days) || Boolean(p.rentPrice3Days)) && (
+                                    <span>Giá 3 ngày: <strong className="text-brand-700 font-semibold">{formatVND((p.rentPrice2Days && p.rentPrice3Days) ? p.rentPrice3Days! : (p.rentPrice7Days || p.rentPrice3Days || 0))}</strong></span>
                                   )}
                                   {Boolean(p.buyPrice) && p.buyPrice! > 0 && (
                                     <span>Giá bán: <strong className="text-gray-900 font-semibold">{formatVND(p.buyPrice!)}</strong></span>

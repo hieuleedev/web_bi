@@ -118,9 +118,9 @@ export const RentalCalendarModal: React.FC<RentalCalendarModalProps> = ({
                 <span className="font-bold text-emerald-600">
                   {formatVND(product.rentPrice1Day)}/ngày
                 </span>
-                {product.rentPrice3Days && (
+                {(product.rentPrice2Days || product.rentPrice3Days) && (
                   <span className="text-[11px] text-gray-500">
-                    (Gói 3 ngày: {formatVND(product.rentPrice3Days)})
+                    {product.rentPrice2Days ? `(2 ngày: ${formatVND(product.rentPrice2Days)} • 3 ngày: ${formatVND(product.rentPrice3Days || 0)})` : `(Gói 3 ngày: ${formatVND(product.rentPrice3Days || 0)})`}
                   </span>
                 )}
               </div>
