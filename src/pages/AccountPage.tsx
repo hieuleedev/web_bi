@@ -65,7 +65,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   onOpenChat,
 }) => {
   const { currentUser, updateProfile, changePassword, logout } = useAuth();
-  const { products, deleteProduct, updateProduct, wishlistIds } = useProducts();
+  const { products, deleteProduct, updateProduct, refreshProducts, wishlistIds } = useProducts();
   const { orders, getUserOrders, getSellerOrders, updateOrderStatus, updateOrder, deleteOrder } = useOrders();
   const { showToast } = useToast();
 
@@ -1636,6 +1636,10 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           isOpen={!!editingProduct}
           product={editingProduct}
           onClose={() => setEditingProduct(null)}
+          onSaved={() => {
+            setEditingProduct(null);
+            refreshProducts();
+          }}
         />
       )}
 

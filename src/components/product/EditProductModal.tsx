@@ -51,11 +51,26 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       setSku(product.sku || (product.id ? product.id.replace("prod-", "BB-") : "BB-001"));
       setCategory(product.category || CATEGORIES[0]?.id || "dam-dai");
       setType(product.type || "both");
-      setRentPrice1Day(product.rentPrice1Day || 0);
-      setRentPrice2Days(product.rentPrice2Days || 0);
-      setRentPrice3Days(product.rentPrice3Days || 0);
-      setRentPrice7Days(product.rentPrice7Days || 0);
-      setExtraDayPrice(product.extraDayPrice || 20000);
+
+      const p1 = Number(product.rentPrice1Day || (product as any).rent_price_1day || 0);
+      const p3 = Number(product.rentPrice3Days || product.rentPrice7Days || (product as any).rent_price_7days || 0);
+      const rawP2 = (product.rentPrice2Days !== undefined && product.rentPrice2Days !== null && Number(product.rentPrice2Days) > 0)
+        ? Number(product.rentPrice2Days)
+        : ((product as any).rent_price_3days !== undefined && (product as any).rent_price_3days !== null && Number((product as any).rent_price_3days) > 0)
+          ? Number((product as any).rent_price_3days)
+          : 0;
+
+      const p2 = (rawP2 > 0 && rawP2 < p3)
+        ? rawP2
+        : (p3 > p1 && p1 > 0)
+          ? Math.round((((p1 + p3) / 2) / 1000)) * 1000
+          : (rawP2 > 0 ? rawP2 : Math.round(((p3 || p1 * 2) * 0.8) / 1000) * 1000);
+
+      setRentPrice1Day(p1);
+      setRentPrice2Days(p2);
+      setRentPrice3Days(p3);
+      setRentPrice7Days(p3);
+      setExtraDayPrice(product.extraDayPrice || (product as any).extra_day_price || 20000);
       setDeposit(product.deposit || 0);
       setBuyPrice(product.buyPrice || 0);
       setOriginalPrice(product.originalPrice || 0);
@@ -132,16 +147,25 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     const finalFeaturedImage = featuredImage.trim() || (images.length > 0 ? images[0] : "");
     const finalImages = images.length > 0 ? images : (finalFeaturedImage ? [finalFeaturedImage] : []);
 
-    const updatedData: Partial<Product> = {
+    const finalP1 = Number(rentPrice1Day) || 0;
+    const finalP2 = Number(rentPrice2Days) || 0;
+    const finalP3 = Number(rentPrice3Days) || 0;
+
+    const updatedData: Partial<Product> & Record<string, any> = {
       title: title.trim(),
       sku: sku.trim() || "BB-001",
       category,
       type,
-      rentPrice1Day: Number(rentPrice1Day) || undefined,
-      rentPrice2Days: Number(rentPrice2Days) || undefined,
-      rentPrice3Days: Number(rentPrice3Days) || undefined,
-      rentPrice7Days: Number(rentPrice3Days) || undefined,
+      rentPrice1Day: finalP1,
+      rentPrice2Days: finalP2,
+      rentPrice3Days: finalP3,
+      rentPrice7Days: finalP3,
+      // Database mapping: rent_price_1day (1 ngày), rent_price_3days (2 ngày), rent_price_7days (3 ngày)
+      rent_price_1day: finalP1,
+      rent_price_3days: finalP2,
+      rent_price_7days: finalP3,
       extraDayPrice: Number(extraDayPrice) || 20000,
+      extra_day_price: Number(extraDayPrice) || 20000,
       deposit: Number(deposit) || undefined,
       buyPrice: Number(buyPrice) || undefined,
       originalPrice: Number(originalPrice) || undefined,
@@ -301,8 +325,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   <input
                     type="number"
                     step={10000}
-                    value={rentPrice2Days || ''}
-                    placeholder={String(Math.round((rentPrice3Days || rentPrice1Day * 2) * 0.75))}
+                    value={rentPrice2Days === 0 ? '' : rentPrice2Days}
+                    placeholder={String(Math.round(((rentPrice1Day + rentPrice3Days) / 2) / 1000) * 1000 || 120000)}
                     onChange={(e) => setRentPrice2Days(Number(e.target.value))}
                     className="w-full px-3 py-2 bg-gray-50/60 border border-gray-200 rounded-lg text-xs font-bold text-gray-900 focus:bg-white focus:outline-none focus:border-brand-500 pr-7"
                   />

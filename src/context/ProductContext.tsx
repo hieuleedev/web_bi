@@ -83,10 +83,30 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (data && data.length > 0) {
         const realRows = data
           .filter((row: any) => row.id && !isLegacyMockId(row.id))
-          .map((row: any) => ({
-            ...row,
-            extraDayPrice: Number(row.extraDayPrice || 20000),
-          }));
+          .map((row: any) => {
+            const p1 = Number(row.rentPrice1Day || row.rent_price_1day || 0);
+            const p3 = Number(row.rentPrice3Days || row.rentPrice7Days || row.rent_price_7days || 0);
+            const rawP2 = (row.rentPrice2Days !== undefined && row.rentPrice2Days !== null && Number(row.rentPrice2Days) > 0)
+              ? Number(row.rentPrice2Days)
+              : ((row.rent_price_3days !== undefined && row.rent_price_3days !== null && Number(row.rent_price_3days) > 0)
+                ? Number(row.rent_price_3days)
+                : 0);
+
+            const p2 = (rawP2 > 0 && rawP2 < p3)
+              ? rawP2
+              : (p3 > p1 && p1 > 0)
+                ? Math.round((((p1 + p3) / 2) / 1000)) * 1000
+                : (rawP2 > 0 ? rawP2 : Math.round(((p3 || p1 * 2) * 0.8) / 1000) * 1000);
+
+            return {
+              ...row,
+              rentPrice1Day: p1,
+              rentPrice2Days: p2,
+              rentPrice3Days: p3,
+              rentPrice7Days: p3,
+              extraDayPrice: Number(row.extraDayPrice || row.extra_day_price || 20000),
+            };
+          });
         setProducts(realRows);
       }
     } catch (e) {
