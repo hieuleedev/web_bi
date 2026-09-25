@@ -17,8 +17,11 @@ import {
   CheckCircle2,
   MapPin,
   ChevronRight,
-  Send
+  Send,
+  PhoneCall,
+  MessageCircle
 } from 'lucide-react';
+import { FEATURES } from '../config/features';
 import { Product, Review, User } from '../types';
 import { formatVND, formatDateVN, calculateRentalDays, calculateRentalPrice, checkRentalOverlap } from '../utils/helpers';
 import { useProducts } from '../context/ProductContext';
@@ -559,128 +562,186 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 </div>
               </div>
 
-              {/* Rental Date Selection & Verification (If in Rent Mode) */}
-              {activeMode === 'rent' && (
-                <div className="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4 text-emerald-600" />
-                      Lịch Chọn Ngày Thuê & Kiểm Tra Trùng
-                    </h4>
-                    <div className="flex items-center gap-2">
+              {/* Rental Date Selection & Verification or Direct Contact Card */}
+              {!FEATURES.ONLINE_BOOKING ? (
+                /* Khu vực tư vấn & liên hệ đặt thuê / thử đồ trực tiếp (Khi tạm ẩn đặt online) */
+                <div className="p-5 rounded-3xl bg-gradient-to-br from-brand-50/70 via-white to-brand-50/40 border-2 border-brand-200/80 shadow-xs space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-brand-500/20">
+                      <PhoneCall className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">
+                        Liên Hệ Đặt Lịch Thuê & Thử Váy
+                      </h4>
+                      <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
+                        Shop tạm thời nhận tư vấn size, kiểm tra lịch trống và giữ đồ trực tiếp qua Zalo / Hotline hoặc ghé thử tại cửa hàng để hỗ trợ bạn chu đáo nhất.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                    <a
+                      href={`https://zalo.me/0795623097`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-3 px-5 rounded-2xl bg-[#0068FF] hover:bg-[#0052cc] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-[0.99]"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Nhắn Zalo Giữ Váy Này</span>
+                    </a>
+
+                    <a
+                      href="tel:0795623097"
+                      className="flex-1 py-3 px-5 rounded-2xl bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-all"
+                    >
+                      <PhoneCall className="w-4 h-4 text-emerald-600" />
+                      <span>Gọi Hotline: 0795.623.097</span>
+                    </a>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-brand-100 text-[11px] text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-brand-600 shrink-0" />
+                      <span>Thử đồ tại: <strong>Khối 1 - Xã Núi Thành - TP. Đà Nẵng</strong></span>
+                    </span>
+                    {onOpenChat && (
                       <button
                         type="button"
-                        onClick={() => setIsScheduleModalOpen(true)}
-                        className="text-[11px] font-semibold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg border border-brand-200 transition-colors flex items-center gap-1"
+                        onClick={onOpenChat}
+                        className="text-brand-700 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                       >
-                        <CalendarRange className="w-3.5 h-3.5" />
-                        <span>Xem chi tiết lịch thuê ({product.bookedDates.length})</span>
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>Nhắn tin trên Web</span>
                       </button>
-                      <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                        {rentalDays} ngày thuê
-                      </span>
-                    </div>
+                    )}
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] text-gray-500 mb-1">Ngày bắt đầu</label>
-                      <input
-                        type="date"
-                        value={startDate}
-                        min={new Date().toISOString().split('T')[0]}
-                        onChange={(e) => {
-                          setStartDate(e.target.value);
-                          if (new Date(e.target.value) >= new Date(endDate)) {
-                            const nextDay = new Date(e.target.value);
-                            nextDay.setDate(nextDay.getDate() + 1);
-                            setEndDate(nextDay.toISOString().split('T')[0]);
-                          }
-                        }}
-                        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-brand-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] text-gray-500 mb-1">Ngày trả đồ</label>
-                      <input
-                        type="date"
-                        value={endDate}
-                        min={startDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-brand-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Overlap message */}
-                  {overlapCheck.hasConflict ? (
-                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-semibold">Đã có người đặt trước trong khoảng ngày này!</p>
-                        <p className="text-[11px] text-rose-700 mt-0.5">
-                          Trùng lịch ({formatDateVN(overlapCheck.conflictingBooking?.startDate)} - {formatDateVN(overlapCheck.conflictingBooking?.endDate)}). Vui lòng chọn lịch khác.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Lịch khả dụng! Tổng tiền thuê dự kiến: <strong>{formatVND(rentalFee)}</strong> + Cọc: <strong>{formatVND(deposit)}</strong></span>
-                    </div>
-                  )}
-
-                  {/* List of already booked dates right here */}
-                  {product.bookedDates && product.bookedDates.length > 0 && (
-                    <div className="pt-2 border-t border-gray-200/80">
-                      <span className="text-[11px] font-semibold text-gray-500 block mb-1.5">
-                        🔴 Các khoảng ngày váy này ĐÃ CÓ NGƯỜI THUÊ (không chọn được):
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {product.bookedDates.map((b) => (
-                          <span
-                            key={b.id}
-                            className="inline-flex items-center gap-1 text-[11px] font-mono font-bold bg-rose-100/80 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-lg"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                            {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
+              ) : (
+                <>
+                  {activeMode === 'rent' && (
+                    <div className="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                          <Calendar className="w-4 h-4 text-emerald-600" />
+                          Lịch Chọn Ngày Thuê & Kiểm Tra Trùng
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsScheduleModalOpen(true)}
+                            className="text-[11px] font-semibold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg border border-brand-200 transition-colors flex items-center gap-1"
+                          >
+                            <CalendarRange className="w-3.5 h-3.5" />
+                            <span>Xem chi tiết lịch thuê ({product.bookedDates.length})</span>
+                          </button>
+                          <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                            {rentalDays} ngày thuê
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] text-gray-500 mb-1">Ngày bắt đầu</label>
+                          <input
+                            type="date"
+                            value={startDate}
+                            min={new Date().toISOString().split('T')[0]}
+                            onChange={(e) => {
+                              setStartDate(e.target.value);
+                              if (new Date(e.target.value) >= new Date(endDate)) {
+                                const nextDay = new Date(e.target.value);
+                                nextDay.setDate(nextDay.getDate() + 1);
+                                setEndDate(nextDay.toISOString().split('T')[0]);
+                              }
+                            }}
+                            className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-brand-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] text-gray-500 mb-1">Ngày trả đồ</label>
+                          <input
+                            type="date"
+                            value={endDate}
+                            min={startDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-brand-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Overlap message */}
+                      {overlapCheck.hasConflict ? (
+                        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-semibold">Đã có người đặt trước trong khoảng ngày này!</p>
+                            <p className="text-[11px] text-rose-700 mt-0.5">
+                              Trùng lịch ({formatDateVN(overlapCheck.conflictingBooking?.startDate)} - {formatDateVN(overlapCheck.conflictingBooking?.endDate)}). Vui lòng chọn lịch khác.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Lịch khả dụng! Tổng tiền thuê dự kiến: <strong>{formatVND(rentalFee)}</strong> + Cọc: <strong>{formatVND(deposit)}</strong></span>
+                        </div>
+                      )}
+
+                      {/* List of already booked dates right here */}
+                      {product.bookedDates && product.bookedDates.length > 0 && (
+                        <div className="pt-2 border-t border-gray-200/80">
+                          <span className="text-[11px] font-semibold text-gray-500 block mb-1.5">
+                            🔴 Các khoảng ngày váy này ĐÃ CÓ NGƯỜI THUÊ (không chọn được):
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {product.bookedDates.map((b) => (
+                              <span
+                                key={b.id}
+                                className="inline-flex items-center gap-1 text-[11px] font-mono font-bold bg-rose-100/80 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-lg"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button
+                      onClick={() => handleAddToCart(false)}
+                      disabled={activeMode === 'rent' && overlapCheck.hasConflict}
+                      className={`flex-1 py-3.5 px-6 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                        activeMode === 'rent' && overlapCheck.hasConflict
+                          ? 'border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed'
+                          : 'border-brand-600 text-brand-700 bg-brand-50/50 hover:bg-brand-50'
+                      }`}
+                    >
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>Thêm Vào Giỏ Hàng</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleAddToCart(true)}
+                      disabled={activeMode === 'rent' && overlapCheck.hasConflict}
+                      className={`flex-1 py-3.5 px-6 rounded-2xl text-xs font-bold text-white shadow-xl transition-all flex items-center justify-center gap-2 ${
+                        activeMode === 'rent' && overlapCheck.hasConflict
+                          ? 'bg-gray-300 cursor-not-allowed shadow-none'
+                          : 'bg-brand-600 hover:bg-brand-700 shadow-brand-500/25 active:scale-[0.99]'
+                      }`}
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>{activeMode === 'rent' ? 'Thuê Ngay Bây Giờ' : 'Mua Ngay'}</span>
+                    </button>
+                  </div>
+                </>
               )}
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <button
-                  onClick={() => handleAddToCart(false)}
-                  disabled={activeMode === 'rent' && overlapCheck.hasConflict}
-                  className={`flex-1 py-3.5 px-6 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
-                    activeMode === 'rent' && overlapCheck.hasConflict
-                      ? 'border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed'
-                      : 'border-brand-600 text-brand-700 bg-brand-50/50 hover:bg-brand-50'
-                  }`}
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Thêm Vào Giỏ Hàng</span>
-                </button>
-
-                <button
-                  onClick={() => handleAddToCart(true)}
-                  disabled={activeMode === 'rent' && overlapCheck.hasConflict}
-                  className={`flex-1 py-3.5 px-6 rounded-2xl text-xs font-bold text-white shadow-xl transition-all flex items-center justify-center gap-2 ${
-                    activeMode === 'rent' && overlapCheck.hasConflict
-                      ? 'bg-gray-300 cursor-not-allowed shadow-none'
-                      : 'bg-brand-600 hover:bg-brand-700 shadow-brand-500/25 active:scale-[0.99]'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>{activeMode === 'rent' ? 'Thuê Ngay Bây Giờ' : 'Mua Ngay'}</span>
-                </button>
-              </div>
 
               {/* Details & Specifications Accordion / Cards */}
               <div className="pt-6 border-t border-gray-100 space-y-4 text-xs text-gray-600 leading-relaxed">

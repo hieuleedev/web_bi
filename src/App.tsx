@@ -21,6 +21,7 @@ import { ChatPage } from './pages/ChatPage';
 import { AdminPage } from './pages/AdminPage';
 import { RentalCalendarModal } from './components/product/RentalCalendarModal';
 import { Product } from './types';
+import { FEATURES } from './config/features';
 
 export function AppContent() {
   const navigate = useNavigate();
@@ -267,7 +268,7 @@ export function AppContent() {
       <Footer />
 
       {/* Rental Calendar Quick Modal */}
-      {calendarProduct && (
+      {calendarProduct && FEATURES.ONLINE_BOOKING && (
         <RentalCalendarModal
           product={calendarProduct}
           onClose={() => setCalendarProduct(null)}

@@ -25,6 +25,7 @@ import { useProducts } from '../../context/ProductContext';
 import { useChat } from '../../context/ChatContext';
 import { UserRole } from '../../types';
 import { AuthModal } from '../auth/AuthModal';
+import { FEATURES } from '../../config/features';
 
 interface HeaderProps {
   currentView?: string;
@@ -274,19 +275,21 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
-            {/* Cart Button */}
-            <button
-              onClick={() => goTo('/cart', 'cart')}
-              className="relative p-1.5 sm:p-2 text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-full transition-colors flex items-center shrink-0"
-              title="Giỏ hàng & Đơn thuê"
-            >
-              <ShoppingBag className="w-5 h-5" />
-              {totalCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-brand-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
-                  {totalCount}
-                </span>
-              )}
-            </button>
+            {/* Cart Button (Chỉ hiển thị khi bật tính năng đặt online) */}
+            {FEATURES.ONLINE_BOOKING && (
+              <button
+                onClick={() => goTo('/cart', 'cart')}
+                className="relative p-1.5 sm:p-2 text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-full transition-colors flex items-center shrink-0"
+                title="Giỏ hàng & Đơn thuê"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                {totalCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-brand-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                    {totalCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* User Profile dropdown (Desktop) */}
             <div className="relative shrink-0 hidden sm:block">
