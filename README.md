@@ -11,7 +11,7 @@ Website thương mại điện tử thời trang hiện đại hàng đầu kế
 - **Trang Mua Sắm (`/shop`)**: Tìm kiếm thông minh, bộ lọc đa chiều (Danh mục, Giới tính, Size, Mức giá, Tình trạng), sắp xếp theo giá và rating.
 - **Trang Cho Thuê (`/rent`)**:
   - Lọc theo ngày trống khả dụng (loại trừ các trang phục đã có người đặt trước).
-  - Hiển thị rõ giá thuê theo ngày, gói 3 ngày, gói 7 ngày và tiền cọc quy định.
+  - Hiển thị rõ giá thuê 1 ngày, gói 2 ngày, gói 3 ngày (chuẩn) và tiền cọc quy định.
 - **Trang Chi Tiết Sản Phẩm (`/product/:id`)**:
   - Gallery nhiều góc chụp + hiệu ứng zoom chi tiết chất liệu vải.
   - Lịch tương tác chọn ngày thuê (Start Date → End Date) với thuật toán kiểm tra chống trùng lịch:
@@ -30,7 +30,7 @@ Website thương mại điện tử thời trang hiện đại hàng đầu kế
 - **Đăng Sản Phẩm (`/sell`)**:
   - Kéo thả / chọn nhiều ảnh từ máy tính (hỗ trợ preview ngay lập tức bằng Base64 và chọn ảnh bìa).
   - Tùy chọn mô hình: Bán, Cho thuê hoặc Cả hai.
-  - Cấu hình giá bán, giá thuê (1 ngày, 3 ngày, 7 ngày) và tiền đặt cọc.
+  - Cấu hình giá bán, giá thuê nhiều bậc (1 ngày, 2 ngày, 3 ngày, phụ phí thêm ngày) và tiền đặt cọc.
   - Mô tả số đo ngực-eo-mông, hướng dẫn bảo quản trang phục.
 - **Quản Lý Cá Nhân (`/account`)**:
   - Quản lý sản phẩm đã đăng: Sửa trạng thái (Ẩn/Hiện), xem lượt xem, xóa sản phẩm.

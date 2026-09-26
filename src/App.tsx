@@ -20,7 +20,10 @@ import { AccountPage } from './pages/AccountPage';
 import { ChatPage } from './pages/ChatPage';
 import { AdminPage } from './pages/AdminPage';
 import { RentalCalendarModal } from './components/product/RentalCalendarModal';
+import { Phone } from 'lucide-react';
+import { ZaloIcon } from './components/common/ZaloIcon';
 import { Product } from './types';
+import { FEATURES } from './config/features';
 
 export function AppContent() {
   const navigate = useNavigate();
@@ -196,24 +199,32 @@ export function AppContent() {
             }
           />
 
-          {/* Cart & Checkout */}
+          {/* Cart & Checkout (Chỉ truy cập khi bật tính năng đặt online) */}
           <Route
             path="/cart"
             element={
-              <CartPage
-                onContinueShopping={() => navigate('/shop')}
-                onProceedCheckout={() => navigate('/checkout')}
-                onViewProduct={handleViewProduct}
-              />
+              FEATURES.ONLINE_BOOKING ? (
+                <CartPage
+                  onContinueShopping={() => navigate('/shop')}
+                  onProceedCheckout={() => navigate('/checkout')}
+                  onViewProduct={handleViewProduct}
+                />
+              ) : (
+                <Navigate to="/rent" replace />
+              )
             }
           />
           <Route
             path="/checkout"
             element={
-              <CheckoutPage
-                onBackToCart={() => navigate('/cart')}
-                onGoToOrderList={() => navigate('/orders')}
-              />
+              FEATURES.ONLINE_BOOKING ? (
+                <CheckoutPage
+                  onBackToCart={() => navigate('/cart')}
+                  onGoToOrderList={() => navigate('/orders')}
+                />
+              ) : (
+                <Navigate to="/rent" replace />
+              )
             }
           />
 
@@ -267,7 +278,7 @@ export function AppContent() {
       <Footer />
 
       {/* Rental Calendar Quick Modal */}
-      {calendarProduct && (
+      {calendarProduct && FEATURES.ONLINE_BOOKING && (
         <RentalCalendarModal
           product={calendarProduct}
           onClose={() => setCalendarProduct(null)}
@@ -277,24 +288,52 @@ export function AppContent() {
         />
       )}
 
-      {/* Floating Hotline & Zalo Contact Widget */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2.5">
-        <a
-          href="https://zalo.me/0795623097"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30 text-xs font-bold transition-all hover:scale-105 group"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Chat Zalo</span>
-        </a>
+      {/* Floating Hotline & Zalo Contact Widget (Tối ưu Responsive không che nút mua trên mobile) */}
+      <div className="fixed bottom-4 right-3.5 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end gap-2">
+        {/* Mobile View: 2 nút tròn gọn gàng bên góc phải không choán màn hình */}
+        <div className="flex sm:hidden flex-col items-end gap-2">
+          <a
+            href="tel:0795623097"
+            className="w-10 h-10 rounded-full bg-white text-brand-600 border border-brand-200/80 shadow-lg shadow-black/10 flex items-center justify-center active:scale-90 transition-transform"
+            title="Gọi Hotline: 079 562 3097"
+          >
+            <Phone className="w-4 h-4 text-brand-600" />
+          </a>
+          <a
+            href="https://zalo.me/0795623097"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#0068FF] to-[#0091FF] text-white shadow-xl shadow-blue-500/40 flex items-center justify-center relative active:scale-90 transition-transform"
+            title="Chat Zalo hỗ trợ"
+          >
+            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-white animate-pulse" />
+            <ZaloIcon className="w-6 h-6 fill-white" />
+          </a>
+        </div>
 
-        <a
-          href="tel:0795623097"
-          className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-500/30 text-xs font-bold transition-all hover:scale-105"
-        >
-          <span>Hotline: 079 562 3097</span>
-        </a>
+        {/* Desktop View: Thanh pill đầy đủ chữ kèm icon đẹp mắt */}
+        <div className="hidden sm:flex flex-col items-end gap-2.5">
+          <a
+            href="https://zalo.me/0795623097"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#0068FF] to-[#0084FF] hover:from-[#005ce6] hover:to-[#0077e6] text-white shadow-lg shadow-blue-500/25 text-xs font-bold transition-all hover:scale-105 group"
+          >
+            <div className="w-4 h-4 bg-white/20 rounded-md p-0.5 flex items-center justify-center">
+              <ZaloIcon className="w-full h-full fill-white" />
+            </div>
+            <span>Chat Zalo</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5"></span>
+          </a>
+
+          <a
+            href="tel:0795623097"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-500/25 text-xs font-bold transition-all hover:scale-105"
+          >
+            <Phone className="w-3.5 h-3.5" />
+            <span>Hotline: 079 562 3097</span>
+          </a>
+        </div>
       </div>
     </div>
   );

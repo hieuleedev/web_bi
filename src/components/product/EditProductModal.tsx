@@ -130,7 +130,11 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     const finalFeaturedImage = featuredImage.trim() || (images.length > 0 ? images[0] : "");
     const finalImages = images.length > 0 ? images : (finalFeaturedImage ? [finalFeaturedImage] : []);
 
-    const updatedData: Partial<Product> = {
+    const finalP1 = Number(rentPrice1Day) || 0;
+    const finalP2 = Number(rentPrice2Days) || 0;
+    const finalP3 = Number(rentPrice3Days) || 0;
+
+    const updatedData: Partial<Product> & Record<string, any> = {
       title: title.trim(),
       sku: sku.trim() || "BB-001",
       category,
@@ -262,86 +266,144 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
           </div>
 
-          {/* Bảng giá thuê & cọc */}
-          <div className="bg-brand-50/40 p-4 rounded-2xl border border-brand-100 space-y-3">
-            <h4 className="font-bold text-brand-900 text-xs flex items-center gap-1.5">
-              <DollarSign className="w-4 h-4 text-brand-600" />
-              <span>Giá Thuê & Tiền Cọc</span>
-            </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">Giá thuê 1 ngày (₫)</label>
-                <input
-                  type="number"
-                  value={rentPrice1Day}
-                  onChange={(e) => setRentPrice1Day(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:border-brand-500"
-                />
+          {/* Bảng giá thuê & Tiền cọc */}
+          <div className="bg-gradient-to-br from-amber-50/50 via-brand-50/30 to-white p-4 sm:p-5 rounded-2xl border border-brand-200/70 space-y-4 shadow-2xs">
+            <div className="flex items-center justify-between pb-2 border-b border-brand-100/80">
+              <h4 className="font-bold text-gray-900 text-xs flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-brand-600 text-white flex items-center justify-center text-xs shadow-xs">₫</span>
+                <span>Bảng Giá Thuê & Tiền Cọc</span>
+              </h4>
+              <span className="text-[11px] text-gray-500 font-medium">Đơn vị: VNĐ</span>
+            </div>
+
+            {/* Hàng 1: Giá thuê theo các gói ngày */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-white p-3 rounded-xl border border-gray-200/80 shadow-2xs">
+                <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                  Giá thuê 1 ngày
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step={10000}
+                    value={rentPrice1Day}
+                    onChange={(e) => setRentPrice1Day(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-gray-50/60 border border-gray-200 rounded-lg text-xs font-bold text-gray-900 focus:bg-white focus:outline-none focus:border-brand-500 pr-7"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₫</span>
+                </div>
               </div>
 
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">Giá thuê 2 ngày (₫)</label>
-                <input
-                  type="number"
-                  value={rentPrice2Days || ''}
-                  placeholder={String(Math.round((rentPrice3Days || rentPrice1Day * 2) * 0.75))}
-                  onChange={(e) => setRentPrice2Days(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:border-brand-500"
-                />
+              <div className="bg-white p-3 rounded-xl border border-gray-200/80 shadow-2xs">
+                <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                  Giá thuê 2 ngày
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step={10000}
+                    value={rentPrice2Days === 0 ? '' : rentPrice2Days}
+                    placeholder={String(Math.round(((rentPrice1Day + rentPrice3Days) / 2) / 1000) * 1000 || 120000)}
+                    onChange={(e) => setRentPrice2Days(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-gray-50/60 border border-gray-200 rounded-lg text-xs font-bold text-gray-900 focus:bg-white focus:outline-none focus:border-brand-500 pr-7"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₫</span>
+                </div>
               </div>
 
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">Giá thuê 3 ngày (₫)</label>
-                <input
-                  type="number"
-                  value={rentPrice3Days}
-                  onChange={(e) => setRentPrice3Days(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-brand-700 focus:outline-none focus:border-brand-500"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">Phí thêm ngày (₫)</label>
-                <input
-                  type="number"
-                  value={extraDayPrice}
-                  onChange={(e) => setExtraDayPrice(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-rose-200 rounded-xl text-xs font-bold text-rose-700 focus:outline-none focus:border-brand-500"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">Tiền cọc giữ đồ (₫)</label>
-                <input
-                  type="number"
-                  value={deposit}
-                  onChange={(e) => setDeposit(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-amber-700 focus:outline-none focus:border-brand-500"
-                />
+              <div className="bg-white p-3 rounded-xl border border-brand-300 ring-2 ring-brand-500/10 shadow-2xs">
+                <label className="block text-[11px] font-bold text-brand-800 mb-1 flex items-center justify-between">
+                  <span>Giá thuê 3 ngày</span>
+                  <span className="text-[10px] bg-brand-100 text-brand-700 px-1.5 py-0.2 rounded font-semibold">Gói chuẩn</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step={10000}
+                    value={rentPrice3Days}
+                    onChange={(e) => setRentPrice3Days(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-brand-50/40 border border-brand-300 rounded-lg text-xs font-bold text-brand-900 focus:bg-white focus:outline-none focus:border-brand-500 pr-7"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-600 font-bold text-xs">₫</span>
+                </div>
               </div>
             </div>
 
+            {/* Hàng 2: Phụ phí ngày thêm & Tiền cọc */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">Giá bán đứt (₫)</label>
-                <input
-                  type="number"
-                  value={buyPrice}
-                  onChange={(e) => setBuyPrice(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:border-brand-500"
-                />
+              <div className="bg-white p-3 rounded-xl border border-rose-200/80 shadow-2xs">
+                <label className="block text-[11px] font-semibold text-rose-800 mb-1 flex items-center justify-between">
+                  <span>Phí thêm ngày (/ngày)</span>
+                  <span className="text-[10px] text-rose-600">Khi thuê quá 3 ngày</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step={5000}
+                    value={extraDayPrice}
+                    onChange={(e) => setExtraDayPrice(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-rose-50/40 border border-rose-200 rounded-lg text-xs font-bold text-rose-700 focus:bg-white focus:outline-none focus:border-rose-400 pr-7"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-rose-400 text-xs">₫</span>
+                </div>
               </div>
 
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">Giá niêm yết / Giá gốc (₫)</label>
-                <input
-                  type="number"
-                  value={originalPrice}
-                  onChange={(e) => setOriginalPrice(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-500 focus:outline-none focus:border-brand-500"
-                />
+              <div className="bg-white p-3 rounded-xl border border-amber-200/80 shadow-2xs">
+                <label className="block text-[11px] font-semibold text-amber-800 mb-1 flex items-center justify-between">
+                  <span>Tiền cọc giữ đồ</span>
+                  <span className="text-[10px] text-amber-600">Hoàn lại khi trả váy</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step={10000}
+                    value={deposit}
+                    onChange={(e) => setDeposit(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200 rounded-lg text-xs font-bold text-amber-800 focus:bg-white focus:outline-none focus:border-amber-400 pr-7"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-amber-400 text-xs">₫</span>
+                </div>
               </div>
             </div>
+
+            {/* Hàng 3: Bán đứt & Giá gốc (Chỉ hiển thị nếu hình thức là Bán hoặc Cả hai) */}
+            {(type === "both" || type === "buy") && (
+              <div className="pt-2 border-t border-brand-100/60 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                    Giá bán đứt (nếu khách mua hẳn)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step={10000}
+                      value={buyPrice}
+                      onChange={(e) => setBuyPrice(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-900 focus:outline-none focus:border-brand-500 pr-7"
+                      placeholder="0"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₫</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                    Giá niêm yết / Giá tag gốc (để gạch giá)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step={10000}
+                      value={originalPrice}
+                      onChange={(e) => setOriginalPrice(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-500 focus:outline-none focus:border-brand-500 pr-7"
+                      placeholder="0"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">₫</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Size & Màu sắc & Chất liệu */}

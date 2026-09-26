@@ -43,7 +43,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
   const [rentPrice1Day, setRentPrice1Day] = useState<number>(180000);
   const [rentPrice2Days, setRentPrice2Days] = useState<number>(280000);
   const [rentPrice3Days, setRentPrice3Days] = useState<number>(350000);
-  const [extraDayPrice, setExtraDayPrice] = useState<number>(50000);
+  const [extraDayPrice, setExtraDayPrice] = useState<number>(20000);
   const [deposit, setDeposit] = useState<number>(200000);
 
   // 3. Optional Buy Mode

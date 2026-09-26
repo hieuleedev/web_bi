@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/product/:id",
+      "destination": "/api/og?id=:id"
+    },
+    {
+      "source": "/api/og",
+      "destination": "/api/og"
+    },
+    {
       "source": "/api/:path*",
       "destination": "http://222.255.215.20:5050/api/:path*"
     },

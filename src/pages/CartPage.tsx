@@ -1,9 +1,10 @@
 import React from 'react';
-import { ShoppingBag, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, PhoneCall } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { RentalCartItem } from '../components/cart/RentalCartItem';
 import { BuyCartItem } from '../components/cart/BuyCartItem';
 import { CartSummaryCard } from '../components/cart/CartSummaryCard';
+import { FEATURES } from '../config/features';
 
 interface CartPageProps {
   onContinueShopping: () => void;
@@ -28,6 +29,49 @@ export const CartPage: React.FC<CartPageProps> = ({
 
   const buyItems = cartItems.filter((i) => i.mode === 'buy');
   const rentItems = cartItems.filter((i) => i.mode === 'rent');
+
+  if (!FEATURES.ONLINE_BOOKING) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-5">
+        <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-3xl flex items-center justify-center mx-auto shadow-sm">
+          <PhoneCall className="w-10 h-10" />
+        </div>
+        <div>
+          <h2 className="font-serif text-2xl font-bold text-gray-900 mb-2">
+            Đặt Thuê & Tư Vấn Trực Tiếp
+          </h2>
+          <p className="text-xs text-gray-600 max-w-md mx-auto leading-relaxed">
+            Shop Bi Bi hiện nhận tư vấn size, kiểm tra lịch trống và giữ đồ trực tiếp qua Zalo / Hotline hoặc ghé thử đồ tại cửa hàng để phục vụ chu đáo nhất.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
+          <a
+            href="https://zalo.me/0795623097"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-6 py-3.5 bg-[#0068FF] hover:bg-[#0052cc] text-white text-xs font-bold rounded-2xl shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2"
+          >
+            <span>Nhắn Zalo: 0795.623.097</span>
+          </a>
+          <a
+            href="tel:0795623097"
+            className="px-6 py-3.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 text-xs font-bold rounded-2xl shadow-2xs transition-all flex items-center justify-center gap-2"
+          >
+            <span>Gọi Hotline: 0795.623.097</span>
+          </a>
+        </div>
+        <div className="pt-4">
+          <button
+            onClick={onContinueShopping}
+            className="text-xs text-brand-600 font-semibold hover:underline inline-flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Quay lại xem thêm các mẫu váy</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (

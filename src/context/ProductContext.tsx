@@ -37,13 +37,16 @@ function isLegacyMockId(id: string): boolean {
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
-    // Proactively wipe all legacy mock/seed caches from browser storage
+    // Proactively wipe all legacy mock/seed/bulky caches from browser storage
     const purgeKeys = [
+      PRODUCTS_KEY,
       'bibi_products_store_v1',
       'bibi_products_store_v2',
+      'bibi_products_store_v3',
       'bibi_products_v6_white_dresses',
       'bibi_products_v5_full_seed',
       'bibi_products_v4_local_v2',
+      'bibi_products_v4_local',
     ];
     purgeKeys.forEach((k) => {
       try {
@@ -51,18 +54,6 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       } catch (e) {}
     });
 
-    const saved = localStorage.getItem(PRODUCTS_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          // Strictly filter out only old mock dummy items, keep all user created products
-          return parsed.filter((p: Product) => p && p.id && !isLegacyMockId(p.id));
-        }
-      } catch (e) {
-        console.error('Error loading products from localStorage', e);
-      }
-    }
     return [];
   });
 
@@ -90,28 +81,42 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       const data = await api.products.getAll({ status: 'all' });
       if (data && data.length > 0) {
-        const realRows = data.filter((row: any) => row.id && !isLegacyMockId(row.id));
-        setProducts((prev) => {
-          const dbIds = new Set(realRows.map((p: any) => p.id));
-          // Preserve any newly created products in local storage that haven't been synced or fetched yet
-          const localOnly = prev.filter((p) => !dbIds.has(p.id) && !isLegacyMockId(p.id));
-          const merged = [...realRows, ...localOnly];
-          localStorage.setItem(PRODUCTS_KEY, JSON.stringify(merged));
-          return merged;
-        });
+        const realRows = data
+          .filter((row: any) => row.id && !isLegacyMockId(row.id))
+          .map((row: any) => {
+            const p1 = Number(row.rentPrice1Day || row.rent_price_1day || 0);
+            const p3 = Number(row.rentPrice3Days || row.rentPrice7Days || row.rent_price_7days || 0);
+            const rawP2 = (row.rentPrice2Days !== undefined && row.rentPrice2Days !== null && Number(row.rentPrice2Days) > 0)
+              ? Number(row.rentPrice2Days)
+              : ((row.rent_price_3days !== undefined && row.rent_price_3days !== null && Number(row.rent_price_3days) > 0)
+                ? Number(row.rent_price_3days)
+                : 0);
+
+            const p2 = (rawP2 > 0 && rawP2 < p3)
+              ? rawP2
+              : (p3 > p1 && p1 > 0)
+                ? Math.round((((p1 + p3) / 2) / 1000)) * 1000
+                : (rawP2 > 0 ? rawP2 : Math.round(((p3 || p1 * 2) * 0.8) / 1000) * 1000);
+
+            return {
+              ...row,
+              rentPrice1Day: p1,
+              rentPrice2Days: p2,
+              rentPrice3Days: p3,
+              rentPrice7Days: p3,
+              extraDayPrice: Number(row.extraDayPrice || row.extra_day_price || 20000),
+            };
+          });
+        setProducts(realRows);
       }
     } catch (e) {
-      console.warn('Backend API products fetch failed, using local/fallback', e);
+      console.warn('Backend API products fetch failed', e);
     }
   };
 
   useEffect(() => {
     refreshProducts();
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-  }, [products]);
 
   // Clean wishlistIds so only IDs of currently active, real products remain (defaults to 0 if no real products were liked)
   useEffect(() => {
@@ -227,11 +232,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     // 2. Chỉ khi Database trả về thành công mới cập nhật giao diện và bộ nhớ cache
     const finalProduct: Product = createdResult && createdResult.id ? { ...newProduct, ...createdResult } : newProduct;
 
-    setProducts((prev) => {
-      const next = [finalProduct, ...prev.filter((p) => p.id !== finalProduct.id)];
-      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
-      return next;
-    });
+    setProducts((prev) => [finalProduct, ...prev.filter((p) => p.id !== finalProduct.id)]);
 
     return finalProduct;
   };
@@ -246,11 +247,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
 
     // Database thành công mới cập nhật UI
-    setProducts((prev) => {
-      const next = prev.map((p) => (p.id === id ? { ...p, ...data } : p));
-      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
-      return next;
-    });
+    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
   };
 
   const deleteProduct = async (id: string) => {
@@ -263,11 +260,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
 
     // Database thành công mới xóa khỏi UI
-    setProducts((prev) => {
-      const next = prev.filter((p) => p.id !== id);
-      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
-      return next;
-    });
+    setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
   const toggleLike = (productId: string) => {

@@ -16,6 +16,8 @@ import { CATEGORIES } from '../data/initialCategories';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { checkRentalOverlap, formatVND, formatDateVN } from '../utils/helpers';
+import { FEATURES } from '../config/features';
+import { ZaloIcon } from '../components/common/ZaloIcon';
 
 interface RentPageProps {
   onViewProduct: (productId: string) => void;
@@ -100,11 +102,28 @@ export const RentPage: React.FC<RentPageProps> = ({
               Dịch Vụ Cho Thuê Đẳng Cấp
             </span>
             <h1 className="font-serif text-3xl sm:text-4xl font-bold">
-              Thuê Trang Phục Theo Lịch Hẹn
+              {FEATURES.ONLINE_BOOKING ? 'Thuê Trang Phục Theo Lịch Hẹn' : 'Bộ Sưu Tập Trang Phục Cho Thuê'}
             </h1>
             <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
-              Mỗi sản phẩm có bảng giá chi tiết theo ngày, 3 ngày, 7 ngày và minh bạch tiền cọc. Chọn khoảng ngày bạn cần để lọc các mẫu trang phục còn trống lịch ngay tức thì!
+              {FEATURES.ONLINE_BOOKING
+                ? 'Mỗi sản phẩm có bảng giá chi tiết gói 1 ngày, 2 ngày, 3 ngày (chuẩn) và minh bạch tiền cọc. Chọn khoảng ngày bạn cần để lọc các mẫu trang phục còn trống lịch ngay tức thì!'
+                : 'Mỗi mẫu váy có bảng giá thuê chi tiết theo ngày và tiền cọc rõ ràng. Quý khách vui lòng nhắn Zalo hoặc liên hệ Hotline để shop kiểm tra lịch trống và giữ đồ chu đáo nhất!'}
             </p>
+            {!FEATURES.ONLINE_BOOKING && (
+              <div className="pt-2 flex flex-wrap gap-3">
+                <a
+                  href="https://zalo.me/0795623097"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0068FF] to-[#0088FF] text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all"
+                >
+                  <div className="w-4 h-4 bg-white text-[#0068FF] rounded-xs p-0.2 flex items-center justify-center shrink-0">
+                    <ZaloIcon className="w-full h-full fill-[#0068FF]" />
+                  </div>
+                  <span>Nhắn Zalo Thuê Đồ: 0795.623.097</span>
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-15 pointer-events-none hidden md:block">
@@ -112,66 +131,114 @@ export const RentPage: React.FC<RentPageProps> = ({
           </div>
         </div>
 
-        {/* Date Availability Search Bar */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-md mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-              Ngày nhận đồ (Start)
-            </label>
-            <input
-              type="date"
-              value={filterDateStart}
-              min={new Date().toISOString().split('T')[0]}
-              onChange={(e) => setFilterDateStart(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-800 focus:outline-none focus:border-brand-500"
-            />
-          </div>
+        {/* Filter Bar */}
+        {FEATURES.ONLINE_BOOKING ? (
+          /* Date Availability Search Bar (Khi bật đặt online) */
+          <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-md mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+                Ngày nhận đồ (Start)
+              </label>
+              <input
+                type="date"
+                value={filterDateStart}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setFilterDateStart(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-800 focus:outline-none focus:border-brand-500"
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-              Ngày trả đồ (End)
-            </label>
-            <input
-              type="date"
-              value={filterDateEnd}
-              min={filterDateStart || new Date().toISOString().split('T')[0]}
-              onChange={(e) => setFilterDateEnd(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-800 focus:outline-none focus:border-brand-500"
-            />
-          </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+                Ngày trả đồ (End)
+              </label>
+              <input
+                type="date"
+                value={filterDateEnd}
+                min={filterDateStart || new Date().toISOString().split('T')[0]}
+                onChange={(e) => setFilterDateEnd(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono text-gray-800 focus:outline-none focus:border-brand-500"
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-              Danh mục đồ thuê
-            </label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-brand-500"
-            >
-              <option value="all">Tất cả trang phục thuê</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                Danh mục đồ thuê
+              </label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-brand-500"
+              >
+                <option value="all">Tất cả trang phục thuê</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <button
-              onClick={() => {
-                setFilterDateStart('');
-                setFilterDateEnd('');
-                setSelectedCategory('all');
-                setSearch('');
-              }}
-              className="w-full py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-            >
-              Xóa Lọc Lịch Hẹn
-            </button>
+            <div>
+              <button
+                onClick={() => {
+                  setFilterDateStart('');
+                  setFilterDateEnd('');
+                  setSelectedCategory('all');
+                  setSearch('');
+                }}
+                className="w-full py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Xóa Lọc Lịch Hẹn
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Filter Bar đơn giản theo tên & danh mục (Khi tạm ẩn đặt online) */
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-md mb-8 grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-end">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5 text-brand-600" />
+                Tìm kiếm trang phục
+              </label>
+              <input
+                type="text"
+                placeholder="Nhập tên mẫu váy, thương hiệu..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-brand-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                Danh mục đồ thuê
+              </label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-brand-500"
+              >
+                <option value="all">Tất cả trang phục thuê</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <button
+                onClick={() => {
+                  setSelectedCategory('all');
+                  setSearch('');
+                }}
+                className="w-full py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Đặt Lại Bộ Lọc
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Date Filter Confirmation Message */}
         {filterDateStart && filterDateEnd && (
@@ -198,7 +265,7 @@ export const RentPage: React.FC<RentPageProps> = ({
         {/* Rental Products Grid */}
         {rentalProducts.length > 0 ? (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
               {paginatedRentalProducts.map((p) => (
                 <ProductCard
                   key={p.id}

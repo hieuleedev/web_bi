@@ -65,7 +65,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   onOpenChat,
 }) => {
   const { currentUser, updateProfile, changePassword, logout } = useAuth();
-  const { products, deleteProduct, updateProduct, wishlistIds } = useProducts();
+  const { products, deleteProduct, updateProduct, refreshProducts, wishlistIds } = useProducts();
   const { orders, getUserOrders, getSellerOrders, updateOrderStatus, updateOrder, deleteOrder } = useOrders();
   const { showToast } = useToast();
 
@@ -82,9 +82,9 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [productSearch, setProductSearch] = useState('');
   const [productCategory, setProductCategory] = useState('all');
   const [productRentalFilter, setProductRentalFilter] = useState<'all' | 'renting_now' | 'available' | 'hidden' | 'overdue'>('all');
-  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'rent' | 'buy' | 'both'>('rent');
+  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'rent' | 'buy' | 'both'>('all');
   const [productPage, setProductPage] = useState(1);
-  const productsPerPage = 6;
+  const [productsPerPage, setProductsPerPage] = useState(6);
 
   // Modals for Quick Order & Bank Config & Bill Printing & Editing
   const [isQuickOrderOpen, setIsQuickOrderOpen] = useState(false);
@@ -803,10 +803,17 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                 {/* Pricing tags (No floating 0) */}
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
                                   {Boolean(p.rentPrice1Day) && p.rentPrice1Day! > 0 && (
-                                    <span>Giá thuê 1 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice1Day!)}</strong></span>
+                                    <span>Giá 1 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice1Day!)}</strong></span>
                                   )}
-                                  {Boolean(p.rentPrice3Days) && p.rentPrice3Days! > 0 && (
-                                    <span>Giá thuê 3 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice3Days!)}</strong></span>
+                                  {(Boolean(p.rentPrice2Days) || Boolean(p.rentPrice3Days) || Boolean(p.rentPrice7Days)) && (
+                                    <span>Giá 2 ngày: <strong className="text-brand-700 font-semibold">{formatVND(
+                                      (p.rentPrice2Days && p.rentPrice2Days > 0 && p.rentPrice2Days < (p.rentPrice3Days || p.rentPrice7Days || Infinity))
+                                        ? p.rentPrice2Days
+                                        : Math.round((((p.rentPrice1Day || 0) + (p.rentPrice3Days || p.rentPrice7Days || 0)) / 2) / 1000) * 1000
+                                    )}</strong></span>
+                                  )}
+                                  {(Boolean(p.rentPrice3Days) || Boolean(p.rentPrice7Days)) && (
+                                    <span>Giá 3 ngày: <strong className="text-brand-700 font-semibold">{formatVND(p.rentPrice3Days || p.rentPrice7Days || 0)}</strong></span>
                                   )}
                                   {Boolean(p.buyPrice) && p.buyPrice! > 0 && (
                                     <span>Giá bán: <strong className="text-gray-900 font-semibold">{formatVND(p.buyPrice!)}</strong></span>
@@ -913,19 +920,46 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     </div>
                   )}
 
-                  {/* Pagination */}
-                  {totalProductPages > 1 && (
-                    <div className="pt-4 border-t border-gray-100">
+                  {/* Pagination & Page size selector */}
+                  <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <span>Hiển thị mỗi trang:</span>
+                      <select
+                        value={productsPerPage}
+                        onChange={(e) => {
+                          setProductsPerPage(Number(e.target.value));
+                          setProductPage(1);
+                        }}
+                        className="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer"
+                      >
+                        <option value={6}>6 mẫu</option>
+                        <option value={12}>12 mẫu</option>
+                        <option value={24}>24 mẫu</option>
+                        <option value={48}>48 mẫu</option>
+                      </select>
+                      <span className="text-gray-400">
+                        (Tổng: {filteredMyProducts.length} mẫu váy)
+                      </span>
+                    </div>
+
+                    {totalProductPages > 1 ? (
                       <Pagination
                         currentPage={productPage}
                         totalPages={totalProductPages}
+                        totalItems={filteredMyProducts.length}
+                        pageSize={productsPerPage}
+                        itemsName="mẫu váy"
                         onPageChange={(p) => {
                           setProductPage(p);
                           window.scrollTo({ top: 300, behavior: 'smooth' });
                         }}
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="text-xs text-gray-400 italic">
+                        Đang hiển thị toàn bộ {filteredMyProducts.length} mẫu trên 1 trang
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })()}
@@ -1602,6 +1636,10 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           isOpen={!!editingProduct}
           product={editingProduct}
           onClose={() => setEditingProduct(null)}
+          onSaved={() => {
+            setEditingProduct(null);
+            refreshProducts();
+          }}
         />
       )}
 
