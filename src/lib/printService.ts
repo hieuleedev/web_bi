@@ -10,7 +10,13 @@ export interface PrintItem {
   qty: number;
   price: number;
   total: number;
+  mode?: string;
+  size?: string;
+  color?: string;
   rentalDates?: string;
+  extraDays?: number;
+  extraDayFee?: number;
+  accessories?: string[];
   note?: string;
 }
 
@@ -23,24 +29,34 @@ export interface PrintPayload {
   paperWidth?: number;
   paperSize?: '58' | '80';
   storeName?: string;
+  storeSub?: string;
   storeAddress?: string;
   storePhone?: string;
   orderId?: string;
   customerName?: string;
   customerPhone?: string;
+  shippingAddress?: string;
+  deliveryMethod?: string;
   staffName?: string;
   createdAt?: string;
   printedAt?: string;
   items: PrintItem[];
   subtotal?: number;
   depositTotal?: number;
+  depositMethod?: string;
+  shippingFee?: number;
   discount?: number;
   total: number;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  cashAmount?: number;
+  transferAmount?: number;
   note?: string;
   openDrawer?: boolean;
   enableBankQr?: boolean;
   bankName?: string;
   bankAccount?: string;
+  bankAccountName?: string;
 }
 
 /** Kiểm tra print server có đang chạy không */
@@ -109,44 +125,58 @@ export function orderToPrintPayload(order: Order, printerName?: string): PrintPa
   const items: PrintItem[] = order.items.map((item) => {
     let rentalDates = '';
     if (item.rentalStartDate && item.rentalEndDate) {
-      const fmt = (d: string) => new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-      rentalDates = `${fmt(item.rentalStartDate)} - ${fmt(item.rentalEndDate)} (${item.rentalDays ?? 1} ngày)`;
+      const fmt = (d: string) => new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      rentalDates = `${fmt(item.rentalStartDate)} → ${fmt(item.rentalEndDate)} (${item.rentalDays ?? 1} ngày)`;
     }
 
     const note = [
-      item.size ? `Size ${item.size}` : '',
-      item.color ? `Màu ${item.color}` : '',
-    ].filter(Boolean).join(', ');
+      item.size ? `Size: ${item.size}` : '',
+      item.color ? `Màu: ${item.color}` : '',
+    ].filter(Boolean).join(' • ');
 
     return {
       name: item.productTitle,
       qty: item.quantity,
       price: item.price,
       total: item.price * item.quantity,
+      mode: item.mode,
+      size: item.size,
+      color: item.color,
       rentalDates,
+      extraDays: item.extraDays,
+      extraDayFee: item.extraDayFee,
+      accessories: item.accessories,
       note,
     };
   });
 
-  const createdAt = new Date(order.createdAt).toLocaleString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
+  const createdAt = `${new Date(order.createdAt).toLocaleDateString('vi-VN')} ${new Date(order.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
   return {
     printerShareName: printerName || localStorage.getItem('bibi_printer_name') || 'POS-80',
     paperSize: '80',
     paperWidth: 48,
-    useGDI: true,
+    storeName: 'BI BI - CHO THUÊ ĐỒ ĐI TIỆC',
+    storeSub: 'Núi Thành',
+    storeAddress: 'Khối 1 – Xã Núi Thành – TP. Đà Nẵng',
+    storePhone: '0795.623.097',
     orderId: order.code || order.id,
     customerName: order.customerName,
     customerPhone: order.customerPhone,
+    shippingAddress: order.shippingAddress || 'Nhận trực tiếp tại tiệm',
+    deliveryMethod: order.deliveryMethod === 'pickup' ? 'Lấy tại tiệm' : 'Giao tận nơi',
     createdAt,
     items,
     subtotal: order.subtotal,
     depositTotal: order.depositTotal,
+    depositMethod: order.depositMethod,
+    shippingFee: order.shippingFee || 0,
     discount: 0,
     total: order.totalAmount,
+    paymentStatus: order.paymentStatus === 'paid' ? 'ĐÃ THANH TOÁN' : 'CHƯA THANH TOÁN',
+    paymentMethod: order.paymentMethod,
+    cashAmount: order.cashAmount,
+    transferAmount: order.transferAmount,
     note: order.notes,
   };
 }
