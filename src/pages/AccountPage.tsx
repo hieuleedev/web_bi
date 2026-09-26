@@ -1851,17 +1851,20 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       )}
 
       {/* Modal Tạo đơn hàng nhanh tại quầy (POS) */}
-      <QuickCreateOrderModal
-        isOpen={isQuickOrderOpen}
-        initialProductId={quickOrderInitialProdId}
-        onClose={() => {
-          setIsQuickOrderOpen(false);
-          setQuickOrderInitialProdId(undefined);
-        }}
-        onOrderCreated={(createdOrder) => {
-          setInvoiceOrder(createdOrder);
-        }}
-      />
+      {isQuickOrderOpen && (
+        <QuickCreateOrderModal
+          key={quickOrderInitialProdId || 'quick-order-new'}
+          isOpen={isQuickOrderOpen}
+          initialProductId={quickOrderInitialProdId}
+          onClose={() => {
+            setIsQuickOrderOpen(false);
+            setQuickOrderInitialProdId(undefined);
+          }}
+          onOrderCreated={(createdOrder) => {
+            setInvoiceOrder(createdOrder);
+          }}
+        />
+      )}
 
       {/* Modal Cấu hình STK Ngân Hàng VietQR In Bill */}
       <BankConfigModal

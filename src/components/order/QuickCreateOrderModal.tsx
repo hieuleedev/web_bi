@@ -114,6 +114,13 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const [cashAmount, setCashAmount] = useState<number>(0);
   const [transferAmount, setTransferAmount] = useState<number>(0);
 
+  // Khi mở modal hoặc khi initialProductId thay đổi, đồng bộ ngay sản phẩm được chọn
+  React.useEffect(() => {
+    if (initialProductId) {
+      setSelectedProductId(initialProductId);
+    }
+  }, [initialProductId, isOpen]);
+
   // When selected product changes, reset defaults
   React.useEffect(() => {
     if (selectedProduct) {
