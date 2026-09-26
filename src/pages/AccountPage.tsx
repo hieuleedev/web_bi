@@ -48,6 +48,7 @@ import { QuickCreateOrderModal } from '../components/order/QuickCreateOrderModal
 import { BankConfigModal } from '../components/admin/BankConfigModal';
 import { OrderInvoiceModal } from '../components/order/OrderInvoiceModal';
 import { EditOrderModal } from '../components/order/EditOrderModal';
+import { PrintReceiptButton } from '../components/order/PrintReceiptButton';
 import { EditProductModal } from '../components/product/EditProductModal';
 import { SellerRevenueTab } from '../components/seller/SellerRevenueTab';
 
