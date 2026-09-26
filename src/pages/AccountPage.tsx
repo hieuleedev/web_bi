@@ -1166,35 +1166,30 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
                   <button
                     onClick={() => setSellerOrderFilter('rented')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
                       sellerOrderFilter === 'rented'
                         ? 'bg-brand-600 text-white shadow-xs'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    Đang cho thuê ({sellerOrders.filter((o) => o.status === 'rented').length})
-                  </button>
-
-                  <button
-                    onClick={() => setSellerOrderFilter('pending')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      sellerOrderFilter === 'pending'
-                        ? 'bg-amber-600 text-white shadow-xs'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Chờ xác nhận ({sellerOrders.filter((o) => o.status === 'pending').length})
+                    <span>👗 Đang cho thuê</span>
+                    <span className="font-mono text-[10px] bg-black/10 px-1.5 py-0.2 rounded-full">
+                      {sellerOrders.filter((o) => o.status === 'rented').length}
+                    </span>
                   </button>
 
                   <button
                     onClick={() => setSellerOrderFilter('completed')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
                       sellerOrderFilter === 'completed'
                         ? 'bg-emerald-600 text-white shadow-xs'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    Đã trả / Hoàn tất ({sellerOrders.filter((o) => ['returned', 'completed'].includes(o.status)).length})
+                    <span>✓ Lịch sử đã trả đồ</span>
+                    <span className="font-mono text-[10px] bg-black/10 px-1.5 py-0.2 rounded-full">
+                      {sellerOrders.filter((o) => ['returned', 'completed'].includes(o.status)).length}
+                    </span>
                   </button>
                 </div>
 
@@ -1202,7 +1197,6 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   const filteredSellerOrders = sellerOrders.filter((order) => {
                     if (sellerOrderFilter === 'overdue') return isOrderOverdue(order);
                     if (sellerOrderFilter === 'rented') return order.status === 'rented';
-                    if (sellerOrderFilter === 'pending') return order.status === 'pending';
                     if (sellerOrderFilter === 'completed') return ['returned', 'completed'].includes(order.status);
                     return true;
                   });
@@ -1343,28 +1337,37 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                             </div>
 
                             <div className="flex justify-between items-center pt-2 border-t border-gray-200/60 text-xs">
+                              {/* Dropdown 2 trạng thái: Đang cho thuê vs Đã nhận lại đồ & hoàn cọc */}
                               <div className="flex items-center gap-2">
-                                <span className="text-gray-500">Đổi trạng thái:</span>
+                                <span className="text-gray-500 font-medium">Trạng thái:</span>
                                 <select
-                                  value={order.status}
+                                  value={order.status === 'completed' || order.status === 'returned' ? 'completed' : 'rented'}
                                   onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
-                                  className={`border rounded-lg px-2.5 py-1 text-xs font-medium focus:ring-1 focus:ring-brand-500 ${
-                                    isOverdue ? 'bg-rose-50 border-rose-300 text-rose-900 font-bold' : 'bg-white border-gray-200 text-gray-800'
+                                  className={`border rounded-xl px-3 py-1.5 text-xs font-bold transition-all shadow-2xs ${
+                                    order.status === 'completed' || order.status === 'returned'
+                                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                                      : isOverdue
+                                      ? 'bg-rose-50 border-rose-300 text-rose-900 animate-pulse'
+                                      : 'bg-amber-50 border-amber-300 text-amber-900'
                                   }`}
                                 >
-                                  <option value="pending">Chờ xác nhận</option>
-                                  <option value="preparing">Đang chuẩn bị</option>
-                                  <option value="shipping">Đang giao</option>
-                                  <option value="rented">Đang cho thuê</option>
-                                  <option value="returned">Đã nhận lại đồ</option>
-                                  <option value="completed">Đã hoàn cọc / Hoàn thành</option>
-                                  <option value="cancelled">Đã hủy đơn</option>
+                                  <option value="rented">👗 Đang cho thuê</option>
+                                  <option value="completed">✓ Đã nhận lại đồ & hoàn cọc</option>
                                 </select>
                               </div>
 
                               <div className="text-right">
-                                <span className="text-gray-400 text-[10px] block">Tổng thanh toán</span>
-                                <span className="font-bold text-sm text-brand-600">{formatVND(order.totalAmount)}</span>
+                                <span className="text-gray-400 text-[10px] block">Doanh thu thuê (không gồm cọc)</span>
+                                <span className="font-bold text-sm text-brand-600 font-mono">
+                                  {formatVND(Math.max(0, (order.totalAmount || 0) - (order.depositTotal || 0)))}
+                                </span>
+                                {order.depositTotal > 0 && (
+                                  <span className="text-[10px] text-amber-700 block font-medium">
+                                    {order.status === 'completed' || order.status === 'returned'
+                                      ? `(Đã hoàn cọc ${formatVND(order.depositTotal)})`
+                                      : `(Cọc đang giữ: ${formatVND(order.depositTotal)})`}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>

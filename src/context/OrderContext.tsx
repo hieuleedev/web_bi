@@ -232,15 +232,26 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
     try {
-      await api.orders.updateStatus(orderId, { status });
+      const isReturnedOrCompleted = status === 'completed' || status === 'returned';
+      const depositStatus = isReturnedOrCompleted ? 'refunded' : undefined;
+      await api.orders.updateStatus(orderId, { status, ...(depositStatus ? { depositStatus } : {}) });
       setOrders((prev) =>
         prev.map((o) =>
           o.id === orderId
-            ? { ...o, status, updatedAt: new Date().toISOString() }
+            ? { 
+                ...o, 
+                status, 
+                ...(depositStatus ? { depositStatus: 'refunded' as any } : {}),
+                updatedAt: new Date().toISOString() 
+              }
             : o
         )
       );
-      showToast(`Đã cập nhật trạng thái đơn hàng sang "${status}"`, 'info');
+      if (isReturnedOrCompleted) {
+        showToast('Đã nhận lại đồ & hoàn cọc cho khách! Đơn đã lưu vào lịch sử hoàn tất.', 'success');
+      } else {
+        showToast('Đã cập nhật trạng thái sang "Đang cho thuê"', 'info');
+      }
     } catch (e: any) {
       console.error('Lỗi cập nhật trạng thái đơn hàng lên Backend:', e);
       showToast(e.message || 'Không thể cập nhật trạng thái đơn hàng trên máy chủ!', 'error');

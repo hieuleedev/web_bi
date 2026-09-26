@@ -70,13 +70,14 @@ export const SellerRevenueTab: React.FC<SellerRevenueTabProps> = ({ orders }) =>
 
       list.forEach(o => {
         const isPaid = o.paymentStatus === 'paid';
-        const amt = o.totalAmount || 0;
-        revenue += amt;
+        // DOANH THU THỰC: Tiền thuê + Tiền mua (TRỪ TIỀN CỌC vì cọc phải hoàn lại cho khách khi trả đồ)
+        const orderRevenue = Math.max(0, (o.totalAmount || 0) - (o.depositTotal || 0));
+        revenue += orderRevenue;
         if (isPaid) {
-          paidRevenue += amt;
+          paidRevenue += orderRevenue;
           paidCount++;
         } else {
-          unpaidRevenue += amt;
+          unpaidRevenue += orderRevenue;
           unpaidCount++;
         }
         depositTotal += (o.depositTotal || 0);
@@ -134,8 +135,13 @@ export const SellerRevenueTab: React.FC<SellerRevenueTabProps> = ({ orders }) =>
       d.setDate(d.getDate() + i);
       const dStr = d.toISOString().split('T')[0];
       const dayOrders = validOrders.filter(o => (o.createdAt || '').startsWith(dStr));
-      const amount = dayOrders.reduce((sum, o) => sum + (o.paymentStatus === 'paid' ? (o.totalAmount || 0) : 0), 0);
-      const totalAmt = dayOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      const amount = dayOrders.reduce((sum, o) => {
+        if (o.paymentStatus === 'paid') {
+          return sum + Math.max(0, (o.totalAmount || 0) - (o.depositTotal || 0));
+        }
+        return sum;
+      }, 0);
+      const totalAmt = dayOrders.reduce((sum, o) => sum + Math.max(0, (o.totalAmount || 0) - (o.depositTotal || 0)), 0);
       days.push({
         label: i === 6 ? 'CN' : 'T' + (i + 2),
         dateStr: dStr,
@@ -422,7 +428,7 @@ export const SellerRevenueTab: React.FC<SellerRevenueTabProps> = ({ orders }) =>
                   <th className="py-3 px-3">Sản Phẩm</th>
                   <th className="py-3 px-3">Ngày Tạo</th>
                   <th className="py-3 px-3 text-center">Thanh Toán</th>
-                  <th className="py-3 px-3 text-right">Tổng Tiền</th>
+                  <th className="py-3 px-3 text-right">Doanh Thu Thuê</th>
                   <th className="py-3 px-3 text-center rounded-r-xl">Thao Tác</th>
                 </tr>
               </thead>
@@ -430,6 +436,7 @@ export const SellerRevenueTab: React.FC<SellerRevenueTabProps> = ({ orders }) =>
                 {displayedOrders.map(order => {
                   const isPaid = order.paymentStatus === 'paid';
                   const isUpdating = updatingOrderId === order.id;
+                  const netRevenue = Math.max(0, (order.totalAmount || 0) - (order.depositTotal || 0));
 
                   return (
                     <tr key={order.id} className="hover:bg-gray-50/80 transition-colors">
@@ -459,8 +466,15 @@ export const SellerRevenueTab: React.FC<SellerRevenueTabProps> = ({ orders }) =>
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-right font-bold text-brand-600 font-mono">
-                        {formatVND(order.totalAmount)}
+                      <td className="py-3 px-3 text-right font-mono">
+                        <div className="font-bold text-brand-600 text-xs">
+                          {formatVND(netRevenue)}
+                        </div>
+                        {order.depositTotal > 0 && (
+                          <div className="text-[10px] text-gray-400">
+                            (Đã trừ cọc {formatVND(order.depositTotal)})
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-center">
                         {!isPaid && (
