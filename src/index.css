@@ -58,3 +58,51 @@
 .animate-bounce-slow {
   animation: bounceSlow 3s ease-in-out infinite;
 }
+
+/* ================= POS RECEIPT PRINT STYLES ================= */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 80mm !important;
+  }
+
+  /* Ẩn toàn bộ giao diện website khi in */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Chỉ hiển thị duy nhất phiếu hóa đơn POS */
+  .pos-bill,
+  .pos-bill * {
+    visibility: visible !important;
+  }
+
+  .pos-bill {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 !important;
+    padding: 4mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .pos-bill img {
+    display: block !important;
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

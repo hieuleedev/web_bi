@@ -67,6 +67,21 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
     }
   };
 
+async function fetchImageAsBase64(url: string): Promise<string | undefined> {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(undefined);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return undefined;
+  }
+}
+
   // In trực tiếp qua Local Print Server (API localhost:8080)
   const handlePrintLocalAPI = async () => {
     if (isPrinting) return;
@@ -85,13 +100,12 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
       return;
     }
 
-    const payload = orderToPrintPayload(currentOrder);
-    if (hasBank) {
-      payload.enableBankQr = true;
-      payload.bankName = bankConfig.bankId;
-      payload.bankAccount = bankConfig.accountNo;
+    let qrBase64: string | undefined;
+    if (qrUrl) {
+      qrBase64 = await fetchImageAsBase64(qrUrl);
     }
 
+    const payload = orderToPrintPayload(currentOrder, undefined, qrUrl, qrBase64);
     const res = await printReceipt(payload);
     setIsPrinting(false);
     setPrintStatus({ ok: res.success, msg: res.message });
@@ -107,12 +121,12 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 print:p-0 print:bg-white print:static print:overflow-visible print:block">
       {/* Backdrop */}
-      <div className="fixed inset-0" onClick={onClose} />
+      <div className="fixed inset-0 print:hidden" onClick={onClose} />
 
       {/* POS Receipt Modal Container */}
-      <div className="relative bg-white rounded-3xl shadow-2xl max-w-[460px] w-full p-4 sm:p-6 my-6 z-10 border border-gray-100 max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:m-0 print:p-0 print:w-[80mm] print:max-w-[80mm]">
+      <div className="pos-bill-container relative bg-white rounded-3xl shadow-2xl max-w-[460px] w-full p-4 sm:p-6 my-6 z-10 border border-gray-100 max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:m-0 print:p-0 print:w-[80mm] print:max-w-[80mm] print:overflow-visible print:static">
         
         {/* Modal Controls (Hidden when printing) */}
         <div className="pb-3 mb-3 border-b border-gray-100 print:hidden space-y-2.5">
@@ -359,11 +373,12 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
               <p className="text-[10px] font-bold uppercase text-gray-700">
                 Quét QR Chuyển Khoản Nhanh
               </p>
-              <div className="w-28 h-28 mx-auto bg-white p-1 border border-gray-300 rounded-lg flex items-center justify-center">
+              <div className="w-28 h-28 mx-auto bg-white p-1 border border-gray-300 rounded-lg flex items-center justify-center print:w-[40mm] print:h-[40mm]">
                 <img
                   src={qrUrl}
                   alt="VietQR"
-                  className="w-full h-full object-contain"
+                  crossOrigin="anonymous"
+                  className="w-full h-full object-contain print:w-full print:h-full block"
                 />
               </div>
               <div className="text-xs font-bold text-gray-950">

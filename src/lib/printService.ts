@@ -57,6 +57,8 @@ export interface PrintPayload {
   bankName?: string;
   bankAccount?: string;
   bankAccountName?: string;
+  qrUrl?: string;
+  qrBase64?: string;
 }
 
 /** Kiểm tra print server có đang chạy không */
@@ -120,8 +122,14 @@ export async function printReceipt(payload: PrintPayload): Promise<{ success: bo
 
 /** Build PrintPayload từ Order object */
 import type { Order } from '../types';
+import { getActiveBankConfig, generateVietQrUrl } from '../utils/vietqr';
 
-export function orderToPrintPayload(order: Order, printerName?: string): PrintPayload {
+export function orderToPrintPayload(
+  order: Order,
+  printerName?: string,
+  customQrUrl?: string,
+  customQrBase64?: string
+): PrintPayload {
   const items: PrintItem[] = order.items.map((item) => {
     let rentalDates = '';
     if (item.rentalStartDate && item.rentalEndDate) {
@@ -152,6 +160,18 @@ export function orderToPrintPayload(order: Order, printerName?: string): PrintPa
 
   const createdAt = `${new Date(order.createdAt).toLocaleDateString('vi-VN')} ${new Date(order.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
+  const bankConfig = getActiveBankConfig();
+  const hasBank = Boolean(bankConfig.accountNo && bankConfig.accountNo.trim());
+  const billAmount = (order.transferAmount && order.transferAmount > 0) ? order.transferAmount : order.totalAmount;
+  const qrUrl = customQrUrl || (hasBank ? generateVietQrUrl({
+    amount: billAmount,
+    orderCode: order.code || order.id,
+    bankId: bankConfig.bankId,
+    accountNo: bankConfig.accountNo,
+    accountName: bankConfig.accountName,
+    template: 'qr_only'
+  }) : '');
+
   return {
     printerShareName: printerName || localStorage.getItem('bibi_printer_name') || 'POS-80',
     paperSize: '80',
@@ -178,5 +198,11 @@ export function orderToPrintPayload(order: Order, printerName?: string): PrintPa
     cashAmount: order.cashAmount,
     transferAmount: order.transferAmount,
     note: order.notes,
+    enableBankQr: hasBank,
+    bankName: bankConfig.bankId,
+    bankAccount: bankConfig.accountNo,
+    bankAccountName: bankConfig.accountName,
+    qrUrl,
+    qrBase64: customQrBase64,
   };
 }
