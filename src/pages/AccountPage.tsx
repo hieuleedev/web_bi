@@ -1236,13 +1236,17 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                   <Edit3 className="w-3 h-3 text-amber-600" />
                                   <span>Sửa đơn</span>
                                 </button>
+                                {/* Nút in nhanh bắn thẳng API máy in POS */}
+                                <PrintReceiptButton order={order} size="sm" />
+
+                                {/* Nút xem chi tiết bill */}
                                 <button
                                   onClick={() => setInvoiceOrder(order)}
-                                  className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold text-[11px] hover:bg-indigo-100 flex items-center gap-1 transition-colors shadow-2xs"
-                                  title="In hóa đơn POS nhiệt 80mm"
+                                  className="px-2.5 py-1 rounded-lg bg-gray-50 text-gray-700 border border-gray-200 font-semibold text-[11px] hover:bg-gray-100 flex items-center gap-1 transition-colors shadow-2xs"
+                                  title="Xem trước hóa đơn POS"
                                 >
-                                  <Printer className="w-3 h-3 text-indigo-600" />
-                                  <span>In bill POS</span>
+                                  <Eye className="w-3 h-3 text-gray-500" />
+                                  <span>Xem bill</span>
                                 </button>
                                 <a
                                   href={`tel:${order.customerPhone}`}

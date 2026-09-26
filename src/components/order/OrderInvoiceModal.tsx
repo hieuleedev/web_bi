@@ -1,8 +1,9 @@
-import React from 'react';
-import { Printer, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Printer, X, Loader2, CheckCircle, AlertTriangle, Monitor } from 'lucide-react';
 import { Order } from '../../types';
 import { formatVND, formatDateVN } from '../../utils/helpers';
 import { generateVietQrUrl, getActiveBankConfig } from '../../utils/vietqr';
+import { checkPrintServer, printReceipt, orderToPrintPayload } from '../../lib/printService';
 
 interface OrderInvoiceModalProps {
   order: Order | null;
@@ -17,8 +18,16 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
 }) => {
   if (!isOpen || !order) return null;
 
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printStatus, setPrintStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+
   const bankConfig = getActiveBankConfig();
   const hasBank = Boolean(bankConfig.accountNo && bankConfig.accountNo.trim());
+
+  useEffect(() => {
+    checkPrintServer().then(setServerOnline);
+  }, []);
 
   const qrUrl = order.vietqrUrl || (hasBank ? generateVietQrUrl({
     amount: order.totalAmount,
@@ -29,7 +38,42 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
     template: 'qr_only'
   }) : '');
 
-  const handlePrint = () => {
+  // In trực tiếp qua Local Print Server (API localhost:8080)
+  const handlePrintLocalAPI = async () => {
+    if (isPrinting) return;
+    setIsPrinting(true);
+    setPrintStatus(null);
+
+    const isOnline = await checkPrintServer();
+    setServerOnline(isOnline);
+
+    if (!isOnline) {
+      setIsPrinting(false);
+      setPrintStatus({
+        ok: false,
+        msg: 'Server in chưa mở! Hãy mở BiBI_PrintServer.exe trên máy tính này để in tự động.'
+      });
+      return;
+    }
+
+    const payload = orderToPrintPayload(order);
+    if (hasBank) {
+      payload.enableBankQr = true;
+      payload.bankName = bankConfig.bankId;
+      payload.bankAccount = bankConfig.accountNo;
+    }
+
+    const res = await printReceipt(payload);
+    setIsPrinting(false);
+    setPrintStatus({ ok: res.success, msg: res.message });
+
+    if (res.success) {
+      setTimeout(() => setPrintStatus(null), 4000);
+    }
+  };
+
+  // Dự phòng: in qua cửa sổ trình duyệt nếu máy in không có server
+  const handleBrowserPrint = () => {
     window.print();
   };
 
@@ -42,28 +86,58 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
       <div className="relative bg-white rounded-3xl shadow-2xl max-w-[420px] w-full p-4 sm:p-6 my-6 z-10 border border-gray-100 max-h-[95vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:m-0 print:p-0 print:w-[80mm] print:max-w-[80mm]">
         
         {/* Modal Controls (Hidden when printing) */}
-        <div className="flex justify-between items-center pb-3 mb-3 border-b border-gray-100 print:hidden">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-gray-800">Hóa Đơn Máy POS (Khổ 80mm)</span>
+        <div className="pb-3 mb-3 border-b border-gray-100 print:hidden space-y-2">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${serverOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+              <span className="text-xs font-bold text-gray-800">
+                Hóa Đơn Máy POS {serverOnline ? '(Server sẵn sàng)' : '(Server Offline)'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {/* Nút in gọi trực tiếp API local print server */}
+              <button
+                onClick={handlePrintLocalAPI}
+                disabled={isPrinting}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all disabled:opacity-60"
+                title="Bắn lệnh in trực tiếp ra máy in nhiệt (không mở hộp thoại)"
+              >
+                {isPrinting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Printer className="w-3.5 h-3.5" />
+                )}
+                <span>{isPrinting ? 'Đang gửi...' : 'In Máy In POS'}</span>
+              </button>
+
+              {/* Nút dự phòng in trình duyệt */}
+              <button
+                onClick={handleBrowserPrint}
+                className="p-1.5 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                title="In qua hộp thoại trình duyệt (Ctrl + P)"
+              >
+                <Monitor className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold shadow-md transition-all"
-              title="In hóa đơn ra máy POS nhiệt"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>In Máy POS</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Thông báo trạng thái in */}
+          {printStatus && (
+            <div className={`p-2 rounded-xl text-xs flex items-center gap-2 ${
+              printStatus.ok ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-900 border border-amber-200'
+            }`}>
+              {printStatus.ok ? <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />}
+              <span className="flex-1">{printStatus.msg}</span>
+            </div>
+          )}
         </div>
 
         {/* ================= POS RECEIPT AREA (KHỔ NHIỆT 80MM) ================= */}

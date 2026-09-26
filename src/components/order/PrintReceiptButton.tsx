@@ -71,7 +71,7 @@ export const PrintReceiptButton: React.FC<Props> = ({ order, className = '', siz
         title={
           serverStatus === 'offline'
             ? 'Máy in offline - mở BiBI_PrintServer.exe'
-            : 'In hóa đơn'
+            : 'In trực tiếp ra máy in POS (qua API)'
         }
         className={`${btnClass} ${colorClass} disabled:opacity-60 disabled:cursor-not-allowed`}
       >
@@ -82,7 +82,7 @@ export const PrintReceiptButton: React.FC<Props> = ({ order, className = '', siz
         ) : (
           <Printer size={iconSize} />
         )}
-        <span>{printing ? 'Đang in...' : 'In hóa đơn'}</span>
+        <span>{printing ? 'Đang in...' : 'In bill POS'}</span>
         {/* Chấm trạng thái server */}
         {serverStatus !== 'unknown' && (
           <span
