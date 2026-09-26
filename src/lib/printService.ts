@@ -90,8 +90,8 @@ export async function printReceipt(payload: PrintPayload): Promise<{ success: bo
   try {
     const body = {
       ...payload,
-      storeName: payload.storeName || 'BI BI BOUTIQUE - CHO THUE DO',
-      storePhone: payload.storePhone || '0795623097',
+      storeName: payload.storeName || 'BI BI - CHO THUÊ ĐỒ',
+      storePhone: payload.storePhone || '0795.623.097',
       printedAt: new Date().toLocaleString('vi-VN'),
       useGDI: payload.useGDI ?? true,
       paperWidth: payload.paperWidth ?? 32,
