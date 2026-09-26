@@ -134,7 +134,9 @@ export function orderToPrintPayload(order: Order, printerName?: string): PrintPa
   });
 
   return {
-    printerShareName: printerName || localStorage.getItem('bibi_printer_name') || 'POS-58',
+    printerShareName: printerName || localStorage.getItem('bibi_printer_name') || 'POS-80',
+    paperSize: '80',
+    paperWidth: 48,
     useGDI: true,
     orderId: order.code || order.id,
     customerName: order.customerName,
