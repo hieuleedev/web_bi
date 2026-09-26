@@ -172,17 +172,23 @@ export const api = {
     },
 
     updateStatus: async (id: string, statusData: { status?: string; depositStatus?: string; paymentStatus?: string }) => {
+      const payload: any = { ...statusData };
+      if (payload.status === 'rented') payload.status = 'renting';
+      if (payload.status === 'preparing') payload.status = 'confirmed';
       const res = await request<{ success: boolean; message: string; data: any }>(`/orders/${id}/status`, {
         method: 'PATCH',
-        body: JSON.stringify(statusData)
+        body: JSON.stringify(payload)
       });
       return res.data;
     },
 
     update: async (id: string, orderData: any) => {
+      const payload: any = { ...orderData };
+      if (payload.status === 'rented') payload.status = 'renting';
+      if (payload.status === 'preparing') payload.status = 'confirmed';
       const res = await request<{ success: boolean; message: string; data: any }>(`/orders/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(orderData)
+        body: JSON.stringify(payload)
       });
       return res.data;
     },
