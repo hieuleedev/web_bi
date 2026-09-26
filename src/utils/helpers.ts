@@ -141,7 +141,7 @@ export function checkRentalOverlap(
   const e = newEnd.split('T')[0];
 
   for (const booking of existingBookings) {
-    if (booking.status === 'cancelled') continue;
+    if (booking.status === 'cancelled' || booking.status === 'completed' || booking.status === 'returned') continue;
     if (excludeBookingId && booking.id === excludeBookingId) continue;
     if (!booking.startDate || !booking.endDate) continue;
 

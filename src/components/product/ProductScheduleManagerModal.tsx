@@ -65,7 +65,7 @@ export const ProductScheduleManagerModal: React.FC<ProductScheduleManagerModalPr
     const targetTime = new Date(targetDateStr).getTime();
 
     return (product.bookedDates || []).find((b) => {
-      if (b.status === 'cancelled') return false;
+      if (b.status === 'cancelled' || b.status === 'completed' || b.status === 'returned') return false;
       const startTime = new Date(b.startDate).getTime();
       const endTime = new Date(b.endDate).getTime();
       return targetTime >= startTime && targetTime <= endTime;
@@ -357,32 +357,51 @@ export const ProductScheduleManagerModal: React.FC<ProductScheduleManagerModalPr
             {/* List */}
             {product.bookedDates && product.bookedDates.length > 0 ? (
               <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden bg-white">
-                {product.bookedDates.map((b) => (
-                  <div key={b.id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
-                        <Lock className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <span className="font-semibold text-xs text-gray-900 block">
-                          {b.renterName || 'Khách đặt qua web'}
-                        </span>
-                        <span className="text-[11px] text-gray-500 font-mono">
-                          {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)} ({calculateRentalDays(b.startDate, b.endDate)} ngày)
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleRemoveBooking(b.id, b.renterName)}
-                      className="px-3 py-1.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold flex items-center gap-1 transition-colors"
-                      title="Mở lại khoảng ngày này"
+                {product.bookedDates.map((b) => {
+                  const isCompleted = b.status === 'completed' || b.status === 'returned';
+                  return (
+                    <div
+                      key={b.id}
+                      className={`p-3.5 flex items-center justify-between gap-3 transition-colors ${
+                        isCompleted ? 'bg-emerald-50/40 opacity-80' : 'hover:bg-gray-50'
+                      }`}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Hủy khóa</span>
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                            isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                          }`}
+                        >
+                          {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-xs text-gray-900 block">
+                              {b.renterName || 'Khách đặt qua web'}
+                            </span>
+                            {isCompleted && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                Đã trả đồ - Đã mở lịch
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-gray-500 font-mono">
+                            {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)} ({calculateRentalDays(b.startDate, b.endDate)} ngày)
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleRemoveBooking(b.id, b.renterName)}
+                        className="px-3 py-1.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold flex items-center gap-1 transition-colors"
+                        title="Xóa bản ghi lịch này"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Hủy khóa</span>
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="p-6 text-center text-xs text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">

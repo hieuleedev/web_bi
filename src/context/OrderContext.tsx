@@ -49,7 +49,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   });
 
   const { cartItems, subtotal, depositTotal, shippingTotal, grandTotal, clearCart } = useCart();
-  const { addRentalBookingToProduct } = useProducts();
+  const { refreshProducts } = useProducts();
   const { showToast } = useToast();
 
   // Sync orders from Backend on mount and Realtime
@@ -177,22 +177,12 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       throw e;
     }
 
-    // Cập nhật trạng thái ngày thuê trên giao diện sản phẩm và Database
-    for (const item of cartItems) {
-      if (item.mode === 'rent' && item.rentalStartDate && item.rentalEndDate) {
-        const bookingId = `book-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
-        try {
-          await addRentalBookingToProduct(item.productId, {
-            id: bookingId,
-            startDate: item.rentalStartDate,
-            endDate: item.rentalEndDate,
-            renterName: params.customerName,
-            status: 'confirmed',
-          });
-        } catch (rentalErr) {
-          console.warn('Lưu lịch thuê tự động thất bại:', rentalErr);
-        }
-      }
+    // Backend đã tự động tạo lịch rental_bookings cho từng sản phẩm thuê.
+    // Làm mới sản phẩm để cập nhật lịch đã đặt:
+    try {
+      await refreshProducts();
+    } catch (e) {
+      console.warn('Làm mới sản phẩm thất bại:', e);
     }
 
     setOrders((prev) => [newOrder, ...prev]);
@@ -252,6 +242,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       } else {
         showToast('Đã cập nhật trạng thái sang "Đang cho thuê"', 'info');
       }
+      refreshProducts();
     } catch (e: any) {
       console.error('Lỗi cập nhật trạng thái đơn hàng lên Backend:', e);
       showToast(e.message || 'Không thể cập nhật trạng thái đơn hàng trên máy chủ!', 'error');

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   X,
   Search,
@@ -46,9 +46,15 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   onOrderCreated,
   initialProductId,
 }) => {
-  const { products, addRentalBookingToProduct } = useProducts();
+  const { products, refreshProducts } = useProducts();
   const { addDirectOrder, orders } = useOrders();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    if (isOpen) {
+      refreshProducts();
+    }
+  }, [isOpen]);
 
   const activeBank = getActiveBankConfig();
 
@@ -379,17 +385,11 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
     };
 
     try {
-      // 1. Lưu vào OrderContext & Database orders
+      // 1. Lưu vào OrderContext & Database orders (Backend sẽ tự động tạo rental_bookings)
       await addDirectOrder(newOrder);
 
-      // 2. Khóa lịch trên sản phẩm & rental_bookings
-      await addRentalBookingToProduct(selectedProduct.id, {
-        id: `book-${Date.now()}`,
-        startDate,
-        endDate,
-        renterName: `${finalName} (${customerPhone.trim()})`,
-        status: 'confirmed',
-      });
+      // 2. Làm mới danh sách sản phẩm để cập nhật ngay lịch đặt thuê mới
+      refreshProducts();
 
       showToast(`Tạo đơn hàng ${orderCode} thành công!`, 'success');
       onOrderCreated(newOrder);
