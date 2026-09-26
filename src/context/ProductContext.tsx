@@ -163,7 +163,6 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         formData.append('rentPrice1Day', String(newProduct.rentPrice1Day || 0));
         formData.append('rentPrice2Days', String(newProduct.rentPrice2Days || 0));
         formData.append('rentPrice3Days', String(newProduct.rentPrice3Days || 0));
-        formData.append('rentPrice7Days', String(newProduct.rentPrice7Days || 0));
         formData.append('extraDayPrice', String(newProduct.extraDayPrice || 0));
         formData.append('deposit', String(newProduct.deposit || 0));
         formData.append('sizes', JSON.stringify(newProduct.sizes || ['Free size']));
@@ -204,7 +203,6 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
           rentPrice1Day: newProduct.rentPrice1Day || 0,
           rentPrice2Days: newProduct.rentPrice2Days || 0,
           rentPrice3Days: newProduct.rentPrice3Days || 0,
-          rentPrice7Days: newProduct.rentPrice7Days || 0,
           extraDayPrice: newProduct.extraDayPrice || 0,
           deposit: newProduct.deposit || 0,
           sizes: newProduct.sizes,

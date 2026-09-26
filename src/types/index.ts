@@ -58,7 +58,6 @@ export interface Product {
   rentPrice1Day?: number;
   rentPrice2Days?: number;
   rentPrice3Days?: number;
-  rentPrice7Days?: number;
   extraDayPrice?: number; // Phụ thu phí thêm ngày
   deposit?: number;
   

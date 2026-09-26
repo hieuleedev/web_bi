@@ -455,15 +455,15 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
                     <div className="grid grid-cols-2 gap-3 pt-2 border-t border-brand-100/80 text-xs">
                       <div className="bg-white p-2.5 rounded-xl border border-gray-100">
-                        <span className="text-gray-500 block text-[11px]">Gói 3 ngày:</span>
+                        <span className="text-gray-500 block text-[11px]">Gói 2 ngày:</span>
                         <span className="font-bold text-gray-900">
-                          {formatVND(product.rentPrice3Days || (product.rentPrice1Day || 0) * 2.5)}
+                          {formatVND(product.rentPrice2Days || Math.round((product.rentPrice1Day || 0) * 1.7))}
                         </span>
                       </div>
                       <div className="bg-white p-2.5 rounded-xl border border-gray-100">
-                        <span className="text-gray-500 block text-[11px]">Gói 7 ngày (1 tuần):</span>
+                        <span className="text-gray-500 block text-[11px]">Gói 3 ngày:</span>
                         <span className="font-bold text-gray-900">
-                          {formatVND(product.rentPrice7Days || (product.rentPrice1Day || 0) * 5)}
+                          {formatVND(product.rentPrice3Days || Math.round((product.rentPrice1Day || 0) * 2.5))}
                         </span>
                       </div>
                     </div>

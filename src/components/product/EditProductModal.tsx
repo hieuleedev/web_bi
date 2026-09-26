@@ -30,7 +30,6 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   const [rentPrice1Day, setRentPrice1Day] = useState<number>(0);
   const [rentPrice2Days, setRentPrice2Days] = useState<number>(0);
   const [rentPrice3Days, setRentPrice3Days] = useState<number>(0);
-  const [rentPrice7Days, setRentPrice7Days] = useState<number>(0);
   const [extraDayPrice, setExtraDayPrice] = useState<number>(50000);
   const [deposit, setDeposit] = useState<number>(0);
   const [buyPrice, setBuyPrice] = useState<number>(0);
@@ -54,7 +53,6 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       setRentPrice1Day(product.rentPrice1Day || 0);
       setRentPrice2Days(product.rentPrice2Days || 0);
       setRentPrice3Days(product.rentPrice3Days || 0);
-      setRentPrice7Days(product.rentPrice7Days || 0);
       setExtraDayPrice(product.extraDayPrice || 50000);
       setDeposit(product.deposit || 0);
       setBuyPrice(product.buyPrice || 0);
@@ -140,7 +138,6 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       rentPrice1Day: Number(rentPrice1Day) || undefined,
       rentPrice2Days: Number(rentPrice2Days) || undefined,
       rentPrice3Days: Number(rentPrice3Days) || undefined,
-      rentPrice7Days: Number(rentPrice7Days) || undefined,
       extraDayPrice: Number(extraDayPrice) || undefined,
       deposit: Number(deposit) || undefined,
       buyPrice: Number(buyPrice) || undefined,

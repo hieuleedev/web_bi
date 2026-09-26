@@ -15,8 +15,6 @@ interface PricingTierFormProps {
   onRentPrice2DaysChange?: (val: number) => void;
   rentPrice3Days: number;
   onRentPrice3DaysChange: (val: number) => void;
-  rentPrice7Days: number;
-  onRentPrice7DaysChange: (val: number) => void;
   extraDayPrice?: number;
   onExtraDayPriceChange?: (val: number) => void;
   deposit: number;
@@ -36,8 +34,6 @@ export const PricingTierForm: React.FC<PricingTierFormProps> = ({
   onRentPrice2DaysChange,
   rentPrice3Days,
   onRentPrice3DaysChange,
-  rentPrice7Days,
-  onRentPrice7DaysChange,
   extraDayPrice = 50000,
   onExtraDayPriceChange,
   deposit,
