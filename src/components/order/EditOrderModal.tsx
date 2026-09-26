@@ -173,8 +173,17 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-900 text-xs truncate">{it.productTitle}</p>
                   <p className="text-gray-500 text-[11px]">
-                    {it.mode === 'rent' ? 'Chế độ: Thuê theo ngày' : 'Chế độ: Bán đứt'} • Size: {it.size} • Màu: {it.color}
+                    {it.mode === 'rent' ? 'Chế độ: Thuê đồ' : 'Chế độ: Bán đứt'} • Size: {it.size} • Màu: {it.color}
                   </p>
+                  {it.mode === 'rent' && it.rentalStartDate && it.rentalEndDate && (
+                    <div className="mt-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
+                        <Calendar className="w-3 h-3 text-emerald-600 shrink-0" />
+                        <span>{formatDateVN(it.rentalStartDate)} → {formatDateVN(it.rentalEndDate)}</span>
+                        <span className="text-emerald-600 font-medium">({it.rentalDays || calculateRentalDays(it.rentalStartDate, it.rentalEndDate)} ngày)</span>
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <span className="font-bold text-gray-900 block">{formatVND(it.price)}</span>

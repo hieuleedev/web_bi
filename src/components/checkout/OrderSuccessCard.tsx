@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle2, ShieldCheck, Printer, QrCode } from 'lucide-react';
 import { Order } from '../../types';
 import { formatVND } from '../../utils/helpers';
-import { generateVietQrUrl, DEFAULT_BANK_CONFIG } from '../../utils/vietqr';
+import { generateVietQrUrl, getActiveBankConfig } from '../../utils/vietqr';
 import { OrderInvoiceModal } from '../order/OrderInvoiceModal';
 
 interface OrderSuccessCardProps {
@@ -17,13 +17,14 @@ export const OrderSuccessCard: React.FC<OrderSuccessCardProps> = ({
   onContinueShopping,
 }) => {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const bankConfig = getActiveBankConfig();
 
   const qrUrl = order.vietqrUrl || generateVietQrUrl({
     amount: order.totalAmount,
     orderCode: order.code,
-    bankId: DEFAULT_BANK_CONFIG.bankId,
-    accountNo: DEFAULT_BANK_CONFIG.accountNo,
-    accountName: DEFAULT_BANK_CONFIG.accountName
+    bankId: bankConfig.bankId,
+    accountNo: bankConfig.accountNo,
+    accountName: bankConfig.accountName
   });
 
   return (
@@ -63,9 +64,9 @@ export const OrderSuccessCard: React.FC<OrderSuccessCardProps> = ({
               </div>
 
               <div className="space-y-1.5 text-xs text-gray-700 flex-1">
-                <p>Ngân hàng: <strong>{DEFAULT_BANK_CONFIG.bankName}</strong></p>
-                <p>Số tài khoản: <strong className="font-mono text-brand-700 text-sm">{DEFAULT_BANK_CONFIG.accountNo}</strong></p>
-                <p>Chủ tài khoản: <strong>{DEFAULT_BANK_CONFIG.accountName}</strong></p>
+                <p>Ngân hàng: <strong>{order.vietqrBank || bankConfig.bankName}</strong></p>
+                <p>Số tài khoản: <strong className="font-mono text-brand-700 text-sm">{order.vietqrAccountNo || bankConfig.accountNo}</strong></p>
+                <p>Chủ tài khoản: <strong className="uppercase">{order.vietqrAccountName || bankConfig.accountName}</strong></p>
                 <p>Số tiền chính xác: <strong className="text-emerald-700 font-bold">{formatVND(order.totalAmount)}</strong></p>
                 <p>Nội dung chuyển khoản: <strong className="font-mono text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">{order.code}</strong></p>
                 <p className="text-[11px] text-gray-500 italic mt-1">

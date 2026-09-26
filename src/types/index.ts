@@ -25,6 +25,8 @@ export interface RentalBookingDate {
   startDate: string; // YYYY-MM-DD
   endDate: string;   // YYYY-MM-DD
   renterName?: string;
+  renterPhone?: string;
+  note?: string;
   status: 'confirmed' | 'active' | 'completed' | 'cancelled' | 'returned';
 }
 

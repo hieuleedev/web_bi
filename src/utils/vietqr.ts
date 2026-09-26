@@ -11,13 +11,13 @@ export interface BankConfig {
   template: 'compact2' | 'compact' | 'qr_only' | 'print';
 }
 
-// Cấu hình STK Ngân Hàng mặc định của Shop (Để trống để chủ shop tự cấu hình)
+// Cấu hình STK Ngân Hàng mặc định của Shop
 export const DEFAULT_BANK_CONFIG: BankConfig = {
-  bankId: 'MB', // Ngân hàng Quân Đội (MB Bank)
-  bankName: 'MB Bank (Ngân hàng TMCP Quân Đội)',
-  accountNo: '',
-  accountName: '',
-  template: 'compact2'
+  bankId: (import.meta.env?.VITE_VIETQR_BANK_ID as string) || 'MB',
+  bankName: (import.meta.env?.VITE_VIETQR_BANK_NAME as string) || 'MB Bank (Ngân hàng TMCP Quân Đội)',
+  accountNo: (import.meta.env?.VITE_VIETQR_ACCOUNT_NO as string) || '3330106140201',
+  accountName: (import.meta.env?.VITE_VIETQR_ACCOUNT_NAME as string)?.toUpperCase() || 'BUI THI KIEU OANH',
+  template: ((import.meta.env?.VITE_VIETQR_TEMPLATE as BankConfig['template']) || 'compact2'),
 };
 
 // Danh sách các ngân hàng phổ biến tại Việt Nam để dễ dàng chuyển đổi
@@ -34,16 +34,17 @@ export const SUPPORTED_BANKS = [
   { id: 'VIB', name: 'VIB (Quốc Tế)' }
 ];
 
-const BANK_STORAGE_KEY = 'bibi_custom_bank_config_v2';
+const BANK_STORAGE_KEY = 'bibi_custom_bank_config_v3';
 
 export function getActiveBankConfig(): BankConfig {
   try {
     // Clear legacy hardcoded config
     localStorage.removeItem('bibi_custom_bank_config_v1');
+    localStorage.removeItem('bibi_custom_bank_config_v2');
     const saved = localStorage.getItem(BANK_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed && parsed.bankId) return parsed;
+      if (parsed && parsed.bankId && parsed.accountNo) return parsed;
     }
   } catch (e) {}
   return DEFAULT_BANK_CONFIG;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Printer } from 'lucide-react';
+import { Search, Printer, Calendar } from 'lucide-react';
 import { Order, OrderStatus } from '../../types';
-import { formatVND, formatDateVN } from '../../utils/helpers';
+import { formatVND, formatDateVN, calculateRentalDays } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
 import { Pagination } from '../ui/Pagination';
 import { OrderInvoiceModal } from '../order/OrderInvoiceModal';
@@ -106,14 +106,20 @@ export const AdminOrdersTable: React.FC<AdminOrdersTableProps> = ({
 
                 <td className="py-3.5 px-4">
                   {order.items.map((it, idx) => (
-                    <div key={idx} className="mb-1">
-                      <span className="font-medium text-gray-900 block truncate max-w-xs">{it.productTitle}</span>
+                    <div key={idx} className="mb-1.5 last:mb-0">
+                      <span className="font-semibold text-gray-900 block truncate max-w-xs">{it.productTitle}</span>
                       {it.mode === 'rent' ? (
-                        <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
-                          Thuê: {formatDateVN(it.rentalStartDate)} → {formatDateVN(it.rentalEndDate)}
-                        </span>
+                        <div className="mt-0.5">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md shadow-2xs">
+                            <Calendar className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>{it.rentalStartDate ? formatDateVN(it.rentalStartDate) : '---'} → {it.rentalEndDate ? formatDateVN(it.rentalEndDate) : '---'}</span>
+                            <span className="text-emerald-600 font-medium ml-0.5">
+                              ({it.rentalDays || (it.rentalStartDate && it.rentalEndDate ? calculateRentalDays(it.rentalStartDate, it.rentalEndDate) : 1)} ngày)
+                            </span>
+                          </span>
+                        </div>
                       ) : (
-                        <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded font-medium">
                           Mua (SL: {it.quantity})
                         </span>
                       )}

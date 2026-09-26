@@ -730,7 +730,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                             🔴 Các khoảng ngày váy này ĐÃ CÓ NGƯỜI THUÊ:
                           </span>
                           <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                            {product.bookedDates.map((b) => (
+                            {product.bookedDates.filter((b) => b.status !== 'cancelled').map((b) => (
                               <span
                                 key={b.id}
                                 className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold bg-rose-100/80 text-rose-700 border border-rose-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg"

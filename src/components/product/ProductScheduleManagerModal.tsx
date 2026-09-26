@@ -375,18 +375,28 @@ export const ProductScheduleManagerModal: React.FC<ProductScheduleManagerModalPr
                           {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-xs text-gray-900 block">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-xs text-gray-900">
                               {b.renterName || 'Khách đặt qua web'}
                             </span>
+                            {b.renterPhone && (
+                              <span className="text-[11px] font-mono font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded">
+                                📞 {b.renterPhone}
+                              </span>
+                            )}
+                            {b.note && (
+                              <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                {b.note}
+                              </span>
+                            )}
                             {isCompleted && (
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
                                 Đã trả đồ - Đã mở lịch
                               </span>
                             )}
                           </div>
-                          <span className="text-[11px] text-gray-500 font-mono">
-                            {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)} ({calculateRentalDays(b.startDate, b.endDate)} ngày)
+                          <span className="text-[11px] text-brand-700 font-mono font-semibold flex items-center gap-1 mt-0.5">
+                            📅 {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)} ({calculateRentalDays(b.startDate, b.endDate)} ngày)
                           </span>
                         </div>
                       </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { CreditCard, QrCode } from 'lucide-react';
 import { formatVND } from '../../utils/helpers';
+import { getActiveBankConfig } from '../../utils/vietqr';
 
 interface PaymentMethodSelectorProps {
   paymentMethod: 'cod' | 'bank_transfer' | 'momo' | 'vnpay';
@@ -13,6 +14,8 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   onPaymentMethodChange,
   grandTotal,
 }) => {
+  const bankConfig = getActiveBankConfig();
+
   return (
     <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
       <h3 className="font-bold text-sm text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
@@ -55,15 +58,15 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               <div className="mt-3 p-3.5 rounded-xl bg-white border border-brand-200 text-xs space-y-1.5 animate-in fade-in duration-200">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Ngân hàng:</span>
-                  <span className="font-bold text-gray-900">MB Bank (Quân Đội)</span>
+                  <span className="font-bold text-gray-900">{bankConfig.bankName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Số tài khoản / SĐT:</span>
-                  <span className="font-mono font-bold text-brand-700">0795623097</span>
+                  <span className="font-mono font-bold text-brand-700">{bankConfig.accountNo}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Chủ tài khoản:</span>
-                  <span className="font-bold text-gray-900">LE TRUNG HIEU (BI BI BOUTIQUE)</span>
+                  <span className="font-bold text-gray-900 uppercase">{bankConfig.accountName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Số tiền:</span>

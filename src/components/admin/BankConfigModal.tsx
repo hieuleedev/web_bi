@@ -51,18 +51,12 @@ export const BankConfigModal: React.FC<BankConfigModalProps> = ({
   };
 
   const handleResetDefault = () => {
-    setBankId('MB');
-    setAccountNo('');
-    setAccountName('');
-    setTemplate('compact2');
-    saveActiveBankConfig({
-      bankId: 'MB',
-      bankName: 'MB Bank (Quân Đội)',
-      accountNo: '',
-      accountName: '',
-      template: 'compact2'
-    });
-    showToast('Đã làm trống thông tin tài khoản ngân hàng!', 'info');
+    setBankId(DEFAULT_BANK_CONFIG.bankId);
+    setAccountNo(DEFAULT_BANK_CONFIG.accountNo);
+    setAccountName(DEFAULT_BANK_CONFIG.accountName);
+    setTemplate(DEFAULT_BANK_CONFIG.template || 'compact2');
+    saveActiveBankConfig(DEFAULT_BANK_CONFIG);
+    showToast('Đã khôi phục thông tin tài khoản mặc định!', 'info');
     if (onUpdated) onUpdated();
   };
 
@@ -197,10 +191,10 @@ export const BankConfigModal: React.FC<BankConfigModalProps> = ({
                 type="button"
                 onClick={handleResetDefault}
                 className="px-3 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-medium flex items-center gap-1 transition-colors"
-                title="Để trống thông tin tài khoản ngân hàng"
+                title="Khôi phục thông tin tài khoản ngân hàng mặc định"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Làm trống</span>
+                <span>Mặc định</span>
               </button>
             </div>
           </form>

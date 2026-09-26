@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Order, OrderStatus, CartItem } from '../types';
-import { generateOrderCode } from '../utils/helpers';
-import { generateVietQrUrl, DEFAULT_BANK_CONFIG } from '../utils/vietqr';
+import { generateOrderCode, checkRentalOverlap, formatDateVN } from '../utils/helpers';
+import { generateVietQrUrl, getActiveBankConfig } from '../utils/vietqr';
 import { useProducts } from './ProductContext';
 import { useCart } from './CartContext';
 import { useToast } from './ToastContext';
@@ -49,7 +49,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   });
 
   const { cartItems, subtotal, depositTotal, shippingTotal, grandTotal, clearCart } = useCart();
-  const { refreshProducts } = useProducts();
+  const { products, refreshProducts } = useProducts();
   const { showToast } = useToast();
 
   // Sync orders from Backend on mount and Realtime
@@ -115,6 +115,29 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       sellerName: c.product.sellerName,
     }));
 
+    // Kiểm tra chặn trùng lịch thuê tuyệt đối trước khi tạo đơn
+    for (const item of orderItems) {
+      if (item.mode === 'rent' && item.rentalStartDate && item.rentalEndDate) {
+        const productInStore = products.find((p) => p.id === item.productId);
+        if (productInStore) {
+          const { hasConflict, conflictingBooking } = checkRentalOverlap(
+            item.rentalStartDate,
+            item.rentalEndDate,
+            productInStore.bookedDates || []
+          );
+          if (hasConflict) {
+            showToast(
+              `Mẫu "${item.productTitle}" đã có khách đặt từ ${formatDateVN(conflictingBooking?.startDate!)} đến ${formatDateVN(conflictingBooking?.endDate!)}! Vui lòng chọn ngày khác.`,
+              'error'
+            );
+            return null;
+          }
+        }
+      }
+    }
+
+    const activeBank = getActiveBankConfig();
+
     const newOrder: Order = {
       id: orderId,
       code: orderCode,
@@ -137,13 +160,13 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       vietqrUrl: generateVietQrUrl({
         amount: grandTotal,
         orderCode,
-        bankId: DEFAULT_BANK_CONFIG.bankId,
-        accountNo: DEFAULT_BANK_CONFIG.accountNo,
-        accountName: DEFAULT_BANK_CONFIG.accountName
+        bankId: activeBank.bankId,
+        accountNo: activeBank.accountNo,
+        accountName: activeBank.accountName
       }),
-      vietqrBank: DEFAULT_BANK_CONFIG.bankName,
-      vietqrAccountNo: DEFAULT_BANK_CONFIG.accountNo,
-      vietqrAccountName: DEFAULT_BANK_CONFIG.accountName,
+      vietqrBank: activeBank.bankName,
+      vietqrAccountNo: activeBank.accountNo,
+      vietqrAccountName: activeBank.accountName,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
