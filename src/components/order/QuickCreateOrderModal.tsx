@@ -678,11 +678,11 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                         <div className="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                           <span>1N: <strong className="text-emerald-700">{formatVND(p.rentPrice1Day || 0)}</strong></span>
                           <span>• 2N: <strong>{formatVND(
-                            (p.rentPrice2Days && p.rentPrice2Days > 0 && p.rentPrice2Days < (p.rentPrice3Days || p.rentPrice7Days || Infinity))
+                            (p.rentPrice2Days && p.rentPrice2Days > 0 && p.rentPrice2Days < (p.rentPrice3Days || Infinity))
                               ? p.rentPrice2Days
-                              : Math.round((((p.rentPrice1Day || 0) + (p.rentPrice3Days || p.rentPrice7Days || 0)) / 2) / 1000) * 1000
+                              : Math.round((((p.rentPrice1Day || 0) + (p.rentPrice3Days || 0)) / 2) / 1000) * 1000
                           )}</strong></span>
-                          <span>• 3N: <strong>{formatVND(p.rentPrice3Days || p.rentPrice7Days || 0)}</strong></span>
+                          <span>• 3N: <strong>{formatVND(p.rentPrice3Days || 0)}</strong></span>
                         </div>
                       </div>
                     </button>
@@ -783,9 +783,9 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                       <span className="block text-[10px] text-gray-500">Gói 2 ngày</span>
                       <span className="text-xs font-bold text-emerald-700">
                         {formatVND(
-                          (selectedProduct.rentPrice2Days && selectedProduct.rentPrice2Days > 0 && selectedProduct.rentPrice2Days < (selectedProduct.rentPrice3Days || selectedProduct.rentPrice7Days || Infinity))
+                          (selectedProduct.rentPrice2Days && selectedProduct.rentPrice2Days > 0 && selectedProduct.rentPrice2Days < (selectedProduct.rentPrice3Days || Infinity))
                             ? selectedProduct.rentPrice2Days
-                            : Math.round((((selectedProduct.rentPrice1Day || 0) + (selectedProduct.rentPrice3Days || selectedProduct.rentPrice7Days || 0)) / 2) / 1000) * 1000
+                            : Math.round((((selectedProduct.rentPrice1Day || 0) + (selectedProduct.rentPrice3Days || 0)) / 2) / 1000) * 1000
                         )}
                       </span>
                     </button>
@@ -802,7 +802,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                     >
                       <span className="block text-[10px] text-gray-500">Gói 3 ngày (Chuẩn)</span>
                       <span className="text-xs font-bold text-emerald-700">
-                        {formatVND(selectedProduct.rentPrice3Days || selectedProduct.rentPrice7Days || 0)}
+                        {formatVND(selectedProduct.rentPrice3Days || 0)}
                       </span>
                     </button>
                   </div>

@@ -56,8 +56,8 @@ export function calculateRentalPricingDetails(
   options?: { isTetHoliday?: boolean; customExtraDayPrice?: number; preferredPackage?: '1day' | '2days' | '3days' | 'auto' }
 ): RentalPricingDetails {
   const dayRate = product.rentPrice1Day || 0;
-  // DB mapping: ngày 1 (rent_price_1day), ngày 2 (rent_price_3days), ngày 3 (rent_price_7days)
-  const price3Days = product.rentPrice3Days || product.rentPrice7Days || Math.round(dayRate * 2.2);
+  // DB mapping: ngày 1 (rent_price_1day), ngày 2 (rent_price_2days), ngày 3 (rent_price_3days)
+  const price3Days = product.rentPrice3Days || Math.round(dayRate * 2.2);
   const price2Days = (product.rentPrice2Days && product.rentPrice2Days > 0 && product.rentPrice2Days < price3Days)
     ? product.rentPrice2Days
     : Math.round((((dayRate || 0) + (price3Days || 0)) / 2) / 1000) * 1000 || Math.round(dayRate * 1.5);

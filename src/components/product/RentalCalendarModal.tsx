@@ -118,13 +118,13 @@ export const RentalCalendarModal: React.FC<RentalCalendarModalProps> = ({
                 <span className="font-bold text-emerald-600">
                   {formatVND(product.rentPrice1Day)}/ngày
                 </span>
-                {(product.rentPrice2Days || product.rentPrice3Days || product.rentPrice7Days) && (
+                {(product.rentPrice2Days || product.rentPrice3Days) && (
                   <span className="text-[11px] text-gray-500">
                     {`(2 ngày: ${formatVND(
-                      (product.rentPrice2Days && product.rentPrice2Days > 0 && product.rentPrice2Days < (product.rentPrice3Days || product.rentPrice7Days || Infinity))
+                      (product.rentPrice2Days && product.rentPrice2Days > 0 && product.rentPrice2Days < (product.rentPrice3Days || Infinity))
                         ? product.rentPrice2Days
-                        : Math.round((((product.rentPrice1Day || 0) + (product.rentPrice3Days || product.rentPrice7Days || 0)) / 2) / 1000) * 1000
-                    )} • 3 ngày: ${formatVND(product.rentPrice3Days || product.rentPrice7Days || 0)})`}
+                        : Math.round((((product.rentPrice1Day || 0) + (product.rentPrice3Days || 0)) / 2) / 1000) * 1000
+                    )} • 3 ngày: ${formatVND(product.rentPrice3Days || 0)})`}
                   </span>
                 )}
               </div>
