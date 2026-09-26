@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   User as UserIcon,
   Package,
@@ -32,7 +32,9 @@ import {
   TrendingUp,
   Camera,
   Loader2,
-  Upload
+  Upload,
+  LayoutDashboard,
+  Users
 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -52,6 +54,8 @@ import { PrintReceiptButton } from '../components/order/PrintReceiptButton';
 import { OrderDetailModal } from '../components/order/OrderDetailModal';
 import { EditProductModal } from '../components/product/EditProductModal';
 import { SellerRevenueTab } from '../components/seller/SellerRevenueTab';
+import { SellerCustomersTab } from '../components/customer/SellerCustomersTab';
+import { SellerDashboardTab } from '../components/seller/SellerDashboardTab';
 
 interface AccountPageProps {
   initialTab?: string;
@@ -68,7 +72,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 }) => {
   const { currentUser, updateProfile, changePassword, logout } = useAuth();
   const { products, deleteProduct, updateProduct, refreshProducts, wishlistIds } = useProducts();
-  const { orders, getUserOrders, getSellerOrders, updateOrderStatus, updateOrder, deleteOrder } = useOrders();
+  const { orders, getUserOrders, getSellerOrders, updateOrderStatus, updateOrderPaymentStatus, updateOrder, deleteOrder } = useOrders();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -227,6 +231,16 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     overdueOrders.flatMap((o) => o.items.filter((i) => i.mode === 'rent').map((i) => i.productId))
   );
 
+  // Đếm số lượng khách hàng duy nhất dựa theo số điện thoại
+  const uniqueCustomersCount = useMemo(() => {
+    const phones = new Set(
+      sellerOrders
+        .map((o) => (o.customerPhone || '').replace(/\s+/g, ''))
+        .filter(Boolean)
+    );
+    return phones.size;
+  }, [sellerOrders]);
+
   // Wishlist products
   const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id));
 
@@ -248,6 +262,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({
     ...(isOwner
       ? [
           {
+            id: 'dashboard',
+            label: 'Dashboard Thống Kê',
+            icon: LayoutDashboard,
+          },
+          {
             id: 'my-products',
             label: `Quản lý kho váy (${myProducts.length})`,
             icon: Layers,
@@ -255,20 +274,16 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             badgeColor: 'bg-rose-500 text-white',
           },
           {
-            id: 'seller-orders',
-            label: `Đơn khách đặt (${sellerOrders.length})`,
-            icon: Calendar,
+            id: 'customers',
+            label: `Khách hàng (${uniqueCustomersCount})`,
+            icon: Users,
             badge: overdueOrders.length > 0 ? `⚠️ ${overdueOrders.length} quá hạn` : undefined,
             badgeColor: 'bg-rose-600 text-white animate-pulse',
           },
           {
-            id: 'rented-orders',
-            label: `Đơn đã cho thuê (${rentedOrders.length})`,
-            icon: ShoppingBag,
-            badge: rentedOrders.filter((o) => o.status === 'rented').length > 0
-              ? `${rentedOrders.filter((o) => o.status === 'rented').length} đang thuê`
-              : undefined,
-            badgeColor: 'bg-emerald-600 text-white',
+            id: 'seller-orders',
+            label: `Đơn khách đặt (${sellerOrders.length})`,
+            icon: Calendar,
           },
           {
             id: 'revenue',
@@ -1599,6 +1614,26 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   );
                 })()}
               </div>
+            )}
+
+            {/* TAB: DASHBOARD STATS (VÁY VÀ KHÁCH THUÊ NHIỀU NHẤT) */}
+            {activeTab === 'dashboard' && isOwner && (
+              <SellerDashboardTab 
+                orders={sellerOrders} 
+                products={products}
+                onViewOrderDetail={(ord) => setViewingDetailOrder(ord)}
+                onViewInvoice={(ord) => setInvoiceOrder(ord)}
+                onSelectProduct={(pId) => onViewProduct(pId)}
+              />
+            )}
+
+            {/* TAB: CUSTOMER MANAGEMENT (QUẢN LÝ KHÁCH HÀNG & LỊCH SỬ THUÊ) */}
+            {activeTab === 'customers' && isOwner && (
+              <SellerCustomersTab
+                orders={sellerOrders}
+                onViewOrderDetail={(ord) => setViewingDetailOrder(ord)}
+                onViewInvoice={(ord) => setInvoiceOrder(ord)}
+              />
             )}
 
             {/* TAB: REVENUE & REPORTS */}

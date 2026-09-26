@@ -1,8 +1,9 @@
-import React from 'react';
-import { X, Printer, Phone, Eye, Calendar, MapPin, User, ShieldCheck, FileText, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Printer, Phone, Eye, Calendar, MapPin, User, ShieldCheck, FileText, CheckCircle2, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import { Order } from '../../types';
 import { formatVND, formatDateVN } from '../../utils/helpers';
 import { PrintReceiptButton } from './PrintReceiptButton';
+import { useOrders } from '../../context/OrderContext';
 
 interface OrderDetailModalProps {
   order: Order | null;
@@ -20,6 +21,27 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   onStatusChange,
 }) => {
   if (!isOpen || !order) return null;
+
+  const { updateOrderPaymentStatus } = useOrders();
+  const [currentOrder, setCurrentOrder] = useState<Order>(order);
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+
+  useEffect(() => {
+    if (order) setCurrentOrder(order);
+  }, [order]);
+
+  const handleCompletePayment = async () => {
+    if (!currentOrder || isUpdatingPayment) return;
+    setIsUpdatingPayment(true);
+    try {
+      await updateOrderPaymentStatus(currentOrder.id, 'paid');
+      setCurrentOrder((prev) => ({ ...prev, paymentStatus: 'paid' }));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsUpdatingPayment(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -201,7 +223,22 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
 
               <div className="flex justify-between items-baseline pt-2 border-t-2 border-dashed border-gray-300 text-sm">
                 <span className="font-bold text-gray-900">TỔNG CỘNG:</span>
-                <span className="font-black text-brand-700 text-base font-mono">{formatVND(order.totalAmount)}</span>
+                <span className="font-black text-brand-700 text-base font-mono">{formatVND(currentOrder.totalAmount)}</span>
+              </div>
+
+              <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-xs">
+                <span className="font-medium text-gray-600">Trạng thái thanh toán:</span>
+                {currentOrder.paymentStatus === 'paid' ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>✓ Đã thanh toán (Đã vào doanh thu)</span>
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] font-bold flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>⏳ Chưa thanh toán</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -209,16 +246,38 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
 
         {/* Footer actions */}
         <div className="pt-3 border-t border-gray-100 shrink-0 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Nút Hoàn thành thanh toán / Thu tiền */}
+            {currentOrder.paymentStatus !== 'paid' ? (
+              <button
+                onClick={handleCompletePayment}
+                disabled={isUpdatingPayment}
+                className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-60"
+                title="Xác nhận khách đã thanh toán đủ để đưa vào doanh thu"
+              >
+                {isUpdatingPayment ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                )}
+                <span>Hoàn Thành Thanh Toán</span>
+              </button>
+            ) : (
+              <div className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Đã Thu Tiền</span>
+              </div>
+            )}
+
             {/* Nút in nhanh trực tiếp qua API */}
-            <PrintReceiptButton order={order} size="md" />
+            <PrintReceiptButton order={currentOrder} size="md" />
 
             {/* Nút xem hóa đơn POS nhiệt 80mm */}
             {onOpenInvoiceModal && (
               <button
                 onClick={() => {
                   onClose();
-                  onOpenInvoiceModal(order);
+                  onOpenInvoiceModal(currentOrder);
                 }}
                 className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
                 title="Mở xem hóa đơn POS nhiệt 80mm"

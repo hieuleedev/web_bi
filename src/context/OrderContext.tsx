@@ -23,6 +23,7 @@ interface OrderContextType {
   createOrder: (params: CreateOrderParams) => Promise<Order | null>;
   addDirectOrder: (order: Order) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  updateOrderPaymentStatus: (orderId: string, paymentStatus: 'paid' | 'unpaid') => Promise<void>;
   updateOrder: (orderId: string, data: Partial<Order>) => Promise<void>;
   deleteOrder: (orderId: string) => Promise<void>;
   getOrderById: (orderId: string) => Order | undefined;
@@ -247,6 +248,29 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const updateOrderPaymentStatus = async (orderId: string, paymentStatus: 'paid' | 'unpaid') => {
+    try {
+      await api.orders.updateStatus(orderId, { paymentStatus });
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? { ...o, paymentStatus, updatedAt: new Date().toISOString() }
+            : o
+        )
+      );
+      showToast(
+        paymentStatus === 'paid'
+          ? 'Đã xác nhận hoàn thành thanh toán!'
+          : 'Đã cập nhật trạng thái chưa thanh toán!',
+        'success'
+      );
+    } catch (e: any) {
+      console.error('Lỗi cập nhật thanh toán đơn hàng:', e);
+      showToast(e.message || 'Không thể cập nhật trạng thái thanh toán!', 'error');
+      throw e;
+    }
+  };
+
   const updateOrder = async (orderId: string, data: Partial<Order>) => {
     try {
       await api.orders.update(orderId, data);
@@ -298,6 +322,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         createOrder,
         addDirectOrder,
         updateOrderStatus,
+        updateOrderPaymentStatus,
         updateOrder,
         deleteOrder,
         getOrderById,

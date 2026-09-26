@@ -336,6 +336,32 @@ export const api = {
       const res = await request<{ success: boolean; stats: any }>('/admin/stats');
       return res.stats;
     }
+  },
+
+  // ==========================================
+  // 9. KHÁCH HÀNG & DASHBOARD THỐNG KÊ (CUSTOMERS & DASHBOARD)
+  // ==========================================
+  customers: {
+    getAll: async (params: { search?: string; sortBy?: string } = {}) => {
+      const query = new URLSearchParams();
+      if (params.search) query.set('search', params.search);
+      if (params.sortBy) query.set('sortBy', params.sortBy);
+      const qs = query.toString();
+      const res = await request<{ success: boolean; count: number; data: any[] }>(`/customers${qs ? `?${qs}` : ''}`);
+      return res.data || [];
+    },
+
+    getByPhone: async (phone: string) => {
+      const res = await request<{ success: boolean; data: { customer: any; orders: any[] } }>(`/customers/${encodeURIComponent(phone)}`);
+      return res.data;
+    }
+  },
+
+  dashboard: {
+    getStats: async () => {
+      const res = await request<{ success: boolean; data: any }>('/dashboard/stats');
+      return res.data;
+    }
   }
 };
 
