@@ -49,6 +49,7 @@ import { BankConfigModal } from '../components/admin/BankConfigModal';
 import { OrderInvoiceModal } from '../components/order/OrderInvoiceModal';
 import { EditOrderModal } from '../components/order/EditOrderModal';
 import { PrintReceiptButton } from '../components/order/PrintReceiptButton';
+import { OrderDetailModal } from '../components/order/OrderDetailModal';
 import { EditProductModal } from '../components/product/EditProductModal';
 import { SellerRevenueTab } from '../components/seller/SellerRevenueTab';
 
@@ -94,6 +95,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [viewingDetailOrder, setViewingDetailOrder] = useState<Order | null>(null);
+  const [rentedOrderFilter, setRentedOrderFilter] = useState<'all' | 'rented' | 'returned' | 'completed' | 'overdue'>('all');
 
   // Profile edit state
   const [name, setName] = useState(currentUser?.name || '');
@@ -217,6 +220,9 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   };
 
   const overdueOrders = sellerOrders.filter(isOrderOverdue);
+  const rentedOrders = sellerOrders.filter(
+    (o) => o.items.some((i) => i.mode === 'rent') || ['rented', 'returned', 'completed'].includes(o.status)
+  );
   const overdueProductIds = new Set(
     overdueOrders.flatMap((o) => o.items.filter((i) => i.mode === 'rent').map((i) => i.productId))
   );
@@ -254,6 +260,15 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             icon: Calendar,
             badge: overdueOrders.length > 0 ? `⚠️ ${overdueOrders.length} quá hạn` : undefined,
             badgeColor: 'bg-rose-600 text-white animate-pulse',
+          },
+          {
+            id: 'rented-orders',
+            label: `Đơn đã cho thuê (${rentedOrders.length})`,
+            icon: ShoppingBag,
+            badge: rentedOrders.filter((o) => o.status === 'rented').length > 0
+              ? `${rentedOrders.filter((o) => o.status === 'rented').length} đang thuê`
+              : undefined,
+            badgeColor: 'bg-emerald-600 text-white',
           },
           {
             id: 'revenue',
@@ -1236,16 +1251,26 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                   <Edit3 className="w-3 h-3 text-amber-600" />
                                   <span>Sửa đơn</span>
                                 </button>
+                                {/* Nút xem chi tiết đơn hàng */}
+                                <button
+                                  onClick={() => setViewingDetailOrder(order)}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold text-[11px] hover:bg-emerald-100 flex items-center gap-1 transition-colors shadow-2xs"
+                                  title="Xem chi tiết đơn hàng & in bill"
+                                >
+                                  <Eye className="w-3 h-3 text-emerald-600" />
+                                  <span>Chi tiết</span>
+                                </button>
+
                                 {/* Nút in nhanh bắn thẳng API máy in POS */}
                                 <PrintReceiptButton order={order} size="sm" />
 
-                                {/* Nút xem chi tiết bill */}
+                                {/* Nút xem chi tiết bill POS */}
                                 <button
                                   onClick={() => setInvoiceOrder(order)}
-                                  className="px-2.5 py-1 rounded-lg bg-gray-50 text-gray-700 border border-gray-200 font-semibold text-[11px] hover:bg-gray-100 flex items-center gap-1 transition-colors shadow-2xs"
-                                  title="Xem trước hóa đơn POS"
+                                  className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold text-[11px] hover:bg-indigo-100 flex items-center gap-1 transition-colors shadow-2xs"
+                                  title="Xem trước hóa đơn POS khổ nhiệt 80mm"
                                 >
-                                  <Eye className="w-3 h-3 text-gray-500" />
+                                  <Printer className="w-3 h-3 text-indigo-600" />
                                   <span>Xem bill</span>
                                 </button>
                                 <a
@@ -1336,6 +1361,240 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       {sellerOrderFilter === 'overdue'
                         ? 'Không có đơn hàng nào bị quá hạn thuê! Tất cả đơn đều đúng hạn.'
                         : 'Không tìm thấy đơn hàng nào phù hợp với bộ lọc.'}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* TAB: RENTED ORDERS (ĐƠN ĐÃ CHO THUÊ) */}
+            {activeTab === 'rented-orders' && (
+              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-gray-100">
+                  <div>
+                    <h3 className="font-serif font-bold text-lg text-gray-900">Danh Sách Đơn Đã & Đang Cho Thuê</h3>
+                    <p className="text-xs text-gray-500">
+                      Toàn bộ đơn thuê trang phục của shop • Bấm vào đơn để xem chi tiết hoặc in bill POS trực tiếp
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setQuickOrderInitialProdId(undefined);
+                        setIsQuickOrderOpen(true);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
+                    >
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>Tạo Đơn Thuê Mới</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filter Pills */}
+                <div className="flex flex-wrap items-center gap-2 pb-1">
+                  <button
+                    onClick={() => setRentedOrderFilter('all')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      rentedOrderFilter === 'all'
+                        ? 'bg-gray-900 text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Tất cả ({rentedOrders.length})
+                  </button>
+
+                  <button
+                    onClick={() => setRentedOrderFilter('rented')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      rentedOrderFilter === 'rented'
+                        ? 'bg-brand-600 text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Đang cho thuê ({rentedOrders.filter((o) => o.status === 'rented').length})
+                  </button>
+
+                  <button
+                    onClick={() => setRentedOrderFilter('returned')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      rentedOrderFilter === 'returned'
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Đã nhận lại đồ ({rentedOrders.filter((o) => o.status === 'returned').length})
+                  </button>
+
+                  <button
+                    onClick={() => setRentedOrderFilter('completed')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      rentedOrderFilter === 'completed'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Hoàn tất ({rentedOrders.filter((o) => o.status === 'completed').length})
+                  </button>
+
+                  <button
+                    onClick={() => setRentedOrderFilter('overdue')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                      rentedOrderFilter === 'overdue'
+                        ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-300'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span>🔴 Quá hạn</span>
+                    <span className="text-[10px] bg-rose-600 text-white px-1.5 py-0.2 rounded-full font-bold">
+                      {rentedOrders.filter(isOrderOverdue).length}
+                    </span>
+                  </button>
+                </div>
+
+                {(() => {
+                  const filteredRentedOrders = rentedOrders.filter((order) => {
+                    if (rentedOrderFilter === 'overdue') return isOrderOverdue(order);
+                    if (rentedOrderFilter === 'rented') return order.status === 'rented';
+                    if (rentedOrderFilter === 'returned') return order.status === 'returned';
+                    if (rentedOrderFilter === 'completed') return order.status === 'completed';
+                    return true;
+                  });
+
+                  return filteredRentedOrders.length > 0 ? (
+                    <div className="space-y-4">
+                      {filteredRentedOrders.map((order) => {
+                        const isOverdue = isOrderOverdue(order);
+                        const overdueDays = isOverdue ? getOverdueDays(order) : 0;
+                        const rentItem = order.items.find((i) => i.mode === 'rent' && i.rentalStartDate && i.rentalEndDate);
+
+                        return (
+                          <div
+                            key={order.id}
+                            className={`p-5 rounded-2xl border space-y-3 transition-all hover:shadow-md ${
+                              isOverdue
+                                ? 'bg-rose-50/40 border-rose-300 ring-2 ring-rose-400/20'
+                                : 'bg-gray-50/70 border-gray-200/80 hover:border-brand-300'
+                            }`}
+                          >
+                            {/* Cảnh báo quá hạn */}
+                            {isOverdue && (
+                              <div className="flex flex-wrap items-center justify-between gap-2 bg-rose-100 border border-rose-300 p-2.5 rounded-xl text-xs text-rose-950 font-bold">
+                                <span>🚨 ĐÃ TRỄ {overdueDays} NGÀY — Hạn trả: {formatDateVN(rentItem?.rentalEndDate!)}</span>
+                                <button
+                                  onClick={() => {
+                                    updateOrderStatus(order.id, 'returned');
+                                    showToast(`Đã nhận lại đồ đơn ${order.code}!`, 'success');
+                                  }}
+                                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-xs"
+                                >
+                                  Đã nhận lại đồ
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Header row */}
+                            <div className="flex flex-wrap justify-between items-center pb-2 border-b border-gray-200/60 text-xs gap-2">
+                              <div className="flex items-center gap-2 cursor-pointer" onClick={() => setViewingDetailOrder(order)}>
+                                <span className="font-mono font-bold text-brand-700 hover:underline">{order.code}</span>
+                                <span className="text-gray-400">•</span>
+                                <span className="font-semibold text-gray-800">{order.customerName}</span>
+                                <span className="text-gray-500 font-mono">({order.customerPhone})</span>
+                                {isOverdue && (
+                                  <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md animate-pulse">
+                                    TRỄ {overdueDays} NGÀY
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Action buttons */}
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {/* Nút xem chi tiết đơn */}
+                                <button
+                                  onClick={() => setViewingDetailOrder(order)}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold text-[11px] hover:bg-emerald-100 flex items-center gap-1 transition-colors shadow-2xs"
+                                  title="Xem chi tiết đơn hàng & in bill"
+                                >
+                                  <Eye className="w-3 h-3 text-emerald-600" />
+                                  <span>Chi tiết</span>
+                                </button>
+
+                                {/* Nút in nhanh trực tiếp qua API */}
+                                <PrintReceiptButton order={order} size="sm" />
+
+                                {/* Nút xem bill POS nhiệt */}
+                                <button
+                                  onClick={() => setInvoiceOrder(order)}
+                                  className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold text-[11px] hover:bg-indigo-100 flex items-center gap-1 transition-colors shadow-2xs"
+                                  title="Xem trước hóa đơn POS"
+                                >
+                                  <Printer className="w-3 h-3 text-indigo-600" />
+                                  <span>Xem bill</span>
+                                </button>
+
+                                <a
+                                  href={`tel:${order.customerPhone}`}
+                                  className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold text-[11px] hover:bg-emerald-100 flex items-center gap-1"
+                                >
+                                  <Phone className="w-3 h-3" />
+                                  <span>Gọi</span>
+                                </a>
+
+                                <a
+                                  href={`https://zalo.me/${order.customerPhone.replace(/\s+/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-semibold text-[11px] hover:bg-blue-100 flex items-center gap-1"
+                                >
+                                  <span>Zalo</span>
+                                </a>
+                              </div>
+                            </div>
+
+                            {/* Body info */}
+                            <div className="text-xs text-gray-600 space-y-1">
+                              <p><strong>Váy thuê:</strong> {order.items.map((i) => i.productTitle).join(', ')}</p>
+                              {rentItem ? (
+                                <p className={`font-medium ${isOverdue ? 'text-rose-700' : 'text-emerald-700'}`}>
+                                  📅 <strong>Lịch thuê:</strong> {formatDateVN(rentItem.rentalStartDate!)} ➔ {formatDateVN(rentItem.rentalEndDate!)} ({rentItem.rentalDays || 1} ngày)
+                                </p>
+                              ) : null}
+                              {order.depositTotal > 0 ? (
+                                <p className="text-amber-800 font-medium">
+                                  💰 <strong>Tiền cọc:</strong> {formatVND(order.depositTotal)}
+                                </p>
+                              ) : null}
+                            </div>
+
+                            {/* Footer status change */}
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-200/60 text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-500">Trạng thái:</span>
+                                <select
+                                  value={order.status}
+                                  onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
+                                  className="border border-gray-200 rounded-lg px-2 py-1 text-xs font-medium bg-white"
+                                >
+                                  <option value="pending">Chờ xác nhận</option>
+                                  <option value="rented">Đang cho thuê</option>
+                                  <option value="returned">Đã nhận lại đồ</option>
+                                  <option value="completed">Đã hoàn cọc / Hoàn tất</option>
+                                  <option value="cancelled">Đã hủy</option>
+                                </select>
+                              </div>
+
+                              <div className="text-right">
+                                <span className="text-gray-400 text-[10px] block">Tổng tiền</span>
+                                <span className="font-bold text-sm text-brand-600">{formatVND(order.totalAmount)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-400 text-xs">
+                      Không có đơn thuê nào trong bộ lọc này.
                     </div>
                   );
                 })()}
@@ -1612,6 +1871,17 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           showToast('Đã đồng bộ thông tin tài khoản in bill mới nhất!', 'success');
         }}
       />
+
+      {/* Modal Xem Chi Tiết Đơn Hàng & In Bill */}
+      {viewingDetailOrder && (
+        <OrderDetailModal
+          isOpen={!!viewingDetailOrder}
+          order={viewingDetailOrder}
+          onClose={() => setViewingDetailOrder(null)}
+          onOpenInvoiceModal={(ord) => setInvoiceOrder(ord)}
+          onStatusChange={(orderId, status) => updateOrderStatus(orderId, status)}
+        />
+      )}
 
       {/* Modal In Hóa Đơn Bill Ngay Lập Tức */}
       {invoiceOrder && (
