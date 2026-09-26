@@ -204,7 +204,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 </span>
               </div>
 
-              {order.shippingFee > 0 && (
+              {order.shippingFee > 0 && order.deliveryMethod !== 'pickup' && (
                 <div className="flex justify-between">
                   <span>Phí giao hàng:</span>
                   <span className="font-semibold text-gray-900">+{formatVND(order.shippingFee)}</span>

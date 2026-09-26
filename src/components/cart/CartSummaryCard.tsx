@@ -40,8 +40,10 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
         )}
 
         <div className="flex justify-between">
-          <span>Phí vận chuyển dự kiến:</span>
-          <span className="font-semibold text-gray-900">{formatVND(shippingTotal)}</span>
+          <span>Phí vận chuyển:</span>
+          <span className="font-semibold text-emerald-600">
+            {shippingTotal > 0 ? formatVND(shippingTotal) : 'Miễn phí'}
+          </span>
         </div>
 
         <div className="flex justify-between text-emerald-600">

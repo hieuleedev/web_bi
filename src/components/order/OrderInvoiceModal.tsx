@@ -38,14 +38,20 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
     checkPrintServer().then(setServerOnline);
   }, []);
 
-  const qrUrl = currentOrder.vietqrUrl || (hasBank ? generateVietQrUrl({
-    amount: currentOrder.totalAmount,
+  // Số tiền thanh toán theo đúng bill (ưu tiên transferAmount nếu tách bill, hoặc totalAmount)
+  const billAmount = (currentOrder as any).transferAmount > 0 
+    ? (currentOrder as any).transferAmount 
+    : currentOrder.totalAmount;
+
+  // Luôn luôn sinh mã QR chuẩn xác theo số tiền của Bill
+  const qrUrl = hasBank ? generateVietQrUrl({
+    amount: billAmount,
     orderCode: currentOrder.code,
     bankId: bankConfig.bankId,
     accountNo: bankConfig.accountNo,
     accountName: bankConfig.accountName,
     template: 'qr_only'
-  }) : '');
+  }) : (currentOrder.vietqrUrl || '');
 
   // Xác nhận hoàn thành thanh toán để ghi nhận doanh thu
   const handleCompletePayment = async () => {
@@ -313,7 +319,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
               </span>
             </div>
 
-            {currentOrder.shippingFee > 0 && (
+            {currentOrder.shippingFee > 0 && currentOrder.deliveryMethod !== 'pickup' && (
               <div className="flex justify-between text-gray-600">
                 <span>Phí giao hàng:</span>
                 <span>+{formatVND(currentOrder.shippingFee)}</span>
@@ -360,10 +366,14 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({
                   className="w-full h-full object-contain"
                 />
               </div>
+              <div className="text-xs font-bold text-gray-950">
+                Số tiền: {formatVND(billAmount)}
+              </div>
               <div className="text-[10px] text-gray-600 leading-none space-y-0.5">
                 <p>NH: <strong>{bankConfig.bankName}</strong></p>
                 <p>STK: <strong className="font-mono text-gray-900">{bankConfig.accountNo}</strong></p>
                 <p>Tên: <strong className="uppercase">{bankConfig.accountName}</strong></p>
+                <p>Nội dung: <strong className="font-mono text-gray-900">{currentOrder.code}</strong></p>
               </div>
             </div>
           )}

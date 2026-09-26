@@ -209,7 +209,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   // Totals
   const rentFeeTotal = pricingDetails.total;
   const depositTotal = depositMethod === 'id_card' || depositMethod === 'none' ? 0 : customDeposit;
-  const shippingFee = orderType === 'shipping' ? 30000 : 0;
+  const shippingFee = 0;
   const grandTotal = rentFeeTotal + accessoriesTotal + depositTotal + shippingFee;
 
   // Auto-fill payment if 0
@@ -509,7 +509,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
             >
               <option value="instant">Lấy ngay (Thử đồ & lấy tại shop)</option>
               <option value="preorder">Đặt trước (Giữ lịch ngày sự kiện)</option>
-              <option value="shipping">Giao hàng tận nơi (+30k ship)</option>
+              <option value="shipping">Giao hàng tận nơi (Miễn phí)</option>
             </select>
           </div>
 

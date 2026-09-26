@@ -206,7 +206,9 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
                 <div className="flex justify-between">
                   <span>Phí giao nhận:</span>
-                  <span className="font-medium text-gray-900">{formatVND(shippingTotal)}</span>
+                  <span className="font-medium text-emerald-600">
+                    {shippingTotal > 0 ? formatVND(shippingTotal) : 'Miễn phí'}
+                  </span>
                 </div>
 
                 <div className="pt-2 border-t border-gray-100 flex justify-between items-baseline text-sm font-bold text-gray-900">

@@ -200,7 +200,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return acc;
   }, 0);
 
-  const shippingTotal = cartItems.length > 0 ? 30000 : 0;
+  const shippingTotal = 0;
   const grandTotal = subtotal + depositTotal + shippingTotal;
 
   return (

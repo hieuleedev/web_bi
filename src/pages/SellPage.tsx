@@ -152,7 +152,7 @@ export const SellPage: React.FC<SellPageProps> = ({ onSuccess, onCancel }) => {
           sellerRating: currentUser?.rating || 5.0,
           location: 'Khối 1 - Xã Núi Thành - Thành Phố Đà Nẵng',
           hasShipping: true,
-          shippingFee: 30000,
+          shippingFee: 0,
           shippingArea: 'Toàn quốc',
         },
         imageFiles
