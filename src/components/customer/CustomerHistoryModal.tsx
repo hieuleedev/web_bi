@@ -164,9 +164,6 @@ export const CustomerHistoryModal: React.FC<CustomerHistoryModalProps> = ({
                 <span className="font-mono font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md">
                   📞 {customer.phone}
                 </span>
-                {customer.address && (
-                  <span className="text-gray-600 truncate max-w-[280px]">📍 {customer.address}</span>
-                )}
               </div>
             </div>
           </div>
