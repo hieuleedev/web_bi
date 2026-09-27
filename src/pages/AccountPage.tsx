@@ -558,6 +558,31 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             {activeTab === 'my-products' && (() => {
               const todayDate = new Date().toISOString().split('T')[0];
 
+              // Helper kiểm tra một lịch thuê có đang thực sự còn hiệu lực cho hôm nay hay không
+              const isBookingActiveToday = (b: any) => {
+                if (!b.startDate || !b.endDate) return false;
+                if (b.status === 'cancelled' || b.status === 'completed' || b.status === 'returned') return false;
+                if (b.startDate > todayDate || b.endDate < todayDate) return false;
+
+                // Nếu lịch gắn liền với đơn hàng, kiểm tra trạng thái đơn hàng đó
+                if (b.orderId) {
+                  const linkedOrder = orders.find((o) => o.id === b.orderId);
+                  if (linkedOrder && ['completed', 'returned', 'cancelled'].includes(linkedOrder.status)) {
+                    return false;
+                  }
+                }
+
+                // Nếu note có chứa mã đơn hàng (BB-xxxxx), kiểm tra xem đơn đó đã hoàn tất/trả đồ chưa
+                if (b.note) {
+                  const matchedOrder = orders.find((o) => o.code && b.note?.includes(o.code));
+                  if (matchedOrder && ['completed', 'returned', 'cancelled'].includes(matchedOrder.status)) {
+                    return false;
+                  }
+                }
+
+                return true;
+              };
+
               // Filtering logic
               const filteredMyProducts = myProducts.filter((p) => {
                 // Search query: match title or sku or id
@@ -582,9 +607,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 }
 
                 // Rental status filter
-                const isCurrentlyRented = (p.bookedDates || []).some(
-                  (b) => b.startDate <= todayDate && b.endDate >= todayDate && b.status !== 'cancelled'
-                );
+                const isCurrentlyRented = (p.bookedDates || []).some(isBookingActiveToday);
 
                 if (productRentalFilter === 'overdue') {
                   return overdueProductIds.has(p.id);
@@ -611,9 +634,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
               // Count currently rented products today
               const totalRentingNow = myProducts.filter((p) =>
-                (p.bookedDates || []).some(
-                  (b) => b.startDate <= todayDate && b.endDate >= todayDate && b.status !== 'cancelled'
-                )
+                (p.bookedDates || []).some(isBookingActiveToday)
               ).length;
 
               return (
@@ -742,9 +763,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   {paginatedMyProducts.length > 0 ? (
                     <div className="space-y-3 pt-1">
                       {paginatedMyProducts.map((p) => {
-                        const activeBookingToday = (p.bookedDates || []).find(
-                          (b) => b.startDate <= todayDate && b.endDate >= todayDate && b.status !== 'cancelled'
-                        );
+                        const activeBookingToday = (p.bookedDates || []).find(isBookingActiveToday);
                         const isRentingNow = !!activeBookingToday;
                         const isOverdueDress = overdueProductIds.has(p.id);
                         const categoryObj = CATEGORIES.find((c) => c.id === p.category);

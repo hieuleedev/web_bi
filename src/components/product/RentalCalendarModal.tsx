@@ -243,7 +243,7 @@ export const RentalCalendarModal: React.FC<RentalCalendarModalProps> = ({
                 Các khoảng thời gian đã có người thuê trước:
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {product.bookedDates.filter((b) => b.status !== 'cancelled').map((b) => (
+                {product.bookedDates.filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'returned').map((b) => (
                   <span
                     key={b.id}
                     className="bg-white border border-amber-300 text-amber-900 px-2 py-0.5 rounded-lg font-mono text-[10px] font-bold shadow-2xs"

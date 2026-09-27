@@ -724,13 +724,13 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                       )}
 
                       {/* List of already booked dates */}
-                      {product.bookedDates && product.bookedDates.length > 0 && (
+                      {product.bookedDates && product.bookedDates.filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'returned').length > 0 && (
                         <div className="pt-2 border-t border-gray-200/80">
                           <span className="text-[11px] font-semibold text-gray-500 block mb-1.5">
                             🔴 Các khoảng ngày váy này ĐÃ CÓ NGƯỜI THUÊ:
                           </span>
                           <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                            {product.bookedDates.filter((b) => b.status !== 'cancelled').map((b) => (
+                            {product.bookedDates.filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'returned').map((b) => (
                               <span
                                 key={b.id}
                                 className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold bg-rose-100/80 text-rose-700 border border-rose-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg"
