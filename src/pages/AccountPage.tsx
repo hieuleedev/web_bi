@@ -583,6 +583,30 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 return true;
               };
 
+              // Helper kiểm tra một lịch thuê có đang còn giữ chỗ / sắp tới (chưa trả đồ, chưa hủy)
+              const isBookingPendingOrActive = (b: any) => {
+                if (!b.startDate || !b.endDate) return false;
+                if (b.status === 'cancelled' || b.status === 'completed' || b.status === 'returned') return false;
+
+                // Nếu lịch gắn liền với đơn hàng, kiểm tra trạng thái đơn hàng đó
+                if (b.orderId) {
+                  const linkedOrder = orders.find((o) => o.id === b.orderId);
+                  if (linkedOrder && ['completed', 'returned', 'cancelled'].includes(linkedOrder.status)) {
+                    return false;
+                  }
+                }
+
+                // Nếu note có chứa mã đơn hàng (BB-xxxxx), kiểm tra xem đơn đó đã hoàn tất/trả đồ chưa
+                if (b.note) {
+                  const matchedOrder = orders.find((o) => o.code && b.note?.includes(o.code));
+                  if (matchedOrder && ['completed', 'returned', 'cancelled'].includes(matchedOrder.status)) {
+                    return false;
+                  }
+                }
+
+                return true;
+              };
+
               // Filtering logic
               const filteredMyProducts = myProducts.filter((p) => {
                 // Search query: match title or sku or id
@@ -768,6 +792,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         const isOverdueDress = overdueProductIds.has(p.id);
                         const categoryObj = CATEGORIES.find((c) => c.id === p.category);
                         const skuDisplay = p.sku || (p.id ? p.id.replace('prod-', 'BB-') : 'BB-001');
+                        const activeBookingsCount = (p.bookedDates || []).filter(isBookingPendingOrActive).length;
 
                         return (
                           <div
@@ -899,11 +924,15 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                               {(p.type === 'rent' || p.type === 'both') && (
                                 <button
                                   onClick={() => setScheduleProduct(p)}
-                                  className="px-2.5 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                  className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs ${
+                                    activeBookingsCount > 0
+                                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                      : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                  }`}
                                   title="Quản lý lịch thuê của món này"
                                 >
-                                  <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>Lịch thuê ({(p.bookedDates || []).length})</span>
+                                  <Calendar className={`w-3.5 h-3.5 ${activeBookingsCount > 0 ? 'text-emerald-600' : 'text-gray-400'}`} />
+                                  <span>Lịch thuê ({activeBookingsCount})</span>
                                 </button>
                               )}
 

@@ -147,7 +147,7 @@ export const CustomerHistoryModal: React.FC<CustomerHistoryModalProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between pb-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-3.5">
-            <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-brand-500 to-amber-500 text-white flex items-center justify-center font-bold text-xl shadow-md">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-amber-500 text-white flex items-center justify-center font-bold text-xl shadow-md shrink-0">
               {customer.name ? customer.name.charAt(0).toUpperCase() : 'K'}
             </div>
             <div>

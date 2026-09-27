@@ -300,11 +300,11 @@ export const SellerDashboardTab: React.FC<SellerDashboardTabProps> = ({
           </div>
           {bestDress ? (
             <div className="flex items-center gap-3 mt-1.5">
-              <div className="relative shrink-0">
+              <div className="w-12 h-14 rounded-xl overflow-hidden shrink-0 border border-amber-200 shadow-2xs bg-gray-50 flex items-center justify-center">
                 <img
                   src={bestDress.image}
                   alt={bestDress.title}
-                  className="w-12 h-12 rounded-2xl object-cover border border-amber-200 shadow-2xs cursor-pointer hover:scale-105 transition-transform"
+                  className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
                   onClick={() => onSelectProduct && bestDress.id && onSelectProduct(bestDress.id)}
                 />
               </div>
@@ -512,11 +512,11 @@ export const SellerDashboardTab: React.FC<SellerDashboardTabProps> = ({
                       </div>
 
                       {/* Dress Thumbnail */}
-                      <div className="relative shrink-0">
+                      <div className="w-14 h-16 rounded-xl overflow-hidden shrink-0 border border-gray-200/80 shadow-2xs bg-gray-50 flex items-center justify-center">
                         <img
                           src={dress.image}
                           alt={dress.title}
-                          className="w-13 h-13 rounded-2xl object-cover border border-gray-100 shadow-2xs cursor-pointer hover:opacity-90 hover:scale-105 transition-all"
+                          className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-all"
                           onClick={() => onSelectProduct && dress.id && onSelectProduct(dress.id)}
                         />
                       </div>

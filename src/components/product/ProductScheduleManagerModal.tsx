@@ -57,6 +57,12 @@ export const ProductScheduleManagerModal: React.FC<ProductScheduleManagerModalPr
     return `Tháng ${currentMonth + 1} / ${currentYear}`;
   }, [currentMonth, currentYear]);
 
+  const activeBookings = useMemo(() => {
+    return (product.bookedDates || []).filter(
+      (b) => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'returned'
+    );
+  }, [product.bookedDates]);
+
   // Check if a specific date (YYYY-MM-DD) is booked
   const getBookingForDay = (dayNum: number): RentalBookingDate | undefined => {
     const dayStr = String(dayNum).padStart(2, '0');
@@ -187,7 +193,7 @@ export const ProductScheduleManagerModal: React.FC<ProductScheduleManagerModalPr
               </div>
               <h4 className="font-semibold text-xs text-gray-900 line-clamp-1">{product.title}</h4>
               <p className="text-[11px] text-gray-500 mt-0.5">
-                Tổng cộng có <strong>{(product.bookedDates || []).length}</strong> khoảng lịch đã ghi nhận
+                Hiện có <strong className="text-emerald-700 font-bold">{activeBookings.length}</strong> khoảng lịch đang giữ chỗ (Tổng {(product.bookedDates || []).length} lượt)
               </p>
             </div>
           </div>
@@ -280,7 +286,7 @@ export const ProductScheduleManagerModal: React.FC<ProductScheduleManagerModalPr
             <div className="flex items-center justify-between">
               <h4 className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
                 <Lock className="w-4 h-4 text-brand-600" />
-                <span>Danh Sách Các Khoảng Ngày Đã Khóa / Đã Đặt ({(product.bookedDates || []).length})</span>
+                <span>Danh Sách Lịch Đã Đặt & Khóa ({activeBookings.length} đang giữ chỗ)</span>
               </h4>
 
               <button
