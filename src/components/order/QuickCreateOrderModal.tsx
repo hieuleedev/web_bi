@@ -74,16 +74,11 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const [depositMethod, setDepositMethod] = useState<'cash' | 'transfer' | 'id_card' | 'none'>('cash');
   const [customDeposit, setCustomDeposit] = useState<number>(0);
 
-  // 3. Rental Dates
+  // 3. Rental Dates (Mặc định 1 ngày: ngày thuê = hôm nay, ngày trả = hôm nay)
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
-  const threeDaysLater = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 2); // 3 ngày bao gồm hôm nay
-    return d.toISOString().split('T')[0];
-  }, []);
 
   const [startDate, setStartDate] = useState(todayStr);
-  const [endDate, setEndDate] = useState(threeDaysLater);
+  const [endDate, setEndDate] = useState(todayStr);
   const [isTetHoliday, setIsTetHoliday] = useState(false);
 
   // 4. Product Selection & Search
@@ -99,7 +94,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
 
   // Selected Size
   const [selectedSize, setSelectedSize] = useState<string>('S');
-  const [selectedPackage, setSelectedPackage] = useState<'1day' | '2days' | '3days' | 'custom'>('3days');
+  const [selectedPackage, setSelectedPackage] = useState<'1day' | '2days' | '3days' | 'custom'>('1day');
 
   // Custom Extra Day Price
   const [customExtraDayPrice, setCustomExtraDayPrice] = useState<number>(20000);
@@ -120,12 +115,17 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const [cashAmount, setCashAmount] = useState<number>(0);
   const [transferAmount, setTransferAmount] = useState<number>(0);
 
-  // Khi mở modal hoặc khi initialProductId thay đổi, đồng bộ ngay sản phẩm được chọn
+  // Khi mở modal hoặc khi initialProductId thay đổi, đồng bộ ngay sản phẩm được chọn và đặt mặc định 1 ngày
   React.useEffect(() => {
-    if (initialProductId) {
-      setSelectedProductId(initialProductId);
+    if (isOpen) {
+      if (initialProductId) {
+        setSelectedProductId(initialProductId);
+      }
+      setStartDate(todayStr);
+      setEndDate(todayStr);
+      setSelectedPackage('1day');
     }
-  }, [initialProductId, isOpen]);
+  }, [initialProductId, isOpen, todayStr]);
 
   // When selected product changes, reset defaults
   React.useEffect(() => {
@@ -570,7 +570,23 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  const newStart = e.target.value;
+                  setStartDate(newStart);
+                  if (selectedPackage === '1day') {
+                    setEndDate(newStart);
+                  } else if (selectedPackage === '2days') {
+                    const d = new Date(newStart);
+                    d.setDate(d.getDate() + 1);
+                    setEndDate(d.toISOString().split('T')[0]);
+                  } else if (selectedPackage === '3days') {
+                    const d = new Date(newStart);
+                    d.setDate(d.getDate() + 2);
+                    setEndDate(d.toISOString().split('T')[0]);
+                  } else if (new Date(endDate) < new Date(newStart)) {
+                    setEndDate(newStart);
+                  }
+                }}
                 className={`w-full px-3 py-2 bg-gray-50 border rounded-xl text-xs font-semibold focus:outline-none ${
                   hasConflict ? 'border-rose-400 bg-rose-50 text-rose-800' : 'border-gray-200'
                 }`}
@@ -588,7 +604,18 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                 type="date"
                 value={endDate}
                 min={startDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  const newEnd = e.target.value;
+                  setEndDate(newEnd);
+                  const s = new Date(startDate);
+                  const ed = new Date(newEnd);
+                  const diff = Math.max(0, ed.getTime() - s.getTime());
+                  const days = Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1);
+                  if (days === 1) setSelectedPackage('1day');
+                  else if (days === 2) setSelectedPackage('2days');
+                  else if (days === 3) setSelectedPackage('3days');
+                  else setSelectedPackage('custom');
+                }}
                 className={`w-full px-3 py-2 bg-gray-50 border rounded-xl text-xs font-semibold focus:outline-none ${
                   hasConflict ? 'border-rose-400 bg-rose-50 text-rose-800' : 'border-gray-200'
                 }`}
@@ -802,7 +829,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                       type="button"
                       onClick={() => handleSelectPackage('3days')}
                       className={`p-2 rounded-xl text-center border transition-all ${
-                        selectedPackage === '3days' || rentalDays >= 3
+                        selectedPackage === '3days' || (rentalDays >= 3 && selectedPackage !== '1day' && selectedPackage !== '2days')
                           ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-1 ring-emerald-400 font-bold'
                           : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
                       }`}
