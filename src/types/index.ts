@@ -170,6 +170,7 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   depositTotal: number;
+  depositStatus?: 'none' | 'held' | 'refunded' | 'deducted';
   shippingFee: number;
   serviceFee: number;
   totalAmount: number;

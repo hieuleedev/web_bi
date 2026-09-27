@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, 
   Phone, 
@@ -10,11 +10,13 @@ import {
   AlertCircle, 
   Printer, 
   Eye, 
-  Award
+  Award,
+  Loader2
 } from 'lucide-react';
 import { Order } from '../../types';
 import { formatVND, formatDateVN } from '../../utils/helpers';
 import { PrintReceiptButton } from '../order/PrintReceiptButton';
+import { api } from '../../lib/api';
 
 export interface CustomerSummary {
   id: string;
@@ -50,14 +52,90 @@ export const CustomerHistoryModal: React.FC<CustomerHistoryModalProps> = ({
   onViewOrderDetail,
   onViewInvoice
 }) => {
+  const [remoteOrders, setRemoteOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  // Tự động tải toàn bộ lịch sử đơn từ Backend Database khi mở modal
+  useEffect(() => {
+    if (!isOpen || !customer?.phone) return;
+    setLoadingOrders(true);
+    api.customers.getByPhone(customer.phone)
+      .then((res) => {
+        if (res && res.orders && Array.isArray(res.orders)) {
+          setRemoteOrders(res.orders as Order[]);
+        }
+      })
+      .catch((err) => console.warn('Lỗi lấy đơn từ API:', err))
+      .finally(() => setLoadingOrders(false));
+  }, [isOpen, customer?.phone]);
+
+  const cleanPhoneStr = (phone?: string) => (phone || '').replace(/\D/g, '');
+  const targetPhone = cleanPhoneStr(customer?.phone);
+  const cleanPhone = customer?.phone?.replace(/\s+/g, '') || '';
+
+  // Kết hợp và lọc tất cả đơn hàng (cả mua và thuê)
+  const customerOrders = useMemo(() => {
+    if (!customer) return [];
+    const combined = [...(orders || []), ...remoteOrders];
+    const uniqueMap = new Map<string, Order>();
+
+    combined.forEach((o) => {
+      const oPhone = cleanPhoneStr(o.customerPhone || (o as any).customer_phone);
+      const isMatch = Boolean(
+        (targetPhone && oPhone && (oPhone === targetPhone || oPhone.endsWith(targetPhone) || targetPhone.endsWith(oPhone))) ||
+        (customer.name && (o.customerName || (o as any).customer_name || '').toLowerCase() === customer.name.toLowerCase() && !targetPhone)
+      );
+
+      if (isMatch && o.id) {
+        uniqueMap.set(o.id, o);
+      }
+    });
+
+    return Array.from(uniqueMap.values()).sort(
+      (a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+    );
+  }, [orders, remoteOrders, targetPhone, customer]);
+
+  // Tính toán lại các chỉ số tài chính chuẩn xác (KHÔNG TÍNH CỌC VÀO CHI TIÊU)
+  const computedStats = useMemo(() => {
+    let totalSpent = 0;
+    let paidAmount = 0;
+    let debt = 0;
+    let rentCount = 0;
+
+    customerOrders.forEach((ord) => {
+      const depositTotal = Number(ord.depositTotal || (ord as any).total_deposit || 0);
+      const subtotal = Number(ord.subtotal || (ord as any).total_rent_fee || 0) + Number((ord as any).total_buy_price || 0);
+      const shipping = Number(ord.shippingFee ?? (ord as any).shipping_fee ?? 0);
+      const orderSpending = subtotal > 0 ? (subtotal + shipping) : Math.max(0, (Number(ord.totalAmount) || 0) - depositTotal);
+
+      const items = ord.items || [];
+      const hasRent = items.some((i) => i.mode === 'rent') || Number((ord as any).total_rent_fee || 0) > 0;
+      if (hasRent) rentCount += 1;
+
+      const isSettled = ord.paymentStatus === 'paid' || 
+                        ord.status === 'completed' || 
+                        ord.status === 'returned' || 
+                        (ord.depositStatus as any) === 'refunded' || 
+                        (ord.notes || '').includes('[DA_THANH_TOAN]');
+
+      totalSpent += orderSpending;
+      if (isSettled) {
+        paidAmount += orderSpending;
+      } else {
+        debt += orderSpending;
+      }
+    });
+
+    return {
+      totalSpent: totalSpent > 0 ? totalSpent : (customer?.total_spent || 0),
+      paidAmount: paidAmount > 0 ? paidAmount : (debt === 0 ? totalSpent : (customer?.paid_amount || 0)),
+      debt,
+      rentCount: rentCount > 0 ? rentCount : (customer?.total_rent_count || customerOrders.length)
+    };
+  }, [customerOrders, customer]);
+
   if (!isOpen || !customer) return null;
-
-  // Lọc tất cả đơn hàng của khách theo số điện thoại
-  const customerOrders = orders.filter(
-    (o) => (o.customerPhone || '').replace(/\s+/g, '') === customer.phone.replace(/\s+/g, '')
-  ).sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-
-  const cleanPhone = customer.phone.replace(/\s+/g, '');
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
@@ -122,32 +200,32 @@ export const CustomerHistoryModal: React.FC<CustomerHistoryModalProps> = ({
         {/* 4 Summary Stats Cards for this customer */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-4 shrink-0 border-b border-gray-100">
           <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-            <span className="text-[10px] text-gray-500 block">Số lần thuê váy</span>
+            <span className="text-[10px] text-gray-500 block">Số lần thuê đồ</span>
             <span className="font-bold text-base text-gray-900 font-mono">
-              {customer.total_rent_count || customerOrders.length} lần
+              {computedStats.rentCount} lần
             </span>
           </div>
 
           <div className="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-100">
-            <span className="text-[10px] text-emerald-700 block">Tổng chi tiêu</span>
+            <span className="text-[10px] text-emerald-700 block">Chi tiêu thực tế</span>
             <span className="font-bold text-base text-emerald-900 font-mono">
-              {formatVND(customer.total_spent)}
+              {formatVND(computedStats.totalSpent)}
             </span>
           </div>
 
           <div className="bg-blue-50/70 p-3 rounded-2xl border border-blue-100">
             <span className="text-[10px] text-blue-700 block">Đã thanh toán</span>
             <span className="font-bold text-base text-blue-900 font-mono">
-              {formatVND(customer.paid_amount || 0)}
+              {formatVND(computedStats.paidAmount)}
             </span>
           </div>
 
-          <div className={`p-3 rounded-2xl border ${customer.debt > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-100'}`}>
-            <span className={`text-[10px] block ${customer.debt > 0 ? 'text-amber-800 font-bold' : 'text-gray-500'}`}>
+          <div className={`p-3 rounded-2xl border ${computedStats.debt > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-100'}`}>
+            <span className={`text-[10px] block ${computedStats.debt > 0 ? 'text-amber-800 font-bold' : 'text-gray-500'}`}>
               Công nợ chưa thu
             </span>
-            <span className={`font-bold text-base font-mono ${customer.debt > 0 ? 'text-amber-700' : 'text-gray-700'}`}>
-              {formatVND(customer.debt || 0)}
+            <span className={`font-bold text-base font-mono ${computedStats.debt > 0 ? 'text-amber-700' : 'text-gray-700'}`}>
+              {formatVND(computedStats.debt)}
             </span>
           </div>
         </div>
@@ -157,16 +235,31 @@ export const CustomerHistoryModal: React.FC<CustomerHistoryModalProps> = ({
           <div className="flex items-center justify-between">
             <h4 className="font-serif font-bold text-sm text-gray-900 flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-brand-600" />
-              <span>Lịch Sử Các Lần Thuê Đồ ({customerOrders.length} đơn)</span>
+              <span>Lịch Sử Đơn Hàng ({customerOrders.length} đơn mua & thuê)</span>
             </h4>
-            <span className="text-[11px] text-gray-400">Xếp theo mới nhất</span>
+            {loadingOrders && (
+              <span className="text-[11px] text-brand-600 flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" /> Đang đồng bộ...
+              </span>
+            )}
+            {!loadingOrders && (
+              <span className="text-[11px] text-gray-400">Xếp theo mới nhất</span>
+            )}
           </div>
 
           {customerOrders.length > 0 ? (
             <div className="space-y-3">
               {customerOrders.map((ord) => {
-                const rentItem = ord.items.find((i) => i.mode === 'rent');
-                const isPaid = ord.paymentStatus === 'paid';
+                const isPaid = ord.paymentStatus === 'paid' || 
+                               ord.status === 'completed' || 
+                               ord.status === 'returned' || 
+                               (ord.depositStatus as any) === 'refunded' || 
+                               (ord.notes || '').includes('[DA_THANH_TOAN]');
+                const isRefunded = (ord.depositStatus as any) === 'refunded' || ord.status === 'completed';
+                const depositTotal = Number(ord.depositTotal || (ord as any).total_deposit || 0);
+                const subtotal = Number(ord.subtotal || (ord as any).total_rent_fee || 0) + Number((ord as any).total_buy_price || 0);
+                const shipping = Number(ord.shippingFee ?? (ord as any).shipping_fee ?? 0);
+                const orderSpending = subtotal > 0 ? (subtotal + shipping) : Math.max(0, (Number(ord.totalAmount) || 0) - depositTotal);
 
                 return (
                   <div
@@ -212,7 +305,7 @@ export const CustomerHistoryModal: React.FC<CustomerHistoryModalProps> = ({
 
                     {/* Items row */}
                     <div className="space-y-2">
-                      {ord.items.map((it, idx) => (
+                      {(ord.items || []).map((it, idx) => (
                         <div key={idx} className="flex items-center gap-3">
                           <img
                             src={it.productImage || 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=200&q=80'}
@@ -227,7 +320,9 @@ export const CustomerHistoryModal: React.FC<CustomerHistoryModalProps> = ({
                                   👗 Thuê: {it.rentalStartDate ? formatDateVN(it.rentalStartDate) : ''} ➔ {it.rentalEndDate ? formatDateVN(it.rentalEndDate) : ''} ({it.rentalDays || 1} ngày)
                                 </span>
                               ) : (
-                                <span>Mua đứt</span>
+                                <span className="text-blue-700 font-medium">
+                                  🛍️ Mua đứt (SL: {it.quantity || 1})
+                                </span>
                               )}
                             </p>
                           </div>
@@ -241,13 +336,13 @@ export const CustomerHistoryModal: React.FC<CustomerHistoryModalProps> = ({
                     {/* Total & Action buttons */}
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100/60 text-xs">
                       <div>
-                        <span className="text-gray-400 text-[11px]">Tổng hóa đơn: </span>
+                        <span className="text-gray-400 text-[11px]">Tiền hàng/thuê: </span>
                         <span className="font-bold text-sm text-brand-600 font-mono">
-                          {formatVND(ord.totalAmount)}
+                          {formatVND(orderSpending)}
                         </span>
-                        {ord.depositTotal > 0 && (
-                          <span className="text-[11px] text-amber-700 ml-2">
-                            (Cọc: {formatVND(ord.depositTotal)})
+                        {depositTotal > 0 && (
+                          <span className={`text-[11px] ml-2 font-medium ${isRefunded ? 'text-emerald-700' : 'text-amber-700'}`}>
+                            (Cọc: {formatVND(depositTotal)} - {isRefunded ? 'Đã hoàn cọc' : 'Đang giữ cọc'})
                           </span>
                         )}
                       </div>

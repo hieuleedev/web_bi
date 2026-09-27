@@ -40,13 +40,28 @@ export const SellerCustomersTab: React.FC<SellerCustomersTabProps> = ({
     const map = new Map<string, CustomerSummary>();
 
     validOrders.forEach((ord) => {
-      const phone = (ord.customerPhone || '').trim();
+      const rawPhone = ord.customerPhone || (ord as any).customer_phone || '';
+      const phone = rawPhone.trim();
       if (!phone) return;
 
       const items = ord.items || [];
-      const hasRent = items.some((i) => i.mode === 'rent');
-      const orderTotal = ord.totalAmount || 0;
-      const isPaid = ord.paymentStatus === 'paid';
+      const hasRent = items.some((i) => i.mode === 'rent') || Number((ord as any).total_rent_fee || 0) > 0;
+
+      // CHI TIÊU THỰC TẾ: Tiền thuê + Tiền mua + Phí ship (KHÔNG BAO GỒM TIỀN CỌC!)
+      // Tiền cọc là khoản giữ chân bảo đảm và được hoàn trả khi trả đồ xong.
+      const depositTotal = Number(ord.depositTotal || (ord as any).total_deposit || 0);
+      const subtotal = Number(ord.subtotal || (ord as any).total_rent_fee || 0) + Number((ord as any).total_buy_price || 0);
+      const shipping = Number(ord.shippingFee ?? (ord as any).shipping_fee ?? 0);
+      const realOrderSpending = subtotal > 0 
+        ? (subtotal + shipping) 
+        : Math.max(0, (Number(ord.totalAmount) || 0) - depositTotal);
+
+      // Đã thanh toán nếu paymentStatus === 'paid' HOẶC đơn đã hoàn thành/trả đồ/đã hoàn cọc
+      const isSettled = ord.paymentStatus === 'paid' || 
+                        ord.status === 'completed' || 
+                        ord.status === 'returned' || 
+                        (ord.depositStatus as any) === 'refunded' || 
+                        (ord.notes || '').includes('[DA_THANH_TOAN]');
 
       if (!map.has(phone)) {
         map.set(phone, {
@@ -70,11 +85,11 @@ export const SellerCustomersTab: React.FC<SellerCustomersTabProps> = ({
       const c = map.get(phone)!;
       c.total_orders_count += 1;
       if (hasRent) c.total_rent_count += 1;
-      c.total_spent += orderTotal;
-      if (isPaid) {
-        c.paid_amount += orderTotal;
+      c.total_spent += realOrderSpending;
+      if (isSettled) {
+        c.paid_amount += realOrderSpending;
       } else {
-        c.debt += orderTotal;
+        c.debt += realOrderSpending;
       }
 
       // Giữ tên mới nhất
