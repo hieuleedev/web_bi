@@ -190,12 +190,12 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <img
                 src="/logo.jpg"
-                alt="Bi Bi - Cho thuê đồ Núi Thành"
+                alt="Bi - Cho thuê đồ Núi Thành"
                 className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover shadow-xs group-hover:scale-105 transition-transform border border-brand-200 shrink-0"
               />
               <div className="whitespace-nowrap">
                 <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-gray-900 group-hover:text-brand-600 transition-colors">
-                  Bi Bi
+                  Bi
                 </span>
                 <span className="block text-[8px] sm:text-[10px] uppercase tracking-wider text-brand-600 font-semibold -mt-0.5">
                   Cho thuê đồ Núi Thành

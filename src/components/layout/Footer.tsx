@@ -57,12 +57,12 @@ export const Footer: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <img
                 src="/logo.jpg"
-                alt="Bi Bi - Cho thuê đồ Núi Thành"
+                alt="Bi - Cho thuê đồ Núi Thành"
                 className="w-11 h-11 rounded-full object-cover shadow-md border border-white/20 shrink-0 bg-white"
               />
               <div>
                 <span className="font-serif text-2xl font-bold tracking-tight text-white">
-                  Bi Bi
+                  Bi
                 </span>
                 <span className="block text-[10px] uppercase tracking-wider text-brand-400 font-semibold -mt-0.5">
                   Cho thuê đồ Núi Thành
