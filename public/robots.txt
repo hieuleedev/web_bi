@@ -1,0 +1,8 @@
+﻿User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /seller/
+Disallow: /quan-ly-shop
+
+Sitemap: https://bichothuedo.vercel.app/sitemap.xml
