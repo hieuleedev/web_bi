@@ -4,6 +4,7 @@
  */
 
 const PRINT_SERVER = 'http://localhost:8080';
+import { calculateRentalDays } from '../utils/helpers';
 
 export interface PrintItem {
   name: string;
@@ -134,7 +135,7 @@ export function orderToPrintPayload(
     let rentalDates = '';
     if (item.rentalStartDate && item.rentalEndDate) {
       const fmt = (d: string) => new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      rentalDates = `${fmt(item.rentalStartDate)} → ${fmt(item.rentalEndDate)} (${item.rentalDays ?? 1} ngày)`;
+      rentalDates = `${fmt(item.rentalStartDate)} → ${fmt(item.rentalEndDate)} (${calculateRentalDays(item.rentalStartDate, item.rentalEndDate)} ngày)`;
     }
 
     const note = [

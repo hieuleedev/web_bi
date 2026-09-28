@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Printer, X, Loader2, CheckCircle, CheckCircle2, AlertTriangle, Monitor, DollarSign } from 'lucide-react';
 import { Order } from '../../types';
-import { formatVND, formatDateVN } from '../../utils/helpers';
+import { formatVND, formatDateVN, calculateRentalDays } from '../../utils/helpers';
 import { generateVietQrUrl, getActiveBankConfig } from '../../utils/vietqr';
 import { checkPrintServer, printReceipt, orderToPrintPayload } from '../../lib/printService';
 import { useOrders } from '../../context/OrderContext';
@@ -297,7 +297,7 @@ async function fetchImageAsBase64(url: string): Promise<string | undefined> {
 
                 {item.mode === 'rent' && item.rentalStartDate && item.rentalEndDate && (
                   <div className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-1 rounded font-medium space-y-0.5">
-                    <div>📅 {formatDateVN(item.rentalStartDate)} → {formatDateVN(item.rentalEndDate)} ({item.rentalDays || 1} ngày)</div>
+                    <div>📅 {formatDateVN(item.rentalStartDate)} → {formatDateVN(item.rentalEndDate)} ({calculateRentalDays(item.rentalStartDate, item.rentalEndDate)} ngày)</div>
                     {item.extraDays && item.extraDays > 0 ? (
                       <div className="text-rose-700 font-semibold">
                         + Phụ thu {item.extraDays} ngày thêm: {formatVND(item.extraDayFee || 0)}

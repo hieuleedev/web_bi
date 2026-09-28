@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Printer, Phone, Eye, Calendar, MapPin, User, ShieldCheck, FileText, CheckCircle2, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import { Order } from '../../types';
-import { formatVND, formatDateVN } from '../../utils/helpers';
+import { formatVND, formatDateVN, calculateRentalDays } from '../../utils/helpers';
 import { PrintReceiptButton } from './PrintReceiptButton';
 import { useOrders } from '../../context/OrderContext';
 
@@ -165,7 +165,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                         <div className="font-semibold flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-emerald-600" />
                           <span>
-                            {formatDateVN(item.rentalStartDate)} ➔ {formatDateVN(item.rentalEndDate)} ({item.rentalDays || 1} ngày)
+                            {formatDateVN(item.rentalStartDate)} ➔ {formatDateVN(item.rentalEndDate)} ({calculateRentalDays(item.rentalStartDate, item.rentalEndDate)} ngày)
                           </span>
                         </div>
                         {item.extraDays && item.extraDays > 0 ? (

@@ -14,7 +14,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Order } from '../../types';
-import { formatVND, formatDateVN } from '../../utils/helpers';
+import { formatVND, formatDateVN, calculateRentalDays } from '../../utils/helpers';
 import { PrintReceiptButton } from '../order/PrintReceiptButton';
 import { api } from '../../lib/api';
 
@@ -314,7 +314,7 @@ export const CustomerHistoryModal: React.FC<CustomerHistoryModalProps> = ({
                             <p className="text-[11px] text-gray-500">
                               {it.mode === 'rent' ? (
                                 <span className="text-emerald-700 font-medium">
-                                  👗 Thuê: {it.rentalStartDate ? formatDateVN(it.rentalStartDate) : ''} ➔ {it.rentalEndDate ? formatDateVN(it.rentalEndDate) : ''} ({it.rentalDays || 1} ngày)
+                                  👗 Thuê: {it.rentalStartDate ? formatDateVN(it.rentalStartDate) : ''} ➔ {it.rentalEndDate ? formatDateVN(it.rentalEndDate) : ''} ({it.rentalStartDate && it.rentalEndDate ? calculateRentalDays(it.rentalStartDate, it.rentalEndDate) : (it.rentalDays || 1)} ngày)
                                 </span>
                               ) : (
                                 <span className="text-blue-700 font-medium">

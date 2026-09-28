@@ -26,16 +26,19 @@ export function formatDateVN(dateString?: string): string {
 }
 
 /**
- * Calculate difference in days between start date and end date
- * Minimum 1 day
+ * Calculate rental days by inclusive calendar day count (đếm số ngày lịch, tính cả ngày nhận và ngày trả)
+ * Ví dụ:
+ * - 04/10 -> 04/10: 1 ngày
+ * - 26/09 -> 27/09: 2 ngày
+ * - 28/09 -> 30/09: 3 ngày
  */
 export function calculateRentalDays(start: string, end: string): number {
   if (!start || !end) return 1;
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const diffTime = endDate.getTime() - startDate.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays > 0 ? diffDays : 1;
+  const s = new Date(start.split('T')[0]);
+  const e = new Date(end.split('T')[0]);
+  const diffTime = e.getTime() - s.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  return Math.max(1, diffDays + 1);
 }
 
 export interface RentalPricingDetails {

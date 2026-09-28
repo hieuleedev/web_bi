@@ -114,7 +114,7 @@ export const AdminOrdersTable: React.FC<AdminOrdersTableProps> = ({
                             <Calendar className="w-3 h-3 text-emerald-600 shrink-0" />
                             <span>{it.rentalStartDate ? formatDateVN(it.rentalStartDate) : '---'} → {it.rentalEndDate ? formatDateVN(it.rentalEndDate) : '---'}</span>
                             <span className="text-emerald-600 font-medium ml-0.5">
-                              ({it.rentalDays || (it.rentalStartDate && it.rentalEndDate ? calculateRentalDays(it.rentalStartDate, it.rentalEndDate) : 1)} ngày)
+                              ({it.rentalStartDate && it.rentalEndDate ? calculateRentalDays(it.rentalStartDate, it.rentalEndDate) : (it.rentalDays || 1)} ngày)
                             </span>
                           </span>
                         </div>

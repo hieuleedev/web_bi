@@ -22,7 +22,7 @@ import { Product, Order, OrderItem } from '../../types';
 import { useProducts } from '../../context/ProductContext';
 import { useOrders } from '../../context/OrderContext';
 import { useToast } from '../../context/ToastContext';
-import { formatVND, formatDateVN, generateOrderCode, checkRentalOverlap, calculateRentalPricingDetails } from '../../utils/helpers';
+import { formatVND, formatDateVN, generateOrderCode, checkRentalOverlap, calculateRentalPricingDetails, calculateRentalDays } from '../../utils/helpers';
 import { generateVietQrUrl, getActiveBankConfig } from '../../utils/vietqr';
 
 interface QuickCreateOrderModalProps {
@@ -159,10 +159,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
 
   // Calculate rental days
   const rentalDays = useMemo(() => {
-    const s = new Date(startDate);
-    const e = new Date(endDate);
-    const diff = Math.max(0, e.getTime() - s.getTime());
-    return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1); // Đếm cả ngày nhận & trả
+    return calculateRentalDays(startDate, endDate);
   }, [startDate, endDate]);
 
   // Pricing calculations
@@ -607,10 +604,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                 onChange={(e) => {
                   const newEnd = e.target.value;
                   setEndDate(newEnd);
-                  const s = new Date(startDate);
-                  const ed = new Date(newEnd);
-                  const diff = Math.max(0, ed.getTime() - s.getTime());
-                  const days = Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1);
+                  const days = calculateRentalDays(startDate, newEnd);
                   if (days === 1) setSelectedPackage('1day');
                   else if (days === 2) setSelectedPackage('2days');
                   else if (days === 3) setSelectedPackage('3days');

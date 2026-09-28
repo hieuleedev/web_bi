@@ -40,7 +40,7 @@ import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
 import { useOrders } from '../context/OrderContext';
-import { formatVND, formatDateVN } from '../utils/helpers';
+import { formatVND, formatDateVN, calculateRentalDays } from '../utils/helpers';
 import { OrderStatus, ProductStatus, Product, Order } from '../types';
 import { useToast } from '../context/ToastContext';
 import { CATEGORIES } from '../data/initialCategories';
@@ -1105,7 +1105,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                                 <div className="text-[11px] text-gray-500">
                                   {item.mode === 'rent' ? (
                                     <span className="text-emerald-700 font-medium">
-                                      Thuê {item.rentalDays} ngày ({formatDateVN(item.rentalStartDate)} → {formatDateVN(item.rentalEndDate)})
+                                      Thuê {item.rentalStartDate && item.rentalEndDate ? calculateRentalDays(item.rentalStartDate, item.rentalEndDate) : (item.rentalDays || 1)} ngày ({formatDateVN(item.rentalStartDate)} → {formatDateVN(item.rentalEndDate)})
                                     </span>
                                   ) : (
                                     <span>Mua {item.quantity} sản phẩm • Size: {item.size}</span>
@@ -1369,7 +1369,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                               <p><strong>Sản phẩm:</strong> {order.items.map((i) => i.productTitle).join(', ')}</p>
                               {rentItem ? (
                                 <p className={`font-medium ${isOverdue ? 'text-rose-700' : 'text-emerald-700'}`}>
-                                  📅 <strong>Lịch thuê:</strong> {formatDateVN(rentItem.rentalStartDate!)} ➔ {formatDateVN(rentItem.rentalEndDate!)} ({rentItem.rentalDays || 1} ngày)
+                                  📅 <strong>Lịch thuê:</strong> {formatDateVN(rentItem.rentalStartDate!)} ➔ {formatDateVN(rentItem.rentalEndDate!)} ({rentItem.rentalStartDate && rentItem.rentalEndDate ? calculateRentalDays(rentItem.rentalStartDate, rentItem.rentalEndDate) : (rentItem.rentalDays || 1)} ngày)
                                 </p>
                               ) : null}
                               {order.depositTotal > 0 ? (
@@ -1622,7 +1622,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                               <p><strong>Váy thuê:</strong> {order.items.map((i) => i.productTitle).join(', ')}</p>
                               {rentItem ? (
                                 <p className={`font-medium ${isOverdue ? 'text-rose-700' : 'text-emerald-700'}`}>
-                                  📅 <strong>Lịch thuê:</strong> {formatDateVN(rentItem.rentalStartDate!)} ➔ {formatDateVN(rentItem.rentalEndDate!)} ({rentItem.rentalDays || 1} ngày)
+                                  📅 <strong>Lịch thuê:</strong> {formatDateVN(rentItem.rentalStartDate!)} ➔ {formatDateVN(rentItem.rentalEndDate!)} ({rentItem.rentalStartDate && rentItem.rentalEndDate ? calculateRentalDays(rentItem.rentalStartDate, rentItem.rentalEndDate) : (rentItem.rentalDays || 1)} ngày)
                                 </p>
                               ) : null}
                               {order.depositTotal > 0 ? (

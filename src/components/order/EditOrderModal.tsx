@@ -180,7 +180,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                       <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
                         <Calendar className="w-3 h-3 text-emerald-600 shrink-0" />
                         <span>{formatDateVN(it.rentalStartDate)} → {formatDateVN(it.rentalEndDate)}</span>
-                        <span className="text-emerald-600 font-medium">({it.rentalDays || calculateRentalDays(it.rentalStartDate, it.rentalEndDate)} ngày)</span>
+                        <span className="text-emerald-600 font-medium">({calculateRentalDays(it.rentalStartDate, it.rentalEndDate)} ngày)</span>
                       </span>
                     </div>
                   )}
