@@ -45,7 +45,7 @@ export const api = {
   // 1. SẢN PHẨM (PRODUCTS)
   // ==========================================
   products: {
-    getAll: async (params: { category?: string; type?: string; search?: string; minPrice?: number; maxPrice?: number; status?: string } = {}) => {
+    getAll: async (params: { category?: string; type?: string; search?: string; minPrice?: number; maxPrice?: number; status?: string; limit?: number | string } = {}) => {
       const query = new URLSearchParams();
       if (params.category && params.category !== 'all') query.set('category', params.category);
       if (params.type && params.type !== 'all') query.set('type', params.type);
@@ -53,6 +53,7 @@ export const api = {
       if (params.minPrice) query.set('minPrice', String(params.minPrice));
       if (params.maxPrice) query.set('maxPrice', String(params.maxPrice));
       if (params.status) query.set('status', params.status);
+      if (params.limit !== undefined && params.limit !== null) query.set('limit', String(params.limit));
 
       const qs = query.toString();
       const res = await request<{ success: boolean; count: number; data: any[] }>(`/products${qs ? `?${qs}` : ''}`);

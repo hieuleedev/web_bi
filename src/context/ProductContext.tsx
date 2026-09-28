@@ -79,7 +79,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   // Sync with Backend API on mount
   const refreshProducts = async () => {
     try {
-      const data = await api.products.getAll({ status: 'all' });
+      const data = await api.products.getAll({ status: 'all', limit: 1000 });
       if (data && data.length > 0) {
         const realRows = data
           .filter((row: any) => row.id && !isLegacyMockId(row.id))
