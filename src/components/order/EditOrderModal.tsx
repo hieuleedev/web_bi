@@ -194,85 +194,84 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 : (it.color ? [it.color] : []);
 
               return (
-                <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-2xs">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <img
-                      src={it.productImage}
-                      alt={it.productTitle}
-                      className="w-13 h-15 object-cover rounded-lg shrink-0 border border-gray-100 shadow-2xs"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-900 text-xs truncate">{it.productTitle}</p>
-                      
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          it.mode === 'rent' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                        }`}>
-                          {it.mode === 'rent' ? 'Thuê đồ' : 'Bán đứt'}
-                        </span>
+                <div key={idx} className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-gray-200/80 shadow-xs">
+                  <img
+                    src={it.productImage}
+                    alt={it.productTitle}
+                    style={{ width: '60px', height: '76px', minWidth: '60px', maxWidth: '60px' }}
+                    className="object-cover rounded-xl shrink-0 border border-gray-100 shadow-2xs"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 text-xs truncate">{it.productTitle}</p>
+                    
+                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                        it.mode === 'rent' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                      }`}>
+                        {it.mode === 'rent' ? 'Thuê đồ' : 'Bán đứt'}
+                      </span>
 
-                        {/* Chọn Size */}
-                        <div className="flex items-center gap-1.5 bg-amber-50/90 border border-amber-200/90 px-2 py-0.5 rounded-lg shadow-2xs">
-                          <label className="text-[10px] font-bold text-amber-900">Size:</label>
-                          <select
-                            value={it.size || ''}
-                            onChange={(e) => handleItemSizeChange(idx, e.target.value)}
-                            className="bg-transparent text-amber-950 font-black text-xs focus:outline-none cursor-pointer pr-0.5"
-                          >
-                            {availableSizes.map((s) => {
-                              const sConflict = (it.mode === 'rent' && startDate && endDate && product?.bookedDates)
-                                ? checkRentalOverlap(
-                                    startDate,
-                                    endDate,
-                                    product.bookedDates.filter((b) => b.orderId !== order.id),
-                                    undefined,
-                                    s
-                                  )
-                                : { hasConflict: false };
+                      {/* Chọn Size */}
+                      <div className="flex items-center gap-1.5 bg-amber-50/90 border border-amber-200/90 px-2 py-0.5 rounded-lg shadow-2xs">
+                        <label className="text-[10px] font-bold text-amber-900">Size:</label>
+                        <select
+                          value={it.size || ''}
+                          onChange={(e) => handleItemSizeChange(idx, e.target.value)}
+                          className="bg-transparent text-amber-950 font-black text-xs focus:outline-none cursor-pointer pr-0.5"
+                        >
+                          {availableSizes.map((s) => {
+                            const sConflict = (it.mode === 'rent' && startDate && endDate && product?.bookedDates)
+                              ? checkRentalOverlap(
+                                  startDate,
+                                  endDate,
+                                  product.bookedDates.filter((b) => b.orderId !== order.id),
+                                  undefined,
+                                  s
+                                )
+                              : { hasConflict: false };
 
-                              return (
-                                <option key={s} value={s}>
-                                  Size {s} {sConflict.hasConflict ? '⚠️ (Đã có khách)' : '✓ (Trống)'}
-                                </option>
-                              );
-                            })}
-                          </select>
-                        </div>
-
-                        {/* Chọn Màu */}
-                        {availableColors.length > 1 ? (
-                          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-lg">
-                            <label className="text-[10px] font-bold text-gray-700">Màu:</label>
-                            <select
-                              value={it.color || ''}
-                              onChange={(e) => handleItemColorChange(idx, e.target.value)}
-                              className="bg-transparent text-gray-800 text-xs font-semibold focus:outline-none cursor-pointer pr-0.5"
-                            >
-                              {availableColors.map((c) => (
-                                <option key={c} value={c}>
-                                  {c}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        ) : it.color ? (
-                          <span className="text-gray-500 text-[11px]">Màu: {it.color}</span>
-                        ) : null}
+                            return (
+                              <option key={s} value={s}>
+                                Size {s} {sConflict.hasConflict ? '⚠️ (Đã có khách)' : '✓ (Trống)'}
+                              </option>
+                            );
+                          })}
+                        </select>
                       </div>
 
-                      {it.mode === 'rent' && it.rentalStartDate && it.rentalEndDate && (
-                        <div className="mt-1.5">
-                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
-                            <Calendar className="w-3 h-3 text-emerald-600 shrink-0" />
-                            <span>{formatDateVN(it.rentalStartDate)} → {formatDateVN(it.rentalEndDate)}</span>
-                            <span className="text-emerald-600 font-medium">({calculateRentalDays(it.rentalStartDate, it.rentalEndDate)} ngày)</span>
-                          </span>
+                      {/* Chọn Màu */}
+                      {availableColors.length > 1 ? (
+                        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-lg">
+                          <label className="text-[10px] font-bold text-gray-700">Màu:</label>
+                          <select
+                            value={it.color || ''}
+                            onChange={(e) => handleItemColorChange(idx, e.target.value)}
+                            className="bg-transparent text-gray-800 text-xs font-semibold focus:outline-none cursor-pointer pr-0.5"
+                          >
+                            {availableColors.map((c) => (
+                              <option key={c} value={c}>
+                                {c}
+                              </option>
+                            ))}
+                          </select>
                         </div>
-                      )}
+                      ) : it.color ? (
+                        <span className="text-gray-500 text-[11px]">Màu: {it.color}</span>
+                      ) : null}
                     </div>
+
+                    {it.mode === 'rent' && it.rentalStartDate && it.rentalEndDate && (
+                      <div className="mt-1.5">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
+                          <Calendar className="w-3 h-3 text-emerald-600 shrink-0" />
+                          <span>{formatDateVN(it.rentalStartDate)} → {formatDateVN(it.rentalEndDate)}</span>
+                          <span className="text-emerald-600 font-medium">({calculateRentalDays(it.rentalStartDate, it.rentalEndDate)} ngày)</span>
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="text-right sm:border-l sm:pl-3 border-gray-100 flex sm:flex-col justify-between sm:justify-center items-end shrink-0">
+                  <div className="text-right border-l pl-3 border-gray-100 flex flex-col justify-center items-end shrink-0 min-w-[70px]">
                     <span className="font-bold text-gray-900 block text-xs">{formatVND(it.price)}</span>
                     {it.deposit ? <span className="text-[10px] text-gray-500">Cọc: {formatVND(it.deposit)}</span> : null}
                   </div>
