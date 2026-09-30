@@ -259,6 +259,13 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
 
   const hasConflict = rentalConflict.hasConflict;
 
+  const activeBookings = useMemo(() => {
+    if (!selectedProduct || !selectedProduct.bookedDates) return [];
+    return selectedProduct.bookedDates.filter(
+      (b) => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'returned'
+    );
+  }, [selectedProduct]);
+
   if (!isOpen) return null;
 
   const handleSelectCustomer = (c: { name: string; phone: string; address?: string }) => {
@@ -751,27 +758,137 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                   </div>
                 </div>
 
-                {/* Size Selector Dropdown / Pills */}
-                <div className="pt-1 border-t border-gray-100">
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1.5">
-                    Chọn Size váy:
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(selectedProduct.sizes || ['S', 'M', 'L']).map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setSelectedSize(s)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
-                          selectedSize === s
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-emerald-300'
-                        }`}
-                      >
-                        Size: {s}
-                      </button>
-                    ))}
+                {/* Size Selector Dropdown / Pills with real-time rental status */}
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] font-bold text-gray-800 flex items-center gap-1.5">
+                      <Shirt className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Chọn Size váy & Tình trạng lịch thuê:</span>
+                    </label>
+                    <span className="text-[10px] text-gray-500 font-mono">
+                      {formatDateVN(startDate)} → {formatDateVN(endDate)}
+                    </span>
                   </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedProduct.sizes || ['S', 'M', 'L']).map((s) => {
+                      const conflict = checkRentalOverlap(
+                        startDate,
+                        endDate,
+                        selectedProduct.bookedDates || [],
+                        undefined,
+                        s
+                      );
+                      const isBooked = conflict.hasConflict;
+                      const isSelected = selectedSize === s;
+
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setSelectedSize(s)}
+                          className={`relative px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${
+                            isBooked
+                              ? isSelected
+                                ? 'bg-rose-50 border-rose-500 text-rose-900 ring-2 ring-rose-400/40 shadow-xs'
+                                : 'bg-rose-50/70 border-rose-200 text-rose-700 hover:border-rose-300'
+                              : isSelected
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                              : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300'
+                          }`}
+                        >
+                          <span>Size {s}</span>
+                          {isBooked ? (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold flex items-center gap-1 ${
+                              isSelected ? 'bg-rose-200 text-rose-950' : 'bg-rose-100 text-rose-800'
+                            }`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                              Đã thuê
+                            </span>
+                          ) : (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold flex items-center gap-1 ${
+                              isSelected ? 'bg-emerald-700 text-emerald-100' : 'bg-emerald-100/80 text-emerald-800'
+                            }`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Trống
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Cảnh báo chi tiết nếu size đang chọn bị trùng */}
+                  {rentalConflict.hasConflict && rentalConflict.conflictingBooking && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-rose-50 border border-rose-200/90 text-rose-900 text-xs animate-in fade-in duration-200">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="font-bold">
+                            ⚠️ Size {selectedSize} ĐÃ CÓ KHÁCH THUÊ từ {formatDateVN(rentalConflict.conflictingBooking.startDate)} đến {formatDateVN(rentalConflict.conflictingBooking.endDate)}!
+                          </p>
+                          {rentalConflict.conflictingBooking.renterName && (
+                            <p className="text-[11px] text-rose-700">
+                              Khách thuê: <span className="font-semibold">{rentalConflict.conflictingBooking.renterName}</span>
+                              {rentalConflict.conflictingBooking.renterPhone ? ` - ${rentalConflict.conflictingBooking.renterPhone}` : ''}
+                            </p>
+                          )}
+                          <p className="text-[11px] text-rose-800 font-medium">
+                            💡 Gợi ý: Hãy bấm chọn size khác (size có nhãn xanh "Trống") hoặc chọn ngày thuê khác cho khách.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Danh sách các lịch thuê đã có của từng Size */}
+                  {activeBookings.length > 0 && (
+                    <div className="mt-2.5 bg-gray-50/90 rounded-xl p-2.5 border border-gray-200/70 text-[11px]">
+                      <div className="font-bold text-gray-700 mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-brand-600" />
+                          <span>Chi tiết tất cả lịch thuê theo từng Size của mẫu này:</span>
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-normal">
+                          (Đã có {activeBookings.length} lịch)
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        {(selectedProduct.sizes || ['S', 'M', 'L']).map((sz) => {
+                          const sizeBookings = activeBookings.filter(
+                            (b) => !b.size || b.size.trim().toUpperCase() === sz.trim().toUpperCase()
+                          );
+
+                          return (
+                            <div key={sz} className="flex items-start gap-2 text-[11px] py-0.5">
+                              <span className="font-bold text-gray-800 shrink-0 bg-white border border-gray-200 px-1.5 py-0.5 rounded text-[10px] min-w-[50px] text-center">
+                                Size {sz}
+                              </span>
+                              <div className="flex-1 flex flex-wrap gap-1">
+                                {sizeBookings.length > 0 ? (
+                                  sizeBookings.map((b, bIdx) => (
+                                    <span
+                                      key={bIdx}
+                                      className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200/80 px-2 py-0.5 rounded-md text-[10px] font-medium"
+                                    >
+                                      <span>{formatDateVN(b.startDate)} → {formatDateVN(b.endDate)}</span>
+                                      {b.renterName && (
+                                        <span className="text-amber-700 font-bold">({b.renterName})</span>
+                                      )}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-emerald-700 font-medium text-[10px] py-0.5">
+                                    Chưa có lịch thuê nào (hoàn toàn trống)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Gói giá thuê 1 ngày / 2 ngày / 3 ngày */}

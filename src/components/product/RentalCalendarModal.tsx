@@ -142,9 +142,14 @@ export const RentalCalendarModal: React.FC<RentalCalendarModalProps> = ({
                 onChange={(e) => setSelectedSize(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
               >
-                {product.sizes.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
+                {product.sizes.map((s) => {
+                  const conflict = checkRentalOverlap(startDate, endDate, product.bookedDates, undefined, s);
+                  return (
+                    <option key={s} value={s}>
+                      Size {s} {conflict.hasConflict ? '⚠️ (Đã có khách thuê)' : '✓ (Còn trống)'}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 

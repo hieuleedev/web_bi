@@ -515,19 +515,41 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     Kích Thước (Size)
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {product.sizes.map((s: string) => (
-                      <button
-                        key={s}
-                        onClick={() => setSelectedSize(s)}
-                        className={`px-4 py-2 rounded-xl text-xs font-medium border transition-all ${
-                          selectedSize === s
-                            ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
-                            : 'bg-white text-gray-700 border-gray-200 hover:border-brand-300'
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                    {product.sizes.map((s: string) => {
+                      const conflict = activeMode === 'rent' && startDate && endDate
+                        ? checkRentalOverlap(startDate, endDate, product.bookedDates || [], undefined, s)
+                        : { hasConflict: false };
+                      const isBooked = conflict.hasConflict;
+
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => setSelectedSize(s)}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
+                            isBooked
+                              ? selectedSize === s
+                                ? 'bg-rose-50 border-rose-500 text-rose-900 ring-2 ring-rose-400/40'
+                                : 'bg-rose-50/70 border-rose-200 text-rose-700 hover:border-rose-300'
+                              : selectedSize === s
+                              ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                              : 'bg-white text-gray-700 border-gray-200 hover:border-brand-300'
+                          }`}
+                        >
+                          <span>Size {s}</span>
+                          {activeMode === 'rent' && (
+                            isBooked ? (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-200 text-rose-900 font-bold">
+                                Đã thuê
+                              </span>
+                            ) : (
+                              <span className="text-[10px] px-1 py-0.2 rounded bg-emerald-100 text-emerald-800">
+                                Trống
+                              </span>
+                            )
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

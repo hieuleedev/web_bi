@@ -4,7 +4,7 @@ import { Order, OrderStatus, OrderItem } from '../../types';
 import { useOrders } from '../../context/OrderContext';
 import { useProducts } from '../../context/ProductContext';
 import { useToast } from '../../context/ToastContext';
-import { formatVND, formatDateVN, calculateRentalDays } from '../../utils/helpers';
+import { formatVND, formatDateVN, calculateRentalDays, checkRentalOverlap } from '../../utils/helpers';
 
 interface EditOrderModalProps {
   isOpen: boolean;
@@ -219,11 +219,23 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                             onChange={(e) => handleItemSizeChange(idx, e.target.value)}
                             className="bg-transparent text-amber-950 font-black text-xs focus:outline-none cursor-pointer pr-0.5"
                           >
-                            {availableSizes.map((s) => (
-                              <option key={s} value={s}>
-                                Size {s}
-                              </option>
-                            ))}
+                            {availableSizes.map((s) => {
+                              const sConflict = (it.mode === 'rent' && startDate && endDate && product?.bookedDates)
+                                ? checkRentalOverlap(
+                                    startDate,
+                                    endDate,
+                                    product.bookedDates.filter((b) => b.orderId !== order.id),
+                                    undefined,
+                                    s
+                                  )
+                                : { hasConflict: false };
+
+                              return (
+                                <option key={s} value={s}>
+                                  Size {s} {sConflict.hasConflict ? '⚠️ (Đã có khách)' : '✓ (Trống)'}
+                                </option>
+                              );
+                            })}
                           </select>
                         </div>
 
