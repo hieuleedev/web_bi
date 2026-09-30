@@ -123,11 +123,13 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           const { hasConflict, conflictingBooking } = checkRentalOverlap(
             item.rentalStartDate,
             item.rentalEndDate,
-            productInStore.bookedDates || []
+            productInStore.bookedDates || [],
+            undefined,
+            item.size
           );
           if (hasConflict) {
             showToast(
-              `Mẫu "${item.productTitle}" đã có khách đặt từ ${formatDateVN(conflictingBooking?.startDate!)} đến ${formatDateVN(conflictingBooking?.endDate!)}! Vui lòng chọn ngày khác.`,
+              `Mẫu "${item.productTitle}" ${item.size ? `(Size ${item.size})` : ''} đã có khách đặt từ ${formatDateVN(conflictingBooking?.startDate!)} đến ${formatDateVN(conflictingBooking?.endDate!)}! Vui lòng chọn ngày hoặc size khác.`,
               'error'
             );
             return null;

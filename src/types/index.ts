@@ -23,6 +23,8 @@ export type GenderCategory = 'women' | 'men' | 'unisex';
 export interface RentalBookingDate {
   id: string;
   orderId?: string;
+  productId?: string;
+  size?: string; // Ví dụ: 'S', 'M', 'L' hoặc undefined nếu khóa chung toàn bộ size
   startDate: string; // YYYY-MM-DD
   endDate: string;   // YYYY-MM-DD
   renterName?: string;

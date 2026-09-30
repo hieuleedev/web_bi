@@ -134,7 +134,8 @@ export function checkRentalOverlap(
   newStart: string,
   newEnd: string,
   existingBookings: RentalBookingDate[] = [],
-  excludeBookingId?: string
+  excludeBookingId?: string,
+  requestedSize?: string
 ): { hasConflict: boolean; conflictingBooking?: RentalBookingDate } {
   if (!newStart || !newEnd || !existingBookings || existingBookings.length === 0) {
     return { hasConflict: false };
@@ -142,11 +143,20 @@ export function checkRentalOverlap(
 
   const s = newStart.split('T')[0];
   const e = newEnd.split('T')[0];
+  const targetSize = requestedSize ? requestedSize.trim().toUpperCase() : undefined;
 
   for (const booking of existingBookings) {
     if (booking.status === 'cancelled' || booking.status === 'completed' || booking.status === 'returned') continue;
     if (excludeBookingId && booking.id === excludeBookingId) continue;
     if (!booking.startDate || !booking.endDate) continue;
+
+    // Phân tách theo size: Nếu có size cụ thể, chỉ trùng khi cùng size (hoặc lịch khóa toàn bộ không ghi size)
+    if (targetSize && booking.size && booking.size.trim() !== '') {
+      const bookingSize = booking.size.trim().toUpperCase();
+      if (bookingSize !== targetSize) {
+        continue; // Khác size -> không trùng, vẫn cho thuê bình thường!
+      }
+    }
 
     const bStart = booking.startDate.split('T')[0];
     const bEnd = booking.endDate.split('T')[0];

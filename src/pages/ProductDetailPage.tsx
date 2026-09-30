@@ -95,8 +95,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   // Overlap verification
   const overlapCheck = useMemo(() => {
     if (!product || activeMode !== 'rent' || !startDate || !endDate) return { hasConflict: false };
-    return checkRentalOverlap(startDate, endDate, product.bookedDates);
-  }, [product, activeMode, startDate, endDate]);
+    return checkRentalOverlap(startDate, endDate, product.bookedDates, undefined, selectedSize);
+  }, [product, activeMode, startDate, endDate, selectedSize]);
 
   const rentalDays = useMemo(() => {
     return calculateRentalDays(startDate, endDate);
@@ -730,15 +730,24 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                             🔴 Các khoảng ngày váy này ĐÃ CÓ NGƯỜI THUÊ:
                           </span>
                           <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                            {product.bookedDates.filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'returned').map((b) => (
-                              <span
-                                key={b.id}
-                                className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold bg-rose-100/80 text-rose-700 border border-rose-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg"
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)}
-                              </span>
-                            ))}
+                            {product.bookedDates.filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'returned').map((b) => {
+                              const isSameSize = !b.size || b.size.toUpperCase() === selectedSize.toUpperCase();
+                              return (
+                                <span
+                                  key={b.id}
+                                  className={`inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border ${
+                                    isSameSize
+                                      ? 'bg-rose-100/90 text-rose-700 border-rose-300 shadow-2xs'
+                                      : 'bg-gray-100 text-gray-600 border-gray-200'
+                                  }`}
+                                  title={b.size ? `Đã có khách đặt Size ${b.size}` : 'Đã có khách đặt'}
+                                >
+                                  <span className={`w-1.5 h-1.5 rounded-full ${isSameSize ? 'bg-rose-500' : 'bg-gray-400'}`}></span>
+                                  {b.size && <span className="font-sans font-extrabold uppercase">[{b.size}]</span>}
+                                  <span>{formatDateVN(b.startDate)} → {formatDateVN(b.endDate)}</span>
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

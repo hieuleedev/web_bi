@@ -69,12 +69,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { hasConflict, conflictingBooking } = checkRentalOverlap(
         rentalStartDate,
         rentalEndDate,
-        product.bookedDates
+        product.bookedDates,
+        undefined,
+        selectedSize
       );
 
       if (hasConflict) {
         showToast(
-          `Khoảng thời gian này đã có khách đặt trước (${conflictingBooking?.startDate} - ${conflictingBooking?.endDate})! Vui lòng chọn ngày khác.`,
+          `Khoảng thời gian này đã có khách đặt trước size ${conflictingBooking?.size || selectedSize} (${conflictingBooking?.startDate} - ${conflictingBooking?.endDate})! Vui lòng chọn ngày hoặc size khác.`,
           'error'
         );
         return false;
@@ -87,14 +89,16 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           item.mode === 'rent' &&
           item.rentalStartDate &&
           item.rentalEndDate &&
+          item.selectedSize === selectedSize &&
           checkRentalOverlap(rentalStartDate, rentalEndDate, [
             {
               id: 'cart-check',
               startDate: item.rentalStartDate,
               endDate: item.rentalEndDate,
+              size: item.selectedSize,
               status: 'confirmed',
             },
-          ]).hasConflict
+          ], undefined, selectedSize).hasConflict
       );
 
       if (existingInCart) {

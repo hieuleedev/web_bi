@@ -38,8 +38,8 @@ export const RentalCalendarModal: React.FC<RentalCalendarModalProps> = ({
   // Check overlap with existing product bookings
   const overlapCheck = useMemo(() => {
     if (!startDate || !endDate) return { hasConflict: false };
-    return checkRentalOverlap(startDate, endDate, product.bookedDates);
-  }, [startDate, endDate, product.bookedDates]);
+    return checkRentalOverlap(startDate, endDate, product.bookedDates, undefined, selectedSize);
+  }, [startDate, endDate, product.bookedDates, selectedSize]);
 
   // Calculations
   const days = useMemo(() => {
@@ -243,14 +243,22 @@ export const RentalCalendarModal: React.FC<RentalCalendarModalProps> = ({
                 Các khoảng thời gian đã có người thuê trước:
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {product.bookedDates.filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'returned').map((b) => (
-                  <span
-                    key={b.id}
-                    className="bg-white border border-amber-300 text-amber-900 px-2 py-0.5 rounded-lg font-mono text-[10px] font-bold shadow-2xs"
-                  >
-                    🔴 {formatDateVN(b.startDate)} → {formatDateVN(b.endDate)}
-                  </span>
-                ))}
+                {product.bookedDates.filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'returned').map((b) => {
+                  const isSameSize = !b.size || b.size.toUpperCase() === selectedSize.toUpperCase();
+                  return (
+                    <span
+                      key={b.id}
+                      className={`border px-2 py-0.5 rounded-lg font-mono text-[10px] font-bold shadow-2xs ${
+                        isSameSize
+                          ? 'bg-rose-50 border-rose-300 text-rose-800'
+                          : 'bg-white border-gray-200 text-gray-600'
+                      }`}
+                      title={b.size ? `Đã có khách đặt Size ${b.size}` : 'Đã có khách đặt'}
+                    >
+                      {isSameSize ? '🔴' : '⚪'} {b.size ? `[Size ${b.size}] ` : ''}{formatDateVN(b.startDate)} → {formatDateVN(b.endDate)}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}

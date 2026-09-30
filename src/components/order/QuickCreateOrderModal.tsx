@@ -254,8 +254,8 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   // Check rental conflict
   const rentalConflict = useMemo(() => {
     if (!selectedProduct) return { hasConflict: false };
-    return checkRentalOverlap(startDate, endDate, selectedProduct.bookedDates || []);
-  }, [selectedProduct, startDate, endDate]);
+    return checkRentalOverlap(startDate, endDate, selectedProduct.bookedDates || [], undefined, selectedSize);
+  }, [selectedProduct, startDate, endDate, selectedSize]);
 
   const hasConflict = rentalConflict.hasConflict;
 
