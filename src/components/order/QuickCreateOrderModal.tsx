@@ -542,7 +542,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                   onClick={() => setDepositMethod(m.id as any)}
                   className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all text-center border ${
                     depositMethod === m.id
-                      ? 'bg-white border-amber-400 text-amber-900 shadow-xs ring-1 ring-amber-400/40'
+                      ? 'bg-white border-amber-400 text-amber-900 shadow-sm ring-1 ring-amber-400/40'
                       : 'bg-transparent border-gray-200 text-gray-600 hover:bg-white'
                   }`}
                 >
@@ -790,10 +790,10 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                           className={`relative px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${
                             isBooked
                               ? isSelected
-                                ? 'bg-rose-50 border-rose-500 text-rose-900 ring-2 ring-rose-400/40 shadow-xs'
+                                ? 'bg-rose-50 border-rose-500 text-rose-900 ring-2 ring-rose-400/40 shadow-sm'
                                 : 'bg-rose-50/70 border-rose-200 text-rose-700 hover:border-rose-300'
                               : isSelected
-                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                               : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300'
                           }`}
                         >

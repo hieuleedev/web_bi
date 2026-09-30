@@ -147,12 +147,12 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-brand-50 via-white to-brand-50/30">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
               <FileText className="w-5 h-5" />
             </div>
             <div>
@@ -194,12 +194,12 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 : (it.color ? [it.color] : []);
 
               return (
-                <div key={idx} className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-gray-200/80 shadow-xs">
+                <div key={idx} className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-gray-200/80 shadow-sm">
                   <img
                     src={it.productImage}
                     alt={it.productTitle}
                     style={{ width: '60px', height: '76px', minWidth: '60px', maxWidth: '60px' }}
-                    className="object-cover rounded-xl shrink-0 border border-gray-100 shadow-2xs"
+                    className="object-cover rounded-xl shrink-0 border border-gray-100 shadow-sm"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 text-xs truncate">{it.productTitle}</p>
@@ -212,7 +212,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                       </span>
 
                       {/* Chọn Size */}
-                      <div className="flex items-center gap-1.5 bg-amber-50/90 border border-amber-200/90 px-2 py-0.5 rounded-lg shadow-2xs">
+                      <div className="flex items-center gap-1.5 bg-amber-50/90 border border-amber-200/90 px-2 py-0.5 rounded-lg shadow-sm">
                         <label className="text-[10px] font-bold text-amber-900">Size:</label>
                         <select
                           value={it.size || ''}
@@ -439,7 +439,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
             {onPrintBill && (
               <button
                 onClick={() => handleSave(true)}
-                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
               >
                 <Printer className="w-4 h-4" />
                 <span>Lưu & In Lại Bill</span>
