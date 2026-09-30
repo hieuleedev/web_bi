@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Phone, MapPin, DollarSign, Calendar, FileText, Check, Printer } from 'lucide-react';
-import { Order, OrderStatus } from '../../types';
+import { Order, OrderStatus, OrderItem } from '../../types';
 import { useOrders } from '../../context/OrderContext';
+import { useProducts } from '../../context/ProductContext';
 import { useToast } from '../../context/ToastContext';
 import { formatVND, formatDateVN, calculateRentalDays } from '../../utils/helpers';
 
@@ -21,6 +22,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
   onPrintBill,
 }) => {
   const { updateOrder } = useOrders();
+  const { products, refreshProducts } = useProducts();
   const { showToast } = useToast();
 
   const [customerName, setCustomerName] = useState('');
@@ -35,6 +37,9 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
   // Amounts
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [depositTotal, setDepositTotal] = useState<number>(0);
+
+  // Editable items
+  const [items, setItems] = useState<OrderItem[]>([]);
 
   // Rental Dates (if any item is rental)
   const firstRentalItem = order?.items.find((i) => i.mode === 'rent');
@@ -53,6 +58,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
       setDeliveryMethod(order.deliveryMethod || 'pickup');
       setTotalAmount(order.totalAmount || 0);
       setDepositTotal(order.depositTotal || 0);
+      setItems(order.items ? JSON.parse(JSON.stringify(order.items)) : []);
 
       const rentItem = order.items.find((i) => i.mode === 'rent');
       if (rentItem) {
@@ -67,6 +73,18 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
 
   if (!isOpen || !order) return null;
 
+  const handleItemSizeChange = (index: number, newSize: string) => {
+    setItems((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, size: newSize } : item))
+    );
+  };
+
+  const handleItemColorChange = (index: number, newColor: string) => {
+    setItems((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, color: newColor } : item))
+    );
+  };
+
   const handleSave = async (printAfterSave = false) => {
     if (!customerName.trim()) {
       showToast('Vui lòng nhập tên khách hàng!', 'error');
@@ -77,8 +95,8 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
       return;
     }
 
-    // Update item rental dates if changed
-    const updatedItems = order.items.map((item) => {
+    // Update item rental dates and keep any modified sizes
+    const updatedItems = items.map((item) => {
       if (item.mode === 'rent' && startDate && endDate) {
         const days = calculateRentalDays(startDate, endDate);
         return {
@@ -106,6 +124,9 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
     };
 
     await updateOrder(order.id, updatedData);
+    if (refreshProducts) {
+      await refreshProducts();
+    }
 
     const completeUpdatedOrder: Order = {
       ...order,
@@ -157,40 +178,95 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200/80 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="font-bold text-gray-700 uppercase tracking-wider text-[11px]">
-                Sản phẩm trong đơn ({order.items.length})
+                Sản phẩm trong đơn ({items.length})
               </span>
               <span className="text-[11px] font-semibold text-brand-600">
-                {order.items.some((i) => i.mode === 'rent') ? 'Đơn thuê đồ' : 'Đơn bán đứt'}
+                {items.some((i) => i.mode === 'rent') ? 'Đơn thuê đồ' : 'Đơn bán đứt'}
               </span>
             </div>
-            {order.items.map((it, idx) => (
-              <div key={idx} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-gray-100">
-                <img
-                  src={it.productImage}
-                  alt={it.productTitle}
-                  className="w-12 h-14 object-cover rounded-lg shrink-0 border border-gray-100"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 text-xs truncate">{it.productTitle}</p>
-                  <p className="text-gray-500 text-[11px]">
-                    {it.mode === 'rent' ? 'Chế độ: Thuê đồ' : 'Chế độ: Bán đứt'} • Size: {it.size} • Màu: {it.color}
-                  </p>
-                  {it.mode === 'rent' && it.rentalStartDate && it.rentalEndDate && (
-                    <div className="mt-1">
-                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
-                        <Calendar className="w-3 h-3 text-emerald-600 shrink-0" />
-                        <span>{formatDateVN(it.rentalStartDate)} → {formatDateVN(it.rentalEndDate)}</span>
-                        <span className="text-emerald-600 font-medium">({calculateRentalDays(it.rentalStartDate, it.rentalEndDate)} ngày)</span>
-                      </span>
+            {items.map((it, idx) => {
+              const product = products.find((p) => p.id === it.productId);
+              const defaultSizes = ['S', 'M', 'L', 'XL', 'FreeSize'];
+              const baseSizes = product?.sizes && product.sizes.length > 0 ? product.sizes : defaultSizes;
+              const availableSizes = Array.from(new Set([...baseSizes, it.size].filter(Boolean)));
+              const availableColors = product?.colors && product.colors.length > 0
+                ? Array.from(new Set([...product.colors, it.color].filter(Boolean)))
+                : (it.color ? [it.color] : []);
+
+              return (
+                <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-2xs">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <img
+                      src={it.productImage}
+                      alt={it.productTitle}
+                      className="w-13 h-15 object-cover rounded-lg shrink-0 border border-gray-100 shadow-2xs"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-xs truncate">{it.productTitle}</p>
+                      
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                          it.mode === 'rent' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                        }`}>
+                          {it.mode === 'rent' ? 'Thuê đồ' : 'Bán đứt'}
+                        </span>
+
+                        {/* Chọn Size */}
+                        <div className="flex items-center gap-1.5 bg-amber-50/90 border border-amber-200/90 px-2 py-0.5 rounded-lg shadow-2xs">
+                          <label className="text-[10px] font-bold text-amber-900">Size:</label>
+                          <select
+                            value={it.size || ''}
+                            onChange={(e) => handleItemSizeChange(idx, e.target.value)}
+                            className="bg-transparent text-amber-950 font-black text-xs focus:outline-none cursor-pointer pr-0.5"
+                          >
+                            {availableSizes.map((s) => (
+                              <option key={s} value={s}>
+                                Size {s}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Chọn Màu */}
+                        {availableColors.length > 1 ? (
+                          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-lg">
+                            <label className="text-[10px] font-bold text-gray-700">Màu:</label>
+                            <select
+                              value={it.color || ''}
+                              onChange={(e) => handleItemColorChange(idx, e.target.value)}
+                              className="bg-transparent text-gray-800 text-xs font-semibold focus:outline-none cursor-pointer pr-0.5"
+                            >
+                              {availableColors.map((c) => (
+                                <option key={c} value={c}>
+                                  {c}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : it.color ? (
+                          <span className="text-gray-500 text-[11px]">Màu: {it.color}</span>
+                        ) : null}
+                      </div>
+
+                      {it.mode === 'rent' && it.rentalStartDate && it.rentalEndDate && (
+                        <div className="mt-1.5">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
+                            <Calendar className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>{formatDateVN(it.rentalStartDate)} → {formatDateVN(it.rentalEndDate)}</span>
+                            <span className="text-emerald-600 font-medium">({calculateRentalDays(it.rentalStartDate, it.rentalEndDate)} ngày)</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  <div className="text-right sm:border-l sm:pl-3 border-gray-100 flex sm:flex-col justify-between sm:justify-center items-end shrink-0">
+                    <span className="font-bold text-gray-900 block text-xs">{formatVND(it.price)}</span>
+                    {it.deposit ? <span className="text-[10px] text-gray-500">Cọc: {formatVND(it.deposit)}</span> : null}
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="font-bold text-gray-900 block">{formatVND(it.price)}</span>
-                  {it.deposit ? <span className="text-[10px] text-gray-500">Cọc: {formatVND(it.deposit)}</span> : null}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Customer Information */}
