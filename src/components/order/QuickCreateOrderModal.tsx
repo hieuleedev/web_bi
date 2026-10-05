@@ -30,6 +30,7 @@ interface QuickCreateOrderModalProps {
   onClose: () => void;
   onOrderCreated: (order: Order) => void;
   initialProductId?: string;
+  initialProduct?: Product;
 }
 
 const AVAILABLE_ACCESSORIES = [
@@ -45,6 +46,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   onClose,
   onOrderCreated,
   initialProductId,
+  initialProduct,
 }) => {
   const { products, refreshProducts } = useProducts();
   const { addDirectOrder, orders } = useOrders();
@@ -84,13 +86,38 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   // 4. Product Selection & Search
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  
+  // Khóa ID sản phẩm được chỉ định ban đầu (từ prop initialProduct hoặc initialProductId)
   const [selectedProductId, setSelectedProductId] = useState<string>(
-    initialProductId || (products[0]?.id || '')
+    initialProduct?.id || initialProductId || (products[0]?.id || '')
   );
+  // Lưu giữ trực tiếp đối tượng váy đã chọn (chống mạng lag/chờ fetch làm nhảy sang váy khác)
+  const [manualSelectedProduct, setManualSelectedProduct] = useState<Product | null>(initialProduct || null);
 
   const selectedProduct = useMemo(() => {
-    return products.find((p) => p.id === selectedProductId) || products[0];
-  }, [products, selectedProductId]);
+    // 1. Ưu tiên tìm theo targetId (ID váy được bấm hoặc chọn thủ công)
+    const targetId = selectedProductId || initialProduct?.id || initialProductId;
+    if (targetId) {
+      // Tìm trong danh sách products (để có bookedDates mới nhất nếu đã load)
+      const foundInList = products.find((p) => p.id === targetId);
+      if (foundInList) return foundInList;
+
+      // Nếu mạng lag chưa tải xong products, giữ chặt đối tượng váy đã chọn ban đầu
+      if (manualSelectedProduct && manualSelectedProduct.id === targetId) return manualSelectedProduct;
+      if (initialProduct && initialProduct.id === targetId) return initialProduct;
+    }
+
+    // 2. Nếu có váy chọn trước đó
+    if (manualSelectedProduct) return manualSelectedProduct;
+    if (initialProduct) return initialProduct;
+
+    // 3. CHỈ fallback về váy đầu tiên nếu mở modal "Tạo đơn mới" chung (không bấm vào váy cụ thể)
+    if (!initialProduct && !initialProductId && products.length > 0) {
+      return products[0];
+    }
+
+    return null;
+  }, [products, selectedProductId, initialProduct, initialProductId, manualSelectedProduct]);
 
   // Selected Size
   const [selectedSize, setSelectedSize] = useState<string>('S');
@@ -115,17 +142,20 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
   const [cashAmount, setCashAmount] = useState<number>(0);
   const [transferAmount, setTransferAmount] = useState<number>(0);
 
-  // Khi mở modal hoặc khi initialProductId thay đổi, đồng bộ ngay sản phẩm được chọn và đặt mặc định 1 ngày
+  // Khi mở modal hoặc khi initialProduct/initialProductId thay đổi, đồng bộ ngay sản phẩm được chọn và đặt mặc định 1 ngày
   React.useEffect(() => {
     if (isOpen) {
-      if (initialProductId) {
+      if (initialProduct) {
+        setSelectedProductId(initialProduct.id);
+        setManualSelectedProduct(initialProduct);
+      } else if (initialProductId) {
         setSelectedProductId(initialProductId);
       }
       setStartDate(todayStr);
       setEndDate(todayStr);
       setSelectedPackage('1day');
     }
-  }, [initialProductId, isOpen, todayStr]);
+  }, [initialProductId, initialProduct, isOpen, todayStr]);
 
   // When selected product changes, reset defaults
   React.useEffect(() => {
@@ -693,6 +723,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                       type="button"
                       onClick={() => {
                         setSelectedProductId(p.id);
+                        setManualSelectedProduct(p);
                         setIsSearchOpen(false);
                         setProductSearchQuery('');
                       }}
@@ -728,7 +759,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
           </div>
 
           {/* 7. VÁY ĐÃ CHỌN (1) - Exact green container from screenshot 3 */}
-          {selectedProduct && (
+          {selectedProduct ? (
             <div className="rounded-2xl border-2 border-emerald-500 bg-emerald-50/30 p-4 space-y-3 animate-in fade-in duration-150">
               
               {/* Header: ✓ Váy đã chọn (1): */}
@@ -1005,6 +1036,14 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
                 </div>
 
               </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50/60 p-6 text-center space-y-2">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                <Loader2 className="w-5 h-5 animate-spin" />
+              </div>
+              <p className="text-xs font-semibold text-gray-700">Đang nạp thông tin mẫu váy...</p>
+              <p className="text-[11px] text-gray-400">Nếu kết nối mạng chậm, bạn có thể gõ tên hoặc mã váy ở ô tìm kiếm bên trên.</p>
             </div>
           )}
 

@@ -95,6 +95,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   // Modals for Quick Order & Bank Config & Bill Printing & Editing
   const [isQuickOrderOpen, setIsQuickOrderOpen] = useState(false);
   const [quickOrderInitialProdId, setQuickOrderInitialProdId] = useState<string | undefined>(undefined);
+  const [quickOrderInitialProduct, setQuickOrderInitialProduct] = useState<Product | undefined>(undefined);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -688,6 +689,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
                       <button
                         onClick={() => {
+                          setQuickOrderInitialProduct(undefined);
                           setQuickOrderInitialProdId(undefined);
                           setIsQuickOrderOpen(true);
                         }}
@@ -911,6 +913,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                             <div className="flex flex-wrap items-center gap-1.5 self-end xl:self-center shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-gray-100 w-full xl:w-auto justify-end">
                               <button
                                 onClick={() => {
+                                  setQuickOrderInitialProduct(p);
                                   setQuickOrderInitialProdId(p.id);
                                   setIsQuickOrderOpen(true);
                                 }}
@@ -1146,6 +1149,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   </div>
                   <button
                     onClick={() => {
+                      setQuickOrderInitialProduct(undefined);
                       setQuickOrderInitialProdId(undefined);
                       setIsQuickOrderOpen(true);
                     }}
@@ -1446,6 +1450,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
+                        setQuickOrderInitialProduct(undefined);
                         setQuickOrderInitialProdId(undefined);
                         setIsQuickOrderOpen(true);
                       }}
@@ -1939,12 +1944,14 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       {/* Modal Tạo đơn hàng nhanh tại quầy (POS) */}
       {isQuickOrderOpen && (
         <QuickCreateOrderModal
-          key={quickOrderInitialProdId || 'quick-order-new'}
+          key={quickOrderInitialProduct?.id || quickOrderInitialProdId || 'quick-order-new'}
           isOpen={isQuickOrderOpen}
           initialProductId={quickOrderInitialProdId}
+          initialProduct={quickOrderInitialProduct}
           onClose={() => {
             setIsQuickOrderOpen(false);
             setQuickOrderInitialProdId(undefined);
+            setQuickOrderInitialProduct(undefined);
           }}
           onOrderCreated={(createdOrder) => {
             setInvoiceOrder(createdOrder);
