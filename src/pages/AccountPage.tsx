@@ -34,7 +34,8 @@ import {
   Loader2,
   Upload,
   LayoutDashboard,
-  Users
+  Users,
+  X
 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -173,6 +174,18 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   // Orders filter
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
   const [sellerOrderFilter, setSellerOrderFilter] = useState<'all' | 'overdue' | 'rented' | 'pending' | 'completed'>('all');
+  const [sellerOrderSearch, setSellerOrderSearch] = useState('');
+  const [sellerOrderPage, setSellerOrderPage] = useState(1);
+  const [sellerOrdersPerPage, setSellerOrdersPerPage] = useState(10);
+
+  // Helper loại bỏ dấu tiếng Việt để tìm kiếm không dấu / có dấu
+  const removeVietnameseTones = (str: string) => {
+    return (str || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D');
+  };
 
   // Today's date string YYYY-MM-DD
   const todayDate = new Date().toISOString().split('T')[0];
@@ -1185,77 +1198,170 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   </div>
                 )}
 
-                {/* Filter Pills */}
-                <div className="flex flex-wrap items-center gap-2 pb-1">
-                  <button
-                    onClick={() => setSellerOrderFilter('all')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      sellerOrderFilter === 'all'
-                        ? 'bg-gray-900 text-white shadow-xs'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Tất cả ({sellerOrders.length})
-                  </button>
-
-                  <button
-                    onClick={() => setSellerOrderFilter('overdue')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                      sellerOrderFilter === 'overdue'
-                        ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-300'
-                        : overdueOrders.length > 0
-                        ? 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-100'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <span>🔴 Quá hạn chưa trả</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      sellerOrderFilter === 'overdue' ? 'bg-white text-rose-700' : 'bg-rose-600 text-white'
-                    }`}>
-                      {overdueOrders.length}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setSellerOrderFilter('rented')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                      sellerOrderFilter === 'rented'
-                        ? 'bg-brand-600 text-white shadow-xs'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <span>👗 Đang cho thuê</span>
-                    <span className="font-mono text-[10px] bg-black/10 px-1.5 py-0.2 rounded-full">
-                      {sellerOrders.filter((o) => o.status === 'rented').length}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setSellerOrderFilter('completed')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                      sellerOrderFilter === 'completed'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <span>✓ Lịch sử đã trả đồ</span>
-                    <span className="font-mono text-[10px] bg-black/10 px-1.5 py-0.2 rounded-full">
-                      {sellerOrders.filter((o) => ['returned', 'completed'].includes(o.status)).length}
-                    </span>
-                  </button>
-                </div>
-
                 {(() => {
+                  const searchClean = removeVietnameseTones(sellerOrderSearch.trim().toLowerCase());
+                  const searchPhone = sellerOrderSearch.trim().replace(/\s+/g, '');
+
                   const filteredSellerOrders = sellerOrders.filter((order) => {
-                    if (sellerOrderFilter === 'overdue') return isOrderOverdue(order);
-                    if (sellerOrderFilter === 'rented') return order.status === 'rented';
-                    if (sellerOrderFilter === 'completed') return ['returned', 'completed'].includes(order.status);
+                    // 1. Lọc theo tab trạng thái
+                    if (sellerOrderFilter === 'overdue' && !isOrderOverdue(order)) return false;
+                    if (sellerOrderFilter === 'rented' && order.status !== 'rented') return false;
+                    if (sellerOrderFilter === 'completed' && !['returned', 'completed'].includes(order.status)) return false;
+
+                    // 2. Tìm kiếm theo Tên khách, SĐT, Tên sản phẩm, Mã đơn hàng
+                    if (searchClean) {
+                      const matchName = removeVietnameseTones(order.customerName || '').toLowerCase().includes(searchClean);
+                      const matchPhone = (order.customerPhone || '').replace(/\s+/g, '').includes(searchPhone);
+                      const matchCode = (order.code || '').toLowerCase().includes(searchClean);
+                      const matchProduct = (order.items || []).some((item) =>
+                        removeVietnameseTones(item.productTitle || '').toLowerCase().includes(searchClean)
+                      );
+                      if (!matchName && !matchPhone && !matchCode && !matchProduct) {
+                        return false;
+                      }
+                    }
+
                     return true;
                   });
 
-                  return filteredSellerOrders.length > 0 ? (
-                    <div className="space-y-4">
-                      {filteredSellerOrders.map((order) => {
+                  // Tính toán phân trang
+                  const totalSellerOrderPages = Math.ceil(filteredSellerOrders.length / sellerOrdersPerPage) || 1;
+                  const paginatedSellerOrders = filteredSellerOrders.slice(
+                    (sellerOrderPage - 1) * sellerOrdersPerPage,
+                    sellerOrderPage * sellerOrdersPerPage
+                  );
+
+                  return (
+                    <div className="space-y-5">
+                      {/* Search & Filter Bar */}
+                      <div className="bg-gray-50/90 p-4 rounded-2xl border border-gray-200/80 space-y-3">
+                        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                          {/* Ô tìm kiếm khách, SĐT, tên sản phẩm */}
+                          <div className="relative flex-1 max-w-lg">
+                            <input
+                              type="text"
+                              value={sellerOrderSearch}
+                              onChange={(e) => {
+                                setSellerOrderSearch(e.target.value);
+                                setSellerOrderPage(1);
+                              }}
+                              placeholder="Tìm theo tên khách, số điện thoại, tên váy, mã đơn (BB-...)..."
+                              className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-9 py-2.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-gray-400 shadow-2xs"
+                            />
+                            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            {sellerOrderSearch && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSellerOrderSearch('');
+                                  setSellerOrderPage(1);
+                                }}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 rounded-full hover:bg-gray-100"
+                                title="Xóa tìm kiếm"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Thống kê kết quả tìm kiếm */}
+                          <div className="flex items-center gap-2 text-xs text-gray-500 self-start sm:self-auto shrink-0">
+                            {sellerOrderSearch ? (
+                              <>
+                                <span>Tìm thấy: <strong className="text-brand-700 font-bold">{filteredSellerOrders.length}</strong> / {sellerOrders.length} đơn</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSellerOrderSearch('');
+                                    setSellerOrderPage(1);
+                                  }}
+                                  className="text-brand-600 hover:text-brand-800 underline text-xs font-semibold ml-1"
+                                >
+                                  Xóa tìm kiếm
+                                </button>
+                              </>
+                            ) : (
+                              <span>Tổng: <strong className="text-gray-800 font-bold">{sellerOrders.length}</strong> đơn hàng</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Filter Pills */}
+                        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-200/60">
+                          <button
+                            onClick={() => {
+                              setSellerOrderFilter('all');
+                              setSellerOrderPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                              sellerOrderFilter === 'all'
+                                ? 'bg-gray-900 text-white shadow-xs'
+                                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            Tất cả ({sellerOrders.length})
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSellerOrderFilter('overdue');
+                              setSellerOrderPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                              sellerOrderFilter === 'overdue'
+                                ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-300'
+                                : overdueOrders.length > 0
+                                ? 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-100'
+                                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            <span>🔴 Quá hạn chưa trả</span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                              sellerOrderFilter === 'overdue' ? 'bg-white text-rose-700' : 'bg-rose-600 text-white'
+                            }`}>
+                              {overdueOrders.length}
+                            </span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSellerOrderFilter('rented');
+                              setSellerOrderPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                              sellerOrderFilter === 'rented'
+                                ? 'bg-brand-600 text-white shadow-xs'
+                                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            <span>👗 Đang cho thuê</span>
+                            <span className="font-mono text-[10px] bg-black/10 px-1.5 py-0.2 rounded-full">
+                              {sellerOrders.filter((o) => o.status === 'rented').length}
+                            </span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSellerOrderFilter('completed');
+                              setSellerOrderPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                              sellerOrderFilter === 'completed'
+                                ? 'bg-emerald-600 text-white shadow-xs'
+                                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            <span>✓ Lịch sử đã trả đồ</span>
+                            <span className="font-mono text-[10px] bg-black/10 px-1.5 py-0.2 rounded-full">
+                              {sellerOrders.filter((o) => ['returned', 'completed'].includes(o.status)).length}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {filteredSellerOrders.length > 0 ? (
+                        <div className="space-y-4">
+                          {paginatedSellerOrders.map((order) => {
                         const isOverdue = isOrderOverdue(order);
                         const overdueDays = isOverdue ? getOverdueDays(order) : 0;
                         const rentItem = order.items.find((i) => i.mode === 'rent' && i.rentalStartDate && i.rentalEndDate);
@@ -1427,13 +1533,74 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-gray-400 text-xs">
-                      {sellerOrderFilter === 'overdue'
-                        ? 'Không có đơn hàng nào bị quá hạn thuê! Tất cả đơn đều đúng hạn.'
-                        : 'Không tìm thấy đơn hàng nào phù hợp với bộ lọc.'}
+                    <div className="text-center py-12 text-gray-400 text-xs space-y-2">
+                      <p>
+                        {sellerOrderSearch
+                          ? `Không tìm thấy đơn hàng nào khớp với từ khóa "${sellerOrderSearch}".`
+                          : sellerOrderFilter === 'overdue'
+                          ? 'Không có đơn hàng nào bị quá hạn thuê! Tất cả đơn đều đúng hạn.'
+                          : 'Không tìm thấy đơn hàng nào phù hợp với bộ lọc.'}
+                      </p>
+                      {(sellerOrderSearch || sellerOrderFilter !== 'all') && (
+                        <button
+                          onClick={() => {
+                            setSellerOrderSearch('');
+                            setSellerOrderFilter('all');
+                            setSellerOrderPage(1);
+                          }}
+                          className="text-brand-600 font-semibold underline text-xs hover:text-brand-800"
+                        >
+                          Xóa toàn bộ bộ lọc & tìm kiếm
+                        </button>
+                      )}
                     </div>
-                  );
-                })()}
+                  )}
+
+                  {/* Phân trang danh sách đơn khách đặt */}
+                  {filteredSellerOrders.length > 0 && (
+                    <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span>Hiển thị mỗi trang:</span>
+                        <select
+                          value={sellerOrdersPerPage}
+                          onChange={(e) => {
+                            setSellerOrdersPerPage(Number(e.target.value));
+                            setSellerOrderPage(1);
+                          }}
+                          className="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer"
+                        >
+                          <option value={10}>10 đơn</option>
+                          <option value={20}>20 đơn</option>
+                          <option value={50}>50 đơn</option>
+                          <option value={100}>100 đơn</option>
+                        </select>
+                        <span className="text-gray-400">
+                          (Tổng: {filteredSellerOrders.length} đơn hàng)
+                        </span>
+                      </div>
+
+                      {totalSellerOrderPages > 1 ? (
+                        <Pagination
+                          currentPage={sellerOrderPage}
+                          totalPages={totalSellerOrderPages}
+                          totalItems={filteredSellerOrders.length}
+                          pageSize={sellerOrdersPerPage}
+                          itemsName="đơn hàng"
+                          onPageChange={(p) => {
+                            setSellerOrderPage(p);
+                            window.scrollTo({ top: 300, behavior: 'smooth' });
+                          }}
+                        />
+                      ) : (
+                        <div className="text-xs text-gray-400 italic">
+                          Hiển thị tất cả {filteredSellerOrders.length} đơn hàng
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
               </div>
             )}
 
