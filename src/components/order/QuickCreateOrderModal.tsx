@@ -258,27 +258,57 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
     );
   }, [products, productSearchQuery]);
 
-  // Autocomplete customers from past orders
+  // Autocomplete customers from past orders with rent count
   const pastCustomers = useMemo(() => {
-    const map = new Map<string, { name: string; phone: string; address?: string }>();
+    const map = new Map<string, { name: string; phone: string; address?: string; rentCount: number; totalOrders: number }>();
     (orders || []).forEach((o) => {
-      if (o.customerPhone && !map.has(o.customerPhone)) {
-        map.set(o.customerPhone, {
-          name: o.customerName,
+      if (o.status === 'cancelled') return;
+      const cleanPhone = (o.customerPhone || '').replace(/\s+/g, '');
+      if (!cleanPhone) return;
+
+      const hasRent = (o.items || []).some((i) => i.mode === 'rent') || ['rented', 'returned', 'completed'].includes(o.status);
+
+      if (!map.has(cleanPhone)) {
+        map.set(cleanPhone, {
+          name: o.customerName || 'Khách hàng',
           phone: o.customerPhone,
           address: o.shippingAddress,
+          rentCount: 0,
+          totalOrders: 0,
         });
       }
+
+      const c = map.get(cleanPhone)!;
+      c.totalOrders += 1;
+      if (hasRent) {
+        c.rentCount += 1;
+      }
+      if (o.customerName) c.name = o.customerName;
+      if (o.shippingAddress) c.address = o.shippingAddress;
     });
     return Array.from(map.values());
   }, [orders]);
 
   const matchingCustomers = useMemo(() => {
     if (!customerQuery.trim()) return [];
-    const q = customerQuery.toLowerCase();
-    return pastCustomers.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q)
-    );
+    const q = customerQuery.trim().toLowerCase();
+    const qClean = q
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D');
+    const qPhone = q.replace(/\s+/g, '');
+
+    return pastCustomers.filter((c) => {
+      const nameClean = (c.name || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D');
+      const phoneClean = (c.phone || '').replace(/\s+/g, '');
+      return nameClean.includes(qClean) || phoneClean.includes(qPhone);
+    });
   }, [pastCustomers, customerQuery]);
 
   // Check rental conflict
@@ -298,7 +328,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSelectCustomer = (c: { name: string; phone: string; address?: string }) => {
+  const handleSelectCustomer = (c: { name: string; phone: string; address?: string; rentCount?: number }) => {
     setCustomerName(c.name);
     setCustomerPhone(c.phone);
     if (c.address) setShippingAddress(c.address);
@@ -477,16 +507,32 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
 
               {/* Autocomplete suggestions dropdown */}
               {matchingCustomers.length > 0 && customerQuery.length >= 2 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl z-20 overflow-hidden divide-y divide-gray-100">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl z-20 overflow-hidden divide-y divide-gray-100 max-h-64 overflow-y-auto">
                   {matchingCustomers.map((c, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => handleSelectCustomer(c)}
-                      className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 text-xs flex items-center justify-between transition-colors"
+                      className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 text-xs flex items-center justify-between gap-2 transition-colors"
                     >
-                      <span className="font-bold text-gray-900">{c.name}</span>
-                      <span className="font-mono text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md font-semibold">
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        <span className="font-bold text-gray-900">{c.name}</span>
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 ${
+                            c.rentCount >= 3
+                              ? 'bg-purple-100 text-purple-800 border border-purple-200 font-bold'
+                              : c.rentCount > 0
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200 font-semibold'
+                              : 'bg-gray-100 text-gray-600 border border-gray-200'
+                          }`}
+                        >
+                          <span>👗</span>
+                          <span>
+                            {c.rentCount > 0 ? `Đã thuê ${c.rentCount} lần` : 'Khách mới'}
+                          </span>
+                        </span>
+                      </div>
+                      <span className="font-mono text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md font-semibold shrink-0">
                         {c.phone}
                       </span>
                     </button>
