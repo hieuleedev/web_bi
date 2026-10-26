@@ -96,7 +96,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
 
     const orderId = `ord-${Date.now()}`;
-    const orderCode = generateOrderCode();
+    const orderCode = generateOrderCode(orders);
 
     const orderItems = cartItems.map((c) => ({
       productId: c.productId,
@@ -220,7 +220,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const addDirectOrder = async (order: Order): Promise<Order> => {
     try {
-      await api.orders.create({
+      const res = await api.orders.create({
         id: order.id,
         orderCode: order.code,
         userId: order.userId || 'counter-customer',
@@ -238,11 +238,18 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         shippingFee: order.shippingFee,
         status: (order.status === 'rented' ? 'renting' : order.status) || 'renting',
       });
+
+      const savedOrder: Order = {
+        ...order,
+        code: res.orderCode || order.code,
+      };
+
+      setOrders((prev) => [savedOrder, ...prev.filter((o) => o.id !== savedOrder.id)]);
+      return savedOrder;
     } catch (e: any) {
-      console.warn('Lỗi lưu đơn hàng trực tiếp lên backend:', e);
+      console.error('Lỗi lưu đơn hàng trực tiếp lên backend:', e);
+      throw e;
     }
-    setOrders((prev) => [order, ...prev.filter((o) => o.id !== order.id)]);
-    return order;
   };
 
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {

@@ -171,11 +171,30 @@ export function checkRentalOverlap(
 }
 
 /**
- * Generate unique order code (e.g., BB-89241)
+ * Generate unique order code (e.g., BB-2610-89241 or checking existing list)
  */
-export function generateOrderCode(): string {
-  const rand = Math.floor(10000 + Math.random() * 90000);
-  return `BB-${rand}`;
+export function generateOrderCode(existingOrders?: { code?: string; orderCode?: string }[]): string {
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(-2);
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  
+  const existingSet = new Set(
+    (existingOrders || []).map((o) => (o.code || o.orderCode || '').toUpperCase())
+  );
+
+  for (let attempt = 0; attempt < 50; attempt++) {
+    // 4 số ngẫu nhiên cuối
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    // Mã dạng BB-261026-4821 (rất gọn gàng, rõ ngày tháng, tuyệt đối không trùng)
+    const code = `BB-${yy}${mm}${dd}-${rand}`;
+    if (!existingSet.has(code)) {
+      return code;
+    }
+  }
+
+  // Fallback timestamp nếu vượt quá số lần thử
+  return `BB-${Date.now().toString().slice(-8)}`;
 }
 
 /**

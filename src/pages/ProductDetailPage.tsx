@@ -19,11 +19,12 @@ import {
   ChevronRight,
   Send,
   PhoneCall,
-  MessageCircle
+  MessageCircle,
+  FilePlus2
 } from 'lucide-react';
 import { FEATURES } from '../config/features';
 import { ZaloIcon, ZaloBadge } from '../components/common/ZaloIcon';
-import { Product, Review, User } from '../types';
+import { Product, Review, User, Order } from '../types';
 import { formatVND, formatDateVN, calculateRentalDays, calculateRentalPrice, checkRentalOverlap } from '../utils/helpers';
 import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
@@ -31,6 +32,8 @@ import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 import { useToast } from '../context/ToastContext';
 import { ProductScheduleManagerModal } from '../components/product/ProductScheduleManagerModal';
+import { QuickCreateOrderModal } from '../components/order/QuickCreateOrderModal';
+import { OrderInvoiceModal } from '../components/order/OrderInvoiceModal';
 
 interface ProductDetailPageProps {
   productId?: string;
@@ -59,10 +62,15 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
   const [activeImage, setActiveImage] = useState<string>('');
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [isQuickOrderOpen, setIsQuickOrderOpen] = useState(false);
+  const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [activeMode, setActiveMode] = useState<'buy' | 'rent'>('buy');
   const [selectedSize, setSelectedSize] = useState<string>('M');
   const [selectedColor, setSelectedColor] = useState<string>('Trắng');
   const [buyQuantity, setBuyQuantity] = useState(1);
+
+  // Chỉ cho phép hiển thị nút Lên Đơn khi đăng nhập bằng tài khoản bibi.fashion@gmail.com
+  const isShopOwner = (currentUser?.email || '').trim().toLowerCase() === 'bibi.fashion@gmail.com';
 
   useEffect(() => {
     if (product) {
@@ -608,6 +616,20 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     </div>
                   </div>
 
+                  {/* Nút Lên Đơn Nhanh Tại Quầy (Chỉ hiển thị cho tài khoản chủ shop: bibi.fashion@gmail.com) */}
+                  {isShopOwner && (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsQuickOrderOpen(true)}
+                        className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-600/30 hover:shadow-emerald-600/40 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                      >
+                        <FilePlus2 className="w-4 h-4 text-white" />
+                        <span className="tracking-wide text-[13px]">Lên Đơn Cho Váy Này (POS)</span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Action Buttons: Zalo Official Button + Hotline */}
                   <div className="flex flex-col sm:flex-row gap-3 pt-1">
                     <a
@@ -953,6 +975,29 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         <ProductScheduleManagerModal
           product={product}
           onClose={() => setIsScheduleModalOpen(false)}
+        />
+      )}
+
+      {/* Modal Tạo đơn hàng nhanh tại quầy (POS) cho sản phẩm đang xem */}
+      {isQuickOrderOpen && product && (
+        <QuickCreateOrderModal
+          key={product.id}
+          isOpen={isQuickOrderOpen}
+          initialProductId={product.id}
+          initialProduct={product}
+          onClose={() => setIsQuickOrderOpen(false)}
+          onOrderCreated={(createdOrder) => {
+            setInvoiceOrder(createdOrder);
+          }}
+        />
+      )}
+
+      {/* Modal Hóa đơn POS sau khi tạo đơn thành công */}
+      {invoiceOrder && (
+        <OrderInvoiceModal
+          isOpen={!!invoiceOrder}
+          order={invoiceOrder}
+          onClose={() => setInvoiceOrder(null)}
         />
       )}
     </div>

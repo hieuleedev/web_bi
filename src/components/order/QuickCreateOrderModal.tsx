@@ -378,7 +378,7 @@ export const QuickCreateOrderModal: React.FC<QuickCreateOrderModalProps> = ({
     isSubmittingRef.current = true;
     setIsSubmitting(true);
 
-    const orderCode = generateOrderCode();
+    const orderCode = generateOrderCode(orders);
     const orderId = `ord-${Date.now()}`;
 
     const orderItem: OrderItem = {
